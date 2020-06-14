@@ -4,12 +4,14 @@ Python indi client package, suitable for a web or gui service. With option of MQ
 
 indi - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-Consists of the package:
+Though indi is used for astronomical observatory use, it can also be used for any instrument control if appropriate indi drivers are available.  This project provides a client, not drivers, nor indiserver. See https://indilib.org/ 
+
+A Python3 package is provided:
 
 ### indimqttredis
 
 An indi client with the capability to read data from redis and send it in indi XML format
-to indiserver, and can read device properties from the indiserver and stores them in redis.
+to indiserver, and can read device properties from indiserver and store them in redis.
 
 A redis server needs to be provided.
 
