@@ -4,7 +4,7 @@ Python indi client package, suitable for a web or gui service. With option of MQ
 
 Consists of the package:
 
-indimqttredis
+### indimqttredis
 
 An indi client with the capability to read data from redis and send it in indi XML format
 to indiserver, and can read device properties from the indiserver and stores them in redis.
@@ -29,19 +29,18 @@ not be enabled.
 In the second case the web/gui, redis server and MQTT server are typically running on one machine (the web server) 
 and indiserver is running on a remote machine at the observatory.  A script running indimqttredis will be running
 at both sites, and will provide the indiserver-MQTT conversion at the observatory, and MQTT-redis at the web/gui server.
-
  
 Python dependencies from pypi: "pip install redis" and "pip install paho-mqtt"  (all python3 versions)
 Server dependencies: A redis server (apt-get install redis-server), and an MQTT server (apt-get install mosquitto)
 
-
 Within indimqttredis, three sub packages are available which can be used by your own script:
 
-indimqttredis.indiredis
+### indimqttredis.indiredis
 
 Converts directly between indiserver (port 7624) and redis, converts indi XML to redis key-value storage.
 For example, your script could be:
 
+```
 from indimqttredis import indiredis
 
 # define the servers
@@ -52,13 +51,14 @@ redis_server = indiredis.redis_server(host='localhost', port=6379, db=0, passwor
 # blocking call which runs the service, communicating between indiserver and redis
 
 indiredis.run(indi_server, redis_server)
+```
 
-indimqttredis.indimqtt
+### indimqttredis.indimqtt
 
 Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver or an indi driver.
 Receives/transmitts XML data between indiserver on port 7624 and MQTT which sends data to the remote web/gui server.
 
-indimqttredis.mqttredis
+### indimqttredis.mqttredis
 
 Intended to be run on the server with the gui or web service which can read/write to redis.
 Receives XML data from MQTT and converts to redis key-value storage.
@@ -71,16 +71,14 @@ not usually directly imported by a client script, but could be if their function
 separated from the network elements.
 
 
-indimqttredis.toxml
+### indimqttredis.toxml
 
 A package that reads values published via redis and converts to indi xml strings.
 
 
-indimqttredis.fromxml
+### indimqttredis.fromxml
 
 A package that reads indi xml strings, parses them and places values into redis.
-
-
 
 
 The web service or gui is not specified, typically a web framework would be used to write code that can read
