@@ -88,9 +88,12 @@ A package that reads values published via redis and converts to indi xml strings
 
 A package that reads indi xml strings, parses them and places values into redis.
 
+### The web service
 
 The web service or gui is not specified, typically a web framework would be used to write code that can read
-and write to a local redis service. 
+and write to a local redis service.
+
+As the code for this project is developed, the redis keys will be defined and documented in the github wiki.
 
 ### mqtt and redis - why?
 
