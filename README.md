@@ -5,7 +5,7 @@ Python indi client package, suitable for a web or gui service. With option of MQ
 indi - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
 Though indi is used for astronomical observatory use, it can also be used for any instrument control if appropriate indi
-drivers are available.  This project provides a client, not drivers, nor indiserver. See https://indilib.org/ 
+drivers are available.  This project provides a client, not drivers, nor indiserver. See https://indilib.org/ for these components.
 
 A Python3 package is provided:
 
@@ -49,14 +49,14 @@ For example, your script could be:
 ```
 from indimqttredis import indiredis
 
-# define the servers
+# define the hosts/ports where servers are listenning
 
-indi_server = indiredis.indi_server(host='localhost', port=7624)
-redis_server = indiredis.redis_server(host='localhost', port=6379, db=0, password='')
+indi_host = indiredis.indi_server(host='localhost', port=7624)
+redis_host = indiredis.redis_server(host='localhost', port=6379, db=0, password='')
 
 # blocking call which runs the service, communicating between indiserver and redis
 
-indiredis.run(indi_server, redis_server)
+indiredis.run(indi_host, redis_host)
 ```
 
 ### indimqttredis.indimqtt
