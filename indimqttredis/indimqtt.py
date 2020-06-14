@@ -20,14 +20,23 @@ import paho.mqtt.client as mqtt
 
 
 # define the mqtt server connection
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password'])
-mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
+MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
+#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
 
 
 # define the indi server connection
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-indiserver = IndiServer('localhost', 7624)
+#indiserver = IndiServer('localhost', 7624)
 
+
+def indi_server(host='localhost', port=7624):
+    "Creates an instance of IndiServer"
+    return IndiServer(host, port)
+
+
+def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
+    "Creates an instance of MQTTServer"
+    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
 
 # The _TO_INDI dequeue has the right side filled from mqtt and the left side
 # sent to indiserver. Limit length to five items - an arbitrary setting
@@ -40,24 +49,19 @@ _TO_INDI = collections.deque(maxlen=5)
 def _on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     global _TO_INDI
-    if message.topic.startswith('ToIndiServer/01'):
-        # print(message.payload)
-        # we have received a message for the indiserver, put it into the _TO_INDI buffer
-        _TO_INDI.append(message.payload)
+    # we have received a message for the indiserver, put it into the _TO_INDI buffer
+    _TO_INDI.append(message.payload)
  
 
 def _on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
     global _TO_INDI
-    # we will use topic "ToIndiServer/01",. which leaves open the possibility of "ToIndiServer/02" in
-    # future
     _TO_INDI.clear()  # - start with fresh empty _TO_INDI buffer
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        # subscribe to topic "ToIndiServer/#"
-        client.subscribe( "ToIndiServer/#", 2 )
+        client.subscribe( userdata["to_indi_topic"], 2 )
         print("MQTT client connected")
     else:
         userdata['comms'] = False
@@ -71,7 +75,9 @@ def _on_disconnect(client, userdata, rc):
 
 
 
-if __name__ == "__main__":
+def run(indiserver, mqttserver):
+    "Blocking call that provides the indiserver - mqtt connection"
+    global _TO_INDI
 
     # wait for five seconds before starting, to give mqtt and other servers
     # time to start up
@@ -80,7 +86,9 @@ if __name__ == "__main__":
     print("indimqtt started")
 
     # create an mqtt client and connection
-    userdata={ "comms"  : False }        # an indication mqtt connection is working
+    userdata={ "comms"           : False,        # an indication mqtt connection is working
+               "to_indi_topic"   : mqttserver.to_indi_topic,
+               "from_indi_topic" : mqttserver.from_indi_topic }
 
     mqtt_client = mqtt.Client(userdata=userdata)
     # attach callback function to client
@@ -127,8 +135,8 @@ if __name__ == "__main__":
                     from_indi = b"".join(_FROM_INDI)
                     # and empty the _FROM_INDI list
                     _FROM_INDI.clear()
-                    # send the payload via mqtt with topic FromIndiServer/01
-                    result = mqtt_client.publish(topic="FromIndiServer/01", payload=from_indi, qos=2)
+                    # send the payload via mqtt with topic from_indi_topic
+                    result = mqtt_client.publish(topic=mqttserver.from_indi_topic, payload=from_indi, qos=2)
                     result.wait_for_publish()
 
                 if mask & selectors.EVENT_WRITE:
