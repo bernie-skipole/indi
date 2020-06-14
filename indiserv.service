@@ -1,0 +1,22 @@
+[Unit]
+Description=Indi Server
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/indiserver indi_simulator_telescope
+
+User=indi
+
+WorkingDirectory=/home/indi
+Restart=on-failure
+
+# Connects standard output to /dev/null
+StandardOutput=null
+
+# Connects standard error to journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
