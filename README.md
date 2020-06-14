@@ -4,7 +4,8 @@ Python indi client package, suitable for a web or gui service. With option of MQ
 
 indi - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-Though indi is used for astronomical observatory use, it can also be used for any instrument control if appropriate indi drivers are available.  This project provides a client, not drivers, nor indiserver. See https://indilib.org/ 
+Though indi is used for astronomical observatory use, it can also be used for any instrument control if appropriate indi
+drivers are available.  This project provides a client, not drivers, nor indiserver. See https://indilib.org/ 
 
 A Python3 package is provided:
 
@@ -106,9 +107,12 @@ the Python bindings that can use it.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
-mqtt is used since it makes out-of-band communications easy, for example, if other none-indi communications are needed between devices, then merely subscribing and publishing with another topic is possible.
+mqtt is used since it makes out-of-band communications easy, for example, if other none-indi communications
+are needed between devices, then merely subscribing and publishing with another topic is possible.
 
-There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
+There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different
+machine entirely. This makes it possible to choose the direction of the initial connection - which may be
+useful when passing through NAT firewalls.
 
 It allows monitoring of the communications by a third device by simply subscribing to the topic used.
 

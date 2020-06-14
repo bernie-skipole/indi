@@ -16,7 +16,7 @@ import sys, collections, socket, selectors, threading
 
 from time import sleep
 
-import toxml, fromxml
+from . import toxml, fromxml
 
 
 # define the server parameters
