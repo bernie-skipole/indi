@@ -2,6 +2,8 @@
 
 Python indi client package, suitable for a web or gui service. With option of MQTT transmission.
 
+indi - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
+
 Consists of the package:
 
 ### indimqttredis
@@ -31,6 +33,7 @@ and indiserver is running on a remote machine at the observatory.  A script runn
 at both sites, and will provide the indiserver-MQTT conversion at the observatory, and MQTT-redis at the web/gui server.
  
 Python dependencies from pypi: "pip install redis" and "pip install paho-mqtt"  (all python3 versions)
+
 Server dependencies: A redis server (apt-get install redis-server), and an MQTT server (apt-get install mosquitto)
 
 Within indimqttredis, three sub packages are available which can be used by your own script:
@@ -56,12 +59,15 @@ indiredis.run(indi_server, redis_server)
 ### indimqttredis.indimqtt
 
 Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver or an indi driver.
+
 Receives/transmitts XML data between indiserver on port 7624 and MQTT which sends data to the remote web/gui server.
 
 ### indimqttredis.mqttredis
 
 Intended to be run on the server with the gui or web service which can read/write to redis.
+
 Receives XML data from MQTT and converts to redis key-value storage.
+
 Reads data published to redis, and converts to indi XML and sends by MQTT.
 
 
@@ -82,7 +88,11 @@ A package that reads indi xml strings, parses them and places values into redis.
 
 
 The web service or gui is not specified, typically a web framework would be used to write code that can read
-and write to a local redis service. redis is used as:
+and write to a local redis service. 
+
+### mqtt and redis - why?
+
+redis is used as:
 
 More than one web service process or thread may be running, redis makes data visible to all processes.
 
@@ -91,5 +101,12 @@ the Python bindings that can use it.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
+mqtt is used since it makes out-of-band communications easy, for example, if other none-indi communications are needed between devices, then merely subscribing and publishing with another topic is possible.
+
+There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different machine entirely.
+
+It allows monitoring of the communications by a third device by simply subscribing to the topic used.
+
+A Python MQTT client is freely available.
 
 
