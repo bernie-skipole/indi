@@ -14,7 +14,7 @@ A Python3 package is provided:
 An indi client with the capability to read data from redis and send it in indi XML format
 to indiserver, and can read device properties from indiserver and store them in redis.
 
-A redis server needs to be provided.
+A redis server and indiserver need to be provided.
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis
 key value storage. The gui or web framework is not specified.
