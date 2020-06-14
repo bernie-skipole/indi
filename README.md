@@ -44,7 +44,7 @@ Within indimqttredis, three sub packages are available which can be used by your
 ### indimqttredis.indiredis
 
 Converts directly between indiserver (port 7624) and redis, converts indi XML to redis key-value storage.
-For example, your script could be:
+For example, your Python script to import and run this service could be:
 
 ```
 from indimqttredis import indiredis
