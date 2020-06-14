@@ -105,7 +105,7 @@ Redis key/value storage and publication is extremely easy, most web frameworks a
 
 mqtt is used since it makes out-of-band communications easy, for example, if other none-indi communications are needed between devices, then merely subscribing and publishing with another topic is possible.
 
-There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different machine entirely.
+There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 
 It allows monitoring of the communications by a third device by simply subscribing to the topic used.
 
