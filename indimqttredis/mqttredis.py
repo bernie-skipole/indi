@@ -22,8 +22,22 @@ import toxml, fromxml
 
 
 # define the mqtt server connection
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password'])
-mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
+MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
+#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
+
+RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix'])
+
+
+def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
+    "Creates a named tuple to hold mqtt server parameters"
+    if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
+        raise ValueError("MQTT topics must exist and must be different from each other.")
+    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
+
+
+def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_'):
+    "Creates a named tuple to hold redis server parameters"
+    return RedisServer(host, port, db, password, keyprefix)
 
 
 
@@ -31,9 +45,8 @@ mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
 
 def _on_message(client, userdata, message):
     "Callback when an MQTT message is received"
-    if message.topic.startswith('FromIndiServer/01'):
-        # we have received a message from the indiserver
-        fromxml.receive_from_indiserver(message.payload)
+    # we have received a message from the indiserver
+    fromxml.receive_from_indiserver(message.payload)
  
 
 def _on_connect(client, userdata, flags, rc):
@@ -44,7 +57,7 @@ def _on_connect(client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         # subscribe to topic "FomIndiServer/#"
-        client.subscribe( "FromIndiServer/#", 2 )
+        client.subscribe( userdata["from_indi_topic"], 2 )
         print("MQTT client connected")
     else:
         userdata['comms'] = False
@@ -61,10 +74,10 @@ def _on_disconnect(client, userdata, rc):
 
 class SenderToIndiServer():
 
-    def __init__(self, mqtt_client, topic, userdata):
+    def __init__(self, mqtt_client, userdata):
         "Sets the client and topic"
         self.mqtt_client = mqtt_client
-        self.topic = topic
+        self.topic = userdata["to_indi_topic"]
         self.userdata = userdata
 
     def __call__(self, data):
@@ -77,7 +90,8 @@ class SenderToIndiServer():
         # is published, and the data is discarded
 
 
-if __name__ == "__main__":
+def run(redisserver, mqttserver):
+    "Blocking call that provides the redisserver - mqtt connection"
 
     # wait for five seconds before starting, to give mqtt and other servers
     # time to start up
@@ -86,7 +100,9 @@ if __name__ == "__main__":
     print("mqttredis started")
 
     # create an mqtt client and connection
-    userdata={ "comms"  : False }        # an indication mqtt connection is working
+    userdata={ "comms"           : False,        # an indication mqtt connection is working
+               "to_indi_topic"   : mqttserver.to_indi_topic,
+               "from_indi_topic" : mqttserver.from_indi_topic }
 
     mqtt_client = mqtt.Client(userdata=userdata)
     # attach callback function to client
@@ -101,7 +117,7 @@ if __name__ == "__main__":
     # connect to the server
     mqtt_client.connect(host=mqttserver.host, port=mqttserver.port)
     # register an instance of SenderToIndiServer with toxml
-    toxml.sender(SenderToIndiServer(mqtt_client, "ToIndiServer/01", userdata))
+    toxml.sender(SenderToIndiServer(mqtt_client, userdata))
     # run toxml.loop - which is blocking, so run in its own thread
     run_toxml = threading.Thread(target=toxml.loop)
     # and start toxml.loop in its thread

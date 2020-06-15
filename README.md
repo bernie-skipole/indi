@@ -52,7 +52,7 @@ from indimqttredis import indiredis
 # define the hosts/ports where servers are listenning
 
 indi_host = indiredis.indi_server(host='localhost', port=7624)
-redis_host = indiredis.redis_server(host='localhost', port=6379, db=0, password='')
+redis_host = indiredis.redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
 
 # blocking call which runs the service, communicating between indiserver and redis
 

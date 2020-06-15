@@ -21,7 +21,7 @@ from . import toxml, fromxml
 
 # define the server parameters
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password'])
+RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix'])
 
 
 
@@ -40,12 +40,12 @@ def _sendertoindiserver(data):
 
 
 def indi_server(host='localhost', port=7624):
-    "Creates an instance of IndiServer"
+    "Creates a named tuple to hold indi server parameters"
     return IndiServer(host, port)
 
-def redis_server(host='localhost', port=6379, db=0, password=''):
-    "Creates an instance of RedisServer"
-    return RedisServer(host, port, db, password)
+def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_'):
+    "Creates a named tuple to hold redis server parameters"
+    return RedisServer(host, port, db, password, keyprefix)
 
 
 
