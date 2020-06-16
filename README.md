@@ -49,7 +49,7 @@ For example, your Python script to import and run this service could be:
 ```
 from indimqttredis import indiredis, indi_server, redis_server
 
-# define the hosts/ports where servers are listenning
+# define the hosts/ports where servers are listenning, these functions return named tuples.
 
 indi_host = indi_server(host='localhost', port=7624)
 redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
@@ -81,7 +81,7 @@ indimqtt.run(indi_host, mqtt_host)
 
 ```
 
-Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
+Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
 
 
 ### indimqttredis.mqttredis
@@ -92,6 +92,21 @@ Receives XML data from MQTT and converts to redis key-value storage.
 
 Reads data published to redis, and converts to indi XML and sends by MQTT.
 
+Example Python script running at the web server:
+```
+from indimqttredis import mqttredis, mqtt_server, redis_server
+
+# define the hosts/ports where servers are listenning, these functions return named tuples.
+
+mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
+
+# blocking call which runs the service, communicating between mqtt and redis
+
+mqttredis.run(mqtt_host, redis_host)
+
+```
+Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
 
 The above packages provide the networking element (reading port 7624 and running MQTT clients), they
 call on further sub packages within indimqttredis, to do the xml conversion. These sub packages are
@@ -139,7 +154,7 @@ A Python MQTT client is freely available.
 
 ### Security
 
-Transmission between servers could pass over an encrypted VPN, but only open MQTT communications is defined
-in this package.
+Only open MQTT communications is defined in this package, security and authentication is not considered.
+Transmission between servers could pass over an encrypted VPN. One method is suggested in the github wiki.
 
 

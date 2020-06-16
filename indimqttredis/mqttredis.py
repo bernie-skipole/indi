@@ -70,8 +70,8 @@ class SenderToIndiServer():
         # is published, and the data is discarded
 
 
-def run(redisserver, mqttserver):
-    "Blocking call that provides the redisserver - mqtt connection"
+def run(mqttserver, redisserver):
+    "Blocking call that provides the mqtt - redis connection"
 
     # wait for five seconds before starting, to give mqtt and other servers
     # time to start up
