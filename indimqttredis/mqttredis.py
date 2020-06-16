@@ -21,26 +21,6 @@ import paho.mqtt.client as mqtt
 from . import toxml, fromxml
 
 
-# define the mqtt server connection
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
-#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
-
-RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix'])
-
-
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
-    "Creates a named tuple to hold mqtt server parameters"
-    if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
-        raise ValueError("MQTT topics must exist and must be different from each other.")
-    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
-
-
-def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_'):
-    "Creates a named tuple to hold redis server parameters"
-    return RedisServer(host, port, db, password, keyprefix)
-
-
-
 ### MQTT Handlers
 
 def _on_message(client, userdata, message):

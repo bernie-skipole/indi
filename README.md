@@ -47,12 +47,12 @@ Converts directly between indiserver (port 7624) and redis, converts indi XML to
 For example, your Python script to import and run this service could be:
 
 ```
-from indimqttredis import indiredis
+from indimqttredis import indiredis, indi_server, redis_server
 
 # define the hosts/ports where servers are listenning
 
-indi_host = indiredis.indi_server(host='localhost', port=7624)
-redis_host = indiredis.redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
+indi_host = indi_server(host='localhost', port=7624)
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
 
 # blocking call which runs the service, communicating between indiserver and redis
 
@@ -64,6 +64,25 @@ indiredis.run(indi_host, redis_host)
 Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver or an indi driver.
 
 Receives/transmitts XML data between indiserver on port 7624 and MQTT which sends data to the remote web/gui server.
+
+Example Python script running at the observatory:
+
+```
+from indimqttredis import indimqtt, indi_server, mqtt_server
+
+# define the hosts/ports where servers are listenning, these functions return named tuples.
+
+indi_host = indi_server(host='localhost', port=7624)
+mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
+
+# blocking call which runs the service, communicating between indiserver and redis
+
+indimqtt.run(indi_host, mqtt_host)
+
+```
+
+Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
+
 
 ### indimqttredis.mqttredis
 

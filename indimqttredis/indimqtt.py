@@ -19,25 +19,6 @@ from time import sleep
 import paho.mqtt.client as mqtt
 
 
-# define the mqtt server connection
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
-#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
-
-
-# define the indi server connection
-IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-
-
-def indi_server(host='localhost', port=7624):
-    "Creates a named tuple to hold indi server parameters"
-    return IndiServer(host, port)
-
-
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
-    "Creates a named tuple to hold mqtt server parameters"
-    if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
-        raise ValueError("MQTT topics must exist and must be different from each other.")
-    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
 
 # The _TO_INDI dequeue has the right side filled from mqtt and the left side
 # sent to indiserver. Limit length to five items - an arbitrary setting

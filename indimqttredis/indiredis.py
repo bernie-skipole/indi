@@ -19,11 +19,6 @@ from time import sleep
 from . import toxml, fromxml
 
 
-# define the server parameters
-IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix'])
-
-
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
 # sent to indiserver. Limit length to five items - an arbitrary setting
@@ -37,16 +32,6 @@ def _sendertoindiserver(data):
     "Appends data to the global deque _TO_INDI which is used to transmit to indiserver"""
     global _TO_INDI
     _TO_INDI.append(data)
-
-
-def indi_server(host='localhost', port=7624):
-    "Creates a named tuple to hold indi server parameters"
-    return IndiServer(host, port)
-
-def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_'):
-    "Creates a named tuple to hold redis server parameters"
-    return RedisServer(host, port, db, password, keyprefix)
-
 
 
 def run(indiserver, redisserver):

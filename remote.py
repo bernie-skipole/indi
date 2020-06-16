@@ -3,18 +3,18 @@
 
 # Alter the above shebang to point to your own Python location
 
-"""Example script to run indiredis"""
+"""Example script to run indimqtt"""
 
 
-from indimqttredis import indiredis, indi_server, redis_server
+from indimqttredis import indimqtt, indi_server, mqtt_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
 indi_host = indi_server(host='localhost', port=7624)
-redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
+mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
 
 # blocking call which runs the service, communicating between indiserver and redis
 
-indiredis.run(indi_host, redis_host)
+indimqtt.run(indi_host, mqtt_host)
 
 
