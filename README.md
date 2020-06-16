@@ -75,7 +75,7 @@ from indimqttredis import indimqtt, indi_server, mqtt_server
 indi_host = indi_server(host='localhost', port=7624)
 mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
 
-# blocking call which runs the service, communicating between indiserver and redis
+# blocking call which runs the service, communicating between indiserver and mqtt
 
 indimqtt.run(indi_host, mqtt_host)
 
