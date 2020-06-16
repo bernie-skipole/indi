@@ -137,4 +137,9 @@ It allows monitoring of the communications by a third device by simply subscribi
 
 A Python MQTT client is freely available.
 
+### Security
+
+Transmission between servers could pass over an encrypted VPN, but only open MQTT communications is defined
+in this package.
+
 
