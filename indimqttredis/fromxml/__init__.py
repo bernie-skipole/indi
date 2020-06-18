@@ -33,6 +33,8 @@ import xml.etree.ElementTree as ET
 
 from .. import redis_ops
 
+from . import parsetypes
+
 
 
 def receive_from_indiserver(data, redisserver):
@@ -46,8 +48,12 @@ def receive_from_indiserver(data, redisserver):
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
-    for child in root:
-        print(child.tag, child.attrib)
+
+    parsetypes(receive_tree(root, rconn))
+
+
+#    for child in root:
+#        print(child.tag, child.attrib)
 
 
 

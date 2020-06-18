@@ -26,7 +26,7 @@ from . import toxml, fromxml
 def _on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     # we have received a message from the indiserver
-    fromxml.receive_from_indiserver(message.payload)
+    fromxml.receive_from_indiserver(message.payload, userdata["redisserver"] )
  
 
 def _on_connect(client, userdata, flags, rc):
@@ -82,7 +82,8 @@ def run(mqttserver, redisserver):
     # create an mqtt client and connection
     userdata={ "comms"           : False,        # an indication mqtt connection is working
                "to_indi_topic"   : mqttserver.to_indi_topic,
-               "from_indi_topic" : mqttserver.from_indi_topic }
+               "from_indi_topic" : mqttserver.from_indi_topic,
+               "redisserver"     : redisserver }
 
     mqtt_client = mqtt.Client(userdata=userdata)
     # attach callback function to client

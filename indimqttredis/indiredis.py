@@ -79,7 +79,7 @@ def run(indiserver, redisserver):
                     # and empty the _FROM_INDI list
                     _FROM_INDI.clear()
                     # send the data to fromxml to parse and store in redis
-                    fromxml.receive_from_indiserver(from_indi)
+                    fromxml.receive_from_indiserver(from_indi, redisserver)
 
                 if mask & selectors.EVENT_WRITE:
                     if _TO_INDI:

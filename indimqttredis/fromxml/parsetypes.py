@@ -42,7 +42,7 @@ class ParseMessage():
         super().__init__(**kwds)
 
 
-class ParsedelProperty()
+class delProperty()
 
 # A Device may tell a Client a given Property is no longer available by sending delProperty. If the command specifies only a
 # Device without a Property, the Client must assume all the Properties for that Device, and indeed the Device itself, are no
@@ -55,32 +55,37 @@ class ParsedelProperty()
         super().__init__(**kwds)
 
 
-class ParseItem():
+class ParseProperty():
 
     "Parent to Text, Number, Switch, Lights, Blob types"
 
-    def __init__(self, name, label, permission, state, timeout, **kwds):
+    def __init__(self, **kwds):
         "Parent Item"
-        self.name = name
-        self.label = label
-        self.state = state              # Idle, OK, Busy or Alert
-        self.timemout = timeout          # The worst-case time it might take to change the value to something else
-        self._set_permission(permission)
+        # Required properties
+        self.device = kwds.pop("device")    # name of Device
+        self.name = kwds.pop("name")        # name of Property
+        self.state = kwds.pop("state")      # current state of Property; Idle, OK, Busy or Alert
+
+        # implied properties
+        self.label = kwds.pop("label", name)   # GUI label, use name by default
+        self.group = kwds.pop("group", "")     # Property group membership, blank by default
+        self.timestamp = kwds.pop("timestamp", 0) # moment when these data were valid
+                                                  ###### # set the default to a real timestamp  ##############!!!!!
+        self.message = kwds.pop("message", "")
+
+        if kwds:
+            kwds.clear()                      # remove any unknown arguments, remove if further parent classes are to be used
+
         super().__init__(**kwds)
+
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only, Write-Only or Read-Write"
         if permission in ('ro', 'wo', 'rw'):
             self.permission = permission
         else:
-            self.permission = 'ro'
-        
+            self.permission = 'ro'       
 
-
-    def elements(self):
-        "Elements have name, value and label"
-        element_values = {}
-        element_labels = {}
 
     # To inform a Client of new current values for a Property and their state, a Device sends one settype element. It is only
     # required to send those members of the vector that have changed.
@@ -90,34 +95,80 @@ class ParseItem():
         pass
 
 
+class ParseElement():
+    "Parent to ParseText, etc.,"
+
+    def __init__(self, **kwds):
+        self.name = kwds.pop("name")           # name of the element, required value
+        self.label = kwds.pop("label", name)   # GUI label, use name by default
+        if kwds:
+            kwds.clear()                       # remove any unknown arguments, remove if further parent classes are to be used
+        super().__init__(**kwds)
 
 
-class ParseText(ParseItem):
 
+################ Text ######################
+
+class ParseTextVector(ParseProperty):
 
     def __init__(self, value, **kwds):
-        "The value is the string"
+        "The value is the xml defTextVector, **kwds are its attributes"
+        perm = kwds.pop("perm")
+        self._set_permission(perm)              # ostensible Client controlability
+        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.elements(value)                
+        super().__init__(**kwds)
+
+    def elements(self, value):
+        "value is the xml defTextVector, this sets its child elements"
+        self.element_list = []
+        for child in value:
+            text_element = ParseText(child.text, **child.attrib)
+            self.element_list.append(text_element)
+
+    def __str__(self):
+        "Creates a string of label:text lines"
+        for element in self.element_list:
+            print(str(element)+"/n")
+
+
+
+class ParseText(ParseElement):
+    "text items contained in a ParseTextVector"
+
+    def __init__(self, value, **kwds):
         self.value = value
         super().__init__(**kwds)
 
+    def __str__(self):
+        return f"{self.label} : {self.value}"
 
 
 
-class ParseNumber(ParseItem):
+################ Number ######################
 
-    def __init__(self, value, nformat, **kwds):  # nformat is used instead of format to avoid confusion with Python 'format'
+class ParseNumberVector(ParseProperty):
+
+    def __init__(self, value, **kwds):
         "The value is the number"
+        perm = kwds.pop("perm")
+        self._set_permission(perm)              # ostensible Client controlability
+        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.value = value
-        self.nformat = nformat
         super().__init__(**kwds)
 
 
 
-class ParseSwitch(ParseItem):
+################ Switch ######################
+
+class ParseSwitchVector(ParseProperty):
 
 
     def __init__(self, value, **kwds):
         "The value is On or Off"
+        perm = kwds.pop("perm")
+        self._set_permission(perm)              # ostensible Client controlability
+        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.value = value
         super().__init__(**kwds)
 
@@ -129,24 +180,48 @@ class ParseSwitch(ParseItem):
             self.permission = 'ro'
 
 
+################ Lights ######################
 
-class ParseLights(ParseItem):
-
-    def __init__(self, value, **kwds):
-        "The value is Idle, OK, Busy or Alert"
-        self.value = value
-        super().__init__(**kwds)
-
-    def _set_permission(self, permission):
-        "Sets the permissions, Read-Only"
-        self.permission = 'ro'
-
-
-
-class ParseBlob(ParseItem):
+class ParseLightVector(ParseProperty):
 
     def __init__(self, value, **kwds):
         "The value is Idle, OK, Busy or Alert"
+        self.permission = 'ro'                      # permission always Read-Only
         self.value = value
         super().__init__(**kwds)
+
+
+        
+
+################ BLOB ######################
+
+class ParseBLOBVector(ParseProperty):
+
+    def __init__(self, value, perm, **kwds):
+        "The value is Idle, OK, Busy or Alert"
+        self._set_permission(perm)      # ostensible Client controlability
+        self.value = value
+        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        super().__init__(**kwds)
+
+
+
+
+def receive_tree(root, rconn):
+    "Receives the element tree root"
+    for child in root:
+        if child.tag == "defTextVector":
+            text_vector = ParseTextVector(child, **child.attrib)
+            print(text_vector.device, text_vector.name)
+            print(str(text_vector))
+
+
+
+
+
+
+
+
+
+
 
