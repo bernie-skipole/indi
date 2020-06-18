@@ -28,15 +28,20 @@ ready for reading by the web server."""
 #    delete all records for all devices
 
 
-
-from time import sleep
-
 import xml.etree.ElementTree as ET
 
 
+from .. import redis_ops
 
-def receive_from_indiserver(data):
+
+
+def receive_from_indiserver(data, redisserver):
     "receives xml data from the indiserver"
+    rconn = redis_ops.open_redis(redisserver)
+    # if no redis connection is possible, return
+    if rconn is None:
+        return
+    
     # data comes in block of xml elements, not inside a root, so create a root
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
