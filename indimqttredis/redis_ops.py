@@ -24,7 +24,7 @@ def open_redis(redisserver):
     try:
         if _REDISCONNECTION is None:
             # create a connection to redis
-            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host, port=redisserver.port, db=rredisserver.db, password=redisserver.password, socket_timeout=5)
+            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host, port=redisserver.port, db=redisserver.db, password=redisserver.password, socket_timeout=5)
     except Exception:
         _REDISCONNECTION = None
     return _REDISCONNECTION

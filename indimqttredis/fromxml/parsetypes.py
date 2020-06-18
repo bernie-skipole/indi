@@ -42,7 +42,7 @@ class ParseMessage():
         super().__init__(**kwds)
 
 
-class delProperty()
+class delProperty():
 
 # A Device may tell a Client a given Property is no longer available by sending delProperty. If the command specifies only a
 # Device without a Property, the Client must assume all the Properties for that Device, and indeed the Device itself, are no
@@ -67,7 +67,7 @@ class ParseProperty():
         self.state = kwds.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
         # implied properties
-        self.label = kwds.pop("label", name)   # GUI label, use name by default
+        self.label = kwds.pop("label", self.name)   # GUI label, use name by default
         self.group = kwds.pop("group", "")     # Property group membership, blank by default
         self.timestamp = kwds.pop("timestamp", 0) # moment when these data were valid
                                                   ###### # set the default to a real timestamp  ##############!!!!!
@@ -99,8 +99,8 @@ class ParseElement():
     "Parent to ParseText, etc.,"
 
     def __init__(self, **kwds):
-        self.name = kwds.pop("name")           # name of the element, required value
-        self.label = kwds.pop("label", name)   # GUI label, use name by default
+        self.name = kwds.pop("name")                # name of the element, required value
+        self.label = kwds.pop("label", self.name)   # GUI label, use name by default
         if kwds:
             kwds.clear()                       # remove any unknown arguments, remove if further parent classes are to be used
         super().__init__(**kwds)
@@ -128,8 +128,10 @@ class ParseTextVector(ParseProperty):
 
     def __str__(self):
         "Creates a string of label:text lines"
+        if not self.element_list:
+            return ""
         for element in self.element_list:
-            print(str(element)+"/n")
+            return str(element)+"\n"
 
 
 
@@ -137,7 +139,10 @@ class ParseText(ParseElement):
     "text items contained in a ParseTextVector"
 
     def __init__(self, value, **kwds):
-        self.value = value
+        if value is None:
+            self.value = ""
+        else:
+            self.value = value.strip()       # remove any newlines around the xml text
         super().__init__(**kwds)
 
     def __str__(self):

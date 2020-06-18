@@ -49,7 +49,7 @@ def receive_from_indiserver(data, redisserver):
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
 
-    parsetypes(receive_tree(root, rconn))
+    parsetypes.receive_tree(root, rconn)
 
 
 #    for child in root:
