@@ -130,8 +130,10 @@ class ParseTextVector(ParseProperty):
         "Creates a string of label:text lines"
         if not self.element_list:
             return ""
+        result = ""
         for element in self.element_list:
-            return element.label + " : " + str(element)+"\n"
+            result += element.label + " : " + str(element)+"\n"
+        return result
 
 
 
@@ -173,9 +175,10 @@ class ParseNumberVector(ParseProperty):
         "Creates a string of label:number lines"
         if not self.element_list:
             return ""
+        result = ""
         for element in self.element_list:
-            return element.label + " : " + str(element)+"\n"
-
+            result += element.label + " : " + str(element)+"\n"
+        return result
 
 
 class ParseNumber(ParseElement):
@@ -184,9 +187,9 @@ class ParseNumber(ParseElement):
     def __init__(self, value, **kwds):
         # required number attributes
         self.format = kwds.pop("format")    # printf-style format for GUI display
-        self.min = kwds.pop("format")       # minimal value
-        self.max = kwds.pop("format")       # maximum value, ignore if min == max
-        self.step = kwds.pop("format")      # allowed increments, ignore if 0
+        self.min = kwds.pop("min")       # minimal value
+        self.max = kwds.pop("max")       # maximum value, ignore if min == max
+        self.step = kwds.pop("step")      # allowed increments, ignore if 0
 
         # get the raw self.value
         # and self.formatted_number
@@ -302,8 +305,7 @@ class ParseNumber(ParseElement):
         value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
         if negative:
             value = -1 * value
-        value_string = "{:" + self.format + "}"
-        self.formatted_number = value_string.format(value)
+        self.formatted_number = self.format % value
 
 
     def __str__(self):
@@ -374,9 +376,6 @@ def receive_tree(root, rconn):
             devices.add(number_vector.device)
             print(number_vector.device, number_vector.name)
             print(str(number_vector))
-
-
-
 
 
 
