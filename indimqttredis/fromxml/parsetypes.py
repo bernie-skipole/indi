@@ -235,17 +235,17 @@ class ParseNumber(ParseElement):
 
     def _sexagesimal(self, negative, number_list):
         "Create string of the number according to the given format"
-       # degrees and minutes should be integers
-       if not isinstance(number_list[0], int):
-           # its a float, so get integer part and fraction part
-           fractdegrees, degrees = math.modf(number_list[0])
-           number_list[0] = int(degrees)
-           number_list[1] += 60*fractdegrees
-       if not isinstance(number_list[1], int):
-           # its a float, so get integer part and fraction part
-           fractminutes, minutes = math.modf(number_list[1])
-           number_list[1] = int(minutes)
-           number_list[2] += 60*fractminutes
+        # degrees and minutes should be integers
+        if not isinstance(number_list[0], int):
+            # its a float, so get integer part and fraction part
+            fractdegrees, degrees = math.modf(number_list[0])
+            number_list[0] = int(degrees)
+            number_list[1] += 60*fractdegrees
+        if not isinstance(number_list[1], int):
+            # its a float, so get integer part and fraction part
+            fractminutes, minutes = math.modf(number_list[1])
+            number_list[1] = int(minutes)
+            number_list[2] += 60*fractminutes
         # Ensure minutes and seconds are less than 60
         minutes = 0        
         while number_list[2] >= 60:
