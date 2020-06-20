@@ -320,12 +320,21 @@ class ParseSwitchVector(ParseProperty):
 
 
     def __init__(self, value, **kwds):
-        "The value is On or Off"
+        "The value is the xml defSwitchVector, containing child defSwich elements"
         perm = kwds.pop("perm")
         self._set_permission(perm)              # ostensible Client controlability
+        self.rule = kwds.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
         self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self.value = value
+        self._set_elements(value)
         super().__init__(**kwds)
+
+
+    def _set_elements(self, value):
+        "value is the xml defSwitchVector, this sets its child elements"
+        self.element_list = []
+        for child in value:
+            switch_element = ParseSwitch(child.text, **child.attrib)
+            self.element_list.append(switch_element)
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only or Read-Write"
@@ -333,6 +342,28 @@ class ParseSwitchVector(ParseProperty):
             self.permission = permission
         else:
             self.permission = 'ro'
+
+    def __str__(self):
+        "Creates a string of label:switchStates"
+        if not self.element_list:
+            return ""
+        result = ""
+        for element in self.element_list:
+            result += element.label + " : " + str(element)+"\n"
+        return result
+
+
+class ParseSwitch(ParseElement):
+    "switch elements contained in a ParseSwitchVector"
+
+    def __init__(self, value, **kwds):
+        "value should be Off or On"
+        self.value = value.strip()       # remove any newlines around the xml text
+        super().__init__(**kwds)
+
+    def __str__(self):
+        return self.value
+
 
 
 ################ Lights ######################
@@ -376,6 +407,11 @@ def receive_tree(root, rconn):
             devices.add(number_vector.device)
             print(number_vector.device, number_vector.name)
             print(str(number_vector))
+        if child.tag == "defSwitchVector":
+            switch_vector = ParseSwitchVector(child, **child.attrib)
+            devices.add(switch_vector.device)
+            print(switch_vector.device, switch_vector.name)
+            print(str(switch_vector))
 
 
 
