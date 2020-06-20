@@ -62,22 +62,19 @@ class ParseProperty():
 
     "Parent to Text, Number, Switch, Lights, Blob types"
 
-    def __init__(self, **kwds):
+    def __init__(self, vector):
         "Parent Item"
+        attribs = vector.attrib
         # Required properties
-        self.device = kwds.pop("device")    # name of Device
-        self.name = kwds.pop("name")        # name of Property
-        self.state = kwds.pop("state")      # current state of Property; Idle, OK, Busy or Alert
+        self.device = attribs.pop("device")    # name of Device
+        self.name = attribs.pop("name")        # name of Property
+        self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
         # implied properties
-        self.label = kwds.pop("label", self.name)                             # GUI label, use name by default
-        self.group = kwds.pop("group", "")                                    # Property group membership, blank by default
-        self.timestamp = kwds.pop("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
-        self.message = kwds.pop("message", "")
-
-        kwds.clear()                      # clear any unknown arguments, remove if further parent classes are to be used
-
-        super().__init__(**kwds)
+        self.label = attribs.pop("label", self.name)                             # GUI label, use name by default
+        self.group = attribs.pop("group", "")                                    # Property group membership, blank by default
+        self.timestamp = attribs.pop("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = attribs.pop("message", "")
 
 
     def _set_permission(self, permission):
@@ -96,38 +93,8 @@ class ParseProperty():
         pass
 
 
-class ParseElement():
-    "Parent to ParseText, etc.,"
-
-    def __init__(self, **kwds):
-        self.name = kwds.pop("name")                # name of the element, required value
-        self.label = kwds.pop("label", self.name)   # GUI label, use name by default
-        kwds.clear()                                # clear any unknown arguments, remove if further parent classes are to be used
-        super().__init__(**kwds)
-
-
-
-################ Text ######################
-
-class ParseTextVector(ParseProperty):
-
-    def __init__(self, value, **kwds):
-        "The value is the xml defTextVector, **kwds are its attributes"
-        perm = kwds.pop("perm")
-        self._set_permission(perm)              # ostensible Client controlability
-        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self._set_elements(value)
-        super().__init__(**kwds)
-
-    def _set_elements(self, value):
-        "value is the xml defTextVector, this sets its child elements"
-        self.element_list = []
-        for child in value:
-            text_element = ParseText(child.text, **child.attrib)
-            self.element_list.append(text_element)
-
     def __str__(self):
-        "Creates a string of label:text lines"
+        "Creates a string of label:states"
         if not self.element_list:
             return ""
         result = ""
@@ -137,15 +104,43 @@ class ParseTextVector(ParseProperty):
 
 
 
+class ParseElement():
+    "Parent to ParseText, etc.,"
+
+    def __init__(self, child):
+        self.name = child.attrib["name"]                   # name of the element, required value
+        self.label = child.attrib.get("label", self.name)  # GUI label, use name by default
+
+
+
+
+################ Text ######################
+
+class ParseTextVector(ParseProperty):
+
+    def __init__(self, vector):
+        "The vector is the xml defTextVector"
+        attribs = vector.attrib
+        perm = attribs.pop("perm")
+        self._set_permission(perm)                 # ostensible Client controlability
+        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.element_list = []
+        for child in vector:
+            element = ParseText(child)
+            self.element_list.append(element)
+        super().__init__(vector)
+
+
 class ParseText(ParseElement):
     "text elements contained in a ParseTextVector"
 
-    def __init__(self, value, **kwds):
+    def __init__(self, child):
+        value = child.text
         if value is None:
             self.value = ""
         else:
             self.value = value.strip()       # remove any newlines around the xml text
-        super().__init__(**kwds)
+        super().__init__(child)
 
     def __str__(self):
         return self.value
@@ -156,45 +151,34 @@ class ParseText(ParseElement):
 
 class ParseNumberVector(ParseProperty):
 
-    def __init__(self, value, **kwds):
-        "The value is the number"
-        perm = kwds.pop("perm")
-        self._set_permission(perm)              # ostensible Client controlability
-        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self._set_elements(value)
-        super().__init__(**kwds)
-
-    def _set_elements(self, value):
-        "value is the xml defNumberVector, this sets its child elements"
+    def __init__(self, vector):
+        "The vector is the defNumberVector"
+        attribs = vector.attrib
+        perm = attribs.pop("perm")
+        self._set_permission(perm)                 # ostensible Client controlability
+        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
-        for child in value:
-            number_element = ParseNumber(child.text, **child.attrib)
-            self.element_list.append(number_element)
+        for child in vector:
+            element = ParseNumber(child)
+            self.element_list.append(element)
+        super().__init__(vector)
 
-    def __str__(self):
-        "Creates a string of label:number lines"
-        if not self.element_list:
-            return ""
-        result = ""
-        for element in self.element_list:
-            result += element.label + " : " + str(element)+"\n"
-        return result
 
 
 class ParseNumber(ParseElement):
     "number elements contained in a defNumberVector"
 
-    def __init__(self, value, **kwds):
+    def __init__(self, child):
         # required number attributes
-        self.format = kwds.pop("format")    # printf-style format for GUI display
-        self.min = kwds.pop("min")       # minimal value
-        self.max = kwds.pop("max")       # maximum value, ignore if min == max
-        self.step = kwds.pop("step")      # allowed increments, ignore if 0
+        self.format = child.attrib["format"]    # printf-style format for GUI display
+        self.min = child.attrib["min"]       # minimal value
+        self.max = child.attrib["max"]       # maximum value, ignore if min == max
+        self.step = child.attrib["step"]      # allowed increments, ignore if 0
 
         # get the raw self.value
         # and self.formatted_number
-        self._number(value)
-        super().__init__(**kwds)
+        self._number(child.text)
+        super().__init__(child)
 
     def _number(self, value):
         """Splits the number into a negative flag and three sexagesimal parts
@@ -319,22 +303,19 @@ class ParseNumber(ParseElement):
 class ParseSwitchVector(ParseProperty):
 
 
-    def __init__(self, value, **kwds):
-        "The value is the xml defSwitchVector, containing child defSwich elements"
-        perm = kwds.pop("perm")
-        self._set_permission(perm)              # ostensible Client controlability
-        self.rule = kwds.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
-        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self._set_elements(value)
-        super().__init__(**kwds)
-
-
-    def _set_elements(self, value):
-        "value is the xml defSwitchVector, this sets its child elements"
+    def __init__(self, vector):
+        "The vector is the xml defSwitchVector, containing child defSwich elements"
+        attribs = vector.attrib
+        perm = attribs.pop("perm")
+        self._set_permission(perm)                 # ostensible Client controlability
+        self.rule = attribs.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
+        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
-        for child in value:
-            switch_element = ParseSwitch(child.text, **child.attrib)
-            self.element_list.append(switch_element)
+        for child in vector:
+            element = ParseSwitch(child)
+            self.element_list.append(element)
+        super().__init__(vector)
+
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only or Read-Write"
@@ -343,23 +324,16 @@ class ParseSwitchVector(ParseProperty):
         else:
             self.permission = 'ro'
 
-    def __str__(self):
-        "Creates a string of label:switchStates"
-        if not self.element_list:
-            return ""
-        result = ""
-        for element in self.element_list:
-            result += element.label + " : " + str(element)+"\n"
-        return result
 
 
 class ParseSwitch(ParseElement):
     "switch elements contained in a ParseSwitchVector"
 
-    def __init__(self, value, **kwds):
-        "value should be Off or On"
+    def __init__(self, child):
+        value = child.text
+        # value should be Off or On"
         self.value = value.strip()       # remove any newlines around the xml text
-        super().__init__(**kwds)
+        super().__init__(child)
 
     def __str__(self):
         return self.value
@@ -370,40 +344,27 @@ class ParseSwitch(ParseElement):
 
 class ParseLightVector(ParseProperty):
 
-    def __init__(self, value, **kwds):
-        "The value is Idle, OK, Busy or Alert"
+    def __init__(self, vector):
+        "The vector is the defLightVector"
         self.permission = 'ro'                      # permission always Read-Only
-        self._set_elements(value)
-        super().__init__(**kwds)
-
-    def _set_elements(self, value):
-        "value is the xml defLightVector, this sets its child elements"
         self.element_list = []
-        for child in value:
-            light_element = ParseLight(child.text, **child.attrib)
-            self.element_list.append(light_element)
-
-    def __str__(self):
-        "Creates a string of label:light states"
-        if not self.element_list:
-            return ""
-        result = ""
-        for element in self.element_list:
-            result += element.label + " : " + str(element)+"\n"
-        return result
+        for child in vector:
+            element = ParseLight(child)
+            self.element_list.append(element)
+        super().__init__(vector)
 
 
 class ParseLight(ParseElement):
     "light elements contained in a ParseLightVector"
 
-    def __init__(self, value, **kwds):
-        "value should be (Idle|Ok|Busy|Alert)"
+    def __init__(self, child):
+        value = child.text
+        # value should be (Idle|Ok|Busy|Alert)"
         self.value = value.strip()       # remove any newlines around the xml text
-        super().__init__(**kwds)
+        super().__init__(child)
 
     def __str__(self):
         return self.value
-
 
 
         
@@ -412,40 +373,69 @@ class ParseLight(ParseElement):
 
 class ParseBLOBVector(ParseProperty):
 
-    def __init__(self, value, perm, **kwds):
-        "The value is Idle, OK, Busy or Alert"
+    def __init__(self, vector):
+        "The vector is the defBLOBVector"
+        attribs = vector.attrib
+        perm = attribs.pop("perm")
         self._set_permission(perm)      # ostensible Client controlability
-        self.value = value
-        self.timeout = kwds.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        super().__init__(**kwds)
+        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.element_list = []
+        for child in vector:
+            element = ParseBLOB(child)
+            self.element_list.append(element)
+        super().__init__(vector)
+
+
+    def __str__(self):
+        "Creates a string of labels"
+        if not self.element_list:
+            return ""
+        result = ""
+        for element in self.element_list:
+            result += element.label + "\n"
+        return result
+
+
+class ParseBLOB(ParseElement):
+    "BLOB elements contained in a ParseBLOBVector"
+
+    # Unlike other defXXX elements, this does not contain an
+    # initial value for the BLOB.
+
+    def __str__(self):
+        return ""
 
 
 
+
+
+############ Function which receives the xml tree ###############
 
 def receive_tree(root, rconn):
     "Receives the element tree root"
     devices = set()       # create a set of devices
     for child in root:
         if child.tag == "defTextVector":
-            text_vector = ParseTextVector(child, **child.attrib)
+            text_vector = ParseTextVector(child)
             devices.add(text_vector.device)
             print(text_vector.device, text_vector.name)
             print(str(text_vector))
         if child.tag == "defNumberVector":
-            number_vector = ParseNumberVector(child, **child.attrib)
+            number_vector = ParseNumberVector(child)
             devices.add(number_vector.device)
             print(number_vector.device, number_vector.name)
             print(str(number_vector))
         if child.tag == "defSwitchVector":
-            switch_vector = ParseSwitchVector(child, **child.attrib)
+            switch_vector = ParseSwitchVector(child)
             devices.add(switch_vector.device)
             print(switch_vector.device, switch_vector.name)
             print(str(switch_vector))
         if child.tag == "defLightVector":
-            light_vector = ParseLightVector(child, **child.attrib)
+            light_vector = ParseLightVector(child)
             devices.add(light_vector.device)
             print(light_vector.device, light_vector.name)
             print(str(light_vector))
+    print(devices)
 
 
 
