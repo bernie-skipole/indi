@@ -373,8 +373,37 @@ class ParseLightVector(ParseProperty):
     def __init__(self, value, **kwds):
         "The value is Idle, OK, Busy or Alert"
         self.permission = 'ro'                      # permission always Read-Only
-        self.value = value
+        self._set_elements(value)
         super().__init__(**kwds)
+
+    def _set_elements(self, value):
+        "value is the xml defLightVector, this sets its child elements"
+        self.element_list = []
+        for child in value:
+            light_element = ParseLight(child.text, **child.attrib)
+            self.element_list.append(light_element)
+
+    def __str__(self):
+        "Creates a string of label:light states"
+        if not self.element_list:
+            return ""
+        result = ""
+        for element in self.element_list:
+            result += element.label + " : " + str(element)+"\n"
+        return result
+
+
+class ParseLight(ParseElement):
+    "light elements contained in a ParseLightVector"
+
+    def __init__(self, value, **kwds):
+        "value should be (Idle|Ok|Busy|Alert)"
+        self.value = value.strip()       # remove any newlines around the xml text
+        super().__init__(**kwds)
+
+    def __str__(self):
+        return self.value
+
 
 
         
@@ -412,6 +441,11 @@ def receive_tree(root, rconn):
             devices.add(switch_vector.device)
             print(switch_vector.device, switch_vector.name)
             print(str(switch_vector))
+        if child.tag == "defLightVector":
+            light_vector = ParseLightVector(child, **child.attrib)
+            devices.add(light_vector.device)
+            print(light_vector.device, light_vector.name)
+            print(str(light_vector))
 
 
 
