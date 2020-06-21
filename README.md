@@ -14,8 +14,8 @@ A Python3 package is provided:
 
 ### indimqttredis
 
-An indi client with the capability to read data from redis and send it in indi XML format
-to indiserver, and can read device properties from indiserver and store them in redis.
+An indi client with the capability to read data from redis and send it in indi XML format to indiserver, and in the other
+direction; can read device properties from indiserver and store them in redis.
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis
 key value storage. The gui or web framework is not specified.
@@ -149,7 +149,12 @@ There is flexibility in where the mqtt server is sited, it could run on the web 
 machine entirely. This makes it possible to choose the direction of the initial connection - which may be
 useful when passing through NAT firewalls.
 
-It allows monitoring of the communications by a third device by simply subscribing to the topic used.
+As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a Raspberry
+Pi running INDIServer could, for instance, have a dynamic DHCP served address, but since it initiates the
+call to the MQTT server, this does not matter.
+
+It allows monitoring of the communications by a third device or service by simply subscribing to the topic
+used. This makes a possible logging service easy to implement.
 
 A Python MQTT client is freely available.
 

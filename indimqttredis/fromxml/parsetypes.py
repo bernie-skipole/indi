@@ -3,34 +3,18 @@
 from datetime import datetime
 
 
+# From the INDI white paper:
+
 # When a Client first starts up it knows nothing about the Devices and Properties it will control. It begins by connecting to a
 # Device or indiserver and sending the getProperties command. This includes the protocol version and may include the name
 # of a specific Device and Property if it is known by some other means. If no device is specified, then all devices are reported; if
 # no name is specified, then all properties for the given device are reported.
 
 
-# The Device then sends back one deftype element
-# for each matching Property it offers for control, limited to the Properties of the specified Device if included. The deftype
-# element shall always include all members of the vector for each Property.
+# The Device then sends back one deftype element for each matching Property it offers for control,
+# limited to the Properties of the specified Device if included. The deftype element shall always include
+# all members of the vector for each Property.
 
-
-class Group():
-
-    "Properties may be assembled into groups"
-
-    def __init__(self, members, **kwds):
-        self.members = members
-        super().__init__(**kwds)
-
-
-class Device(Group):
-
-    """Each command between Client and Device specifies a Device name and Property name.
-       The Device name serves as a logical grouping of several Properties"""
-
-    def __init__(self, name, **kwds):
-        self.name = name
-        super().__init__(**kwds)
 
 
 class ParseMessage():
@@ -60,7 +44,7 @@ class delProperty():
 
 class ParseProperty():
 
-    "Parent to Text, Number, Switch, Lights, Blob types"
+    "Parent to Text, Number, Switch, Lights, Blob vectors"
 
     def __init__(self, vector):
         "Parent Item"
@@ -105,7 +89,7 @@ class ParseProperty():
 
 
 class ParseElement():
-    "Parent to ParseText, etc.,"
+    "Parent to Text, Number, Switch, Lights, Blob elements"
 
     def __init__(self, child):
         self.name = child.attrib["name"]                   # name of the element, required value
@@ -435,6 +419,12 @@ def receive_tree(root, rconn):
             devices.add(light_vector.device)
             print(light_vector.device, light_vector.name)
             print(str(light_vector))
+        if child.tag == "defBLOBVector":
+            blob_vector = ParseBLOBVector(child)
+            devices.add(blob_vector.device)
+            print(blob_vector.device, blob_vector.name)
+            print(str(blob_vector))
+    # devices are those received in this exchange
     print(devices)
 
 
