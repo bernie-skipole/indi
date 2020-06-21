@@ -391,6 +391,22 @@ class ParseBLOB(ParseElement):
 
 
 
+################ Message ####################
+
+
+class ParseMessage():
+    "a message associated with a device or entire system"
+
+    def __init__(self, child):
+        self.device = child.attrib.get["device", ""]                                  # considered to be site-wide if absent
+        self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.attrib.get("message", "")                                # Received message
+
+    def __str__(self):
+        return self.message
+
+
+
 
 
 ############ Function which receives the xml tree ###############
@@ -424,6 +440,10 @@ def receive_tree(root, rconn):
             devices.add(blob_vector.device)
             print(blob_vector.device, blob_vector.name)
             print(str(blob_vector))
+        if child.tag == "message":
+            message = ParseMessage(child)
+            print(message.device, str(message))
+            # do not add to 'known devices'
     # devices are those received in this exchange
     print(devices)
 
