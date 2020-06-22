@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+import redis
+
 
 # From the INDI white paper:
 
@@ -16,30 +18,30 @@ from datetime import datetime
 # all members of the vector for each Property.
 
 
+############## redis connection
 
-class ParseMessage():
+# redisserver is a named tuple with attributes: 'host', 'port', 'db', 'password', 'keyprefix'
 
-# A Device may send out a message either as part of another command or by itself. When sent alone a message may be
-# associated with a specific Device or just to the Client in general.
+_REDISCONNECTION = None
 
-    def __init__(self, message, timestamp=None, device=None, **kwds):
-        self.message = message
-        self.timestamp = timestamp
-        self.device = device
-        super().__init__(**kwds)
+_KEYPREFIX = ''
 
 
-class delProperty():
+def open_redis(redisserver):
+    "Returns a connection to the redis database, on failure returns None"
+    global _KEYPREFIX, _REDISCONNECTION
+    _KEYPREFIX = redisserver.keyprefix
+    try:
+        if _REDISCONNECTION is None:
+            # create a connection to redis
+            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host, port=redisserver.port, db=redisserver.db, password=redisserver.password, socket_timeout=5)
+    except Exception:
+        _REDISCONNECTION = None
+    return _REDISCONNECTION
+    
 
-# A Device may tell a Client a given Property is no longer available by sending delProperty. If the command specifies only a
-# Device without a Property, the Client must assume all the Properties for that Device, and indeed the Device itself, are no
-# longer available.
 
-    def __init__(self, device, dproperty, **kwds):    # dproperty is used instead of property to avoid confusion with the Python 'property'
-        "Delete the given property, or all if dproperty is None"
-        self.device = device
-        self.dproperty = dproperty
-        super().__init__(**kwds)
+############# Define properties
 
 
 class ParseProperty():
@@ -398,12 +400,27 @@ class ParseMessage():
         return self.message
 
 
+################## Deleting #####################
+
+
+class delProperty():
+
+# A Device may tell a Client a given Property is no longer available by sending delProperty. If the command specifies only a
+# Device without a Property, the Client must assume all the Properties for that Device, and indeed the Device itself, are no
+# longer available.
+
+    def __init__(self, device, dproperty, **kwds):    # dproperty is used instead of property to avoid confusion with the Python 'property'
+        "Delete the given property, or all if dproperty is None"
+        self.device = device
+        self.dproperty = dproperty
+        super().__init__(**kwds)
+
 
 
 
 ############ Function which receives the xml tree ###############
 
-def receive_tree(root, rconn):
+def receive_tree(root):
     "Receives the element tree root"
     devices = set()       # create a set of devices
     for child in root:

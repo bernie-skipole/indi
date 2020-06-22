@@ -31,15 +31,13 @@ ready for reading by the web server."""
 import xml.etree.ElementTree as ET
 
 
-from .. import redis_ops
-
 from . import parsetypes
 
 
 
 def receive_from_indiserver(data, redisserver):
     "receives xml data from the indiserver"
-    rconn = redis_ops.open_redis(redisserver)
+    rconn = parsetypes.open_redis(redisserver)
     # if no redis connection is possible, return
     if rconn is None:
         return
@@ -49,12 +47,7 @@ def receive_from_indiserver(data, redisserver):
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
 
-    parsetypes.receive_tree(root, rconn)
-
-
-#    for child in root:
-#        print(child.tag, child.attrib)
-
+    parsetypes.receive_tree(root)
 
 
                
