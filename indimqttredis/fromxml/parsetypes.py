@@ -158,17 +158,15 @@ class ParseNumber(ParseElement):
         self.min = child.attrib["min"]       # minimal value
         self.max = child.attrib["max"]       # maximum value, ignore if min == max
         self.step = child.attrib["step"]      # allowed increments, ignore if 0
-
         # get the raw self.value
-        # and self.formatted_number
-        self._number(child.text)
+        self.value = child.text.strip()
         super().__init__(child)
 
-    def _number(self, value):
-        """Splits the number into a negative flag and three sexagesimal parts
-           then calls self._sexagesimal or self._printf to create the formatted string"""
-        value = value.strip()
-        self.value = value   # the raw value
+    def __str__(self):
+        """Returns the string of the number using the format value"""
+        # Splits the number into a negative flag and three sexagesimal parts
+        # then calls self._sexagesimal or self._printf to create the formatted string"""
+        value = self.value
         # negative is True, if the value is negative
         negative = value.startswith("-")
         if negative:
@@ -199,9 +197,9 @@ class ParseNumber(ParseElement):
             number_list.append(num)
         # convert the number to a formatted string
         if self.format.startswith("%") and self.format.endswith("m"):
-            self._sexagesimal(negative, number_list)
+            return self._sexagesimal(negative, number_list)
         else:
-            self._printf(negative, number_list)
+            return self._printf(negative, number_list)
 
 
     def _sexagesimal(self, negative, number_list):
@@ -265,7 +263,7 @@ class ParseNumber(ParseElement):
         if w>l:
             number = " "*(w-l) + number
 
-        self.formatted_number = number
+        return number
 
 
     def _printf(self, negative, number_list):
@@ -273,13 +271,7 @@ class ParseNumber(ParseElement):
         value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
         if negative:
             value = -1 * value
-        self.formatted_number = self.format % value
-
-
-    def __str__(self):
-        "Returns the string of the number using the format value"
-        return self.formatted_number
-
+        return self.format % value
 
 
 ################ Switch ######################
