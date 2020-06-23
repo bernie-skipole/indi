@@ -69,7 +69,7 @@ class ParseProperty():
         # Required properties
         self.device = attribs.pop("device")    # name of Device
         # add this device to redis set 'devices'
-        redis.sadd(key('devices'), self.device)
+        _REDISCONNECTION.sadd(key('devices'), self.device)
         self.name = attribs.pop("name")        # name of Property
         self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
@@ -464,10 +464,11 @@ def receive_tree(root):
             message = ParseMessage(child)
             print(message.device, str(message))
     # devices are those received in this exchange, list of binary names
-    devices = redis.smembers(key('devices'))
+    devices = _REDISCONNECTION.smembers(key('devices'))
     if devices:
-        device_names = list(dn.decode("utf-8") for dn in devices).sort()
-        print(devices)
+        device_names = list(dn.decode("utf-8") for dn in devices)
+        device_names.sort()
+        print(device_names)
 
 
 
