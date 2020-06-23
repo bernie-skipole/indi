@@ -31,13 +31,28 @@ def open_redis(redisserver):
     "Returns a connection to the redis database, on failure returns None"
     global _KEYPREFIX, _REDISCONNECTION
     _KEYPREFIX = redisserver.keyprefix
+    if _KEYPREFIX:
+        _KEYPREFIX += ":"
     try:
         if _REDISCONNECTION is None:
             # create a connection to redis
-            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host, port=redisserver.port, db=redisserver.db, password=redisserver.password, socket_timeout=5)
+            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host,
+                                                 port=redisserver.port,
+                                                 db=redisserver.db,
+                                                 password=redisserver.password,
+                                                 socket_timeout=5)
     except Exception:
         _REDISCONNECTION = None
     return _REDISCONNECTION
+
+
+########## redis keys
+
+def key(*keys):
+    "Add the prefix to keys, delimit keys with :"
+    # example - if keys are 'device', 'property' this will result in a key of
+    # 'keyprefix:device:property'
+    return _KEYPREFIX + ":".join(keys)
     
 
 
@@ -53,6 +68,8 @@ class ParseProperty():
         attribs = vector.attrib
         # Required properties
         self.device = attribs.pop("device")    # name of Device
+        # add this device to redis set 'devices'
+        redis.sadd(key('devices'), self.device)
         self.name = attribs.pop("name")        # name of Property
         self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
@@ -422,39 +439,35 @@ class delProperty():
 
 def receive_tree(root):
     "Receives the element tree root"
-    devices = set()       # create a set of devices
     for child in root:
         if child.tag == "defTextVector":
             text_vector = ParseTextVector(child)
-            devices.add(text_vector.device)
             print(text_vector.device, text_vector.name)
             print(str(text_vector))
         if child.tag == "defNumberVector":
             number_vector = ParseNumberVector(child)
-            devices.add(number_vector.device)
             print(number_vector.device, number_vector.name)
             print(str(number_vector))
         if child.tag == "defSwitchVector":
             switch_vector = ParseSwitchVector(child)
-            devices.add(switch_vector.device)
             print(switch_vector.device, switch_vector.name)
             print(str(switch_vector))
         if child.tag == "defLightVector":
             light_vector = ParseLightVector(child)
-            devices.add(light_vector.device)
             print(light_vector.device, light_vector.name)
             print(str(light_vector))
         if child.tag == "defBLOBVector":
             blob_vector = ParseBLOBVector(child)
-            devices.add(blob_vector.device)
             print(blob_vector.device, blob_vector.name)
             print(str(blob_vector))
         if child.tag == "message":
             message = ParseMessage(child)
             print(message.device, str(message))
-            # do not add to 'known devices'
-    # devices are those received in this exchange
-    print(devices)
+    # devices are those received in this exchange, list of binary names
+    devices = redis.smembers(key('devices'))
+    if devices:
+        device_names = list(dn.decode("utf-8") for dn in devices).sort()
+        print(devices)
 
 
 
