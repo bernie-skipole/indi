@@ -53,7 +53,15 @@ def key(*keys):
     # example - if keys are 'device', 'property' this will result in a key of
     # 'keyprefix:device:property'
     return _KEYPREFIX + ":".join(keys)
-    
+
+#   redis keys and data
+#
+#   one key : set
+#   'devices' - set of device names
+
+#   multiple keys : sets
+#   'properties:<devicename>' - set of property names for the device (properties is a literal string
+#                                                                     <devicename> is an actual device name
 
 
 ############# Define properties
@@ -69,8 +77,10 @@ class ParseProperty():
         # Required properties
         self.device = attribs.pop("device")    # name of Device
         # add this device to redis set 'devices'
-        _REDISCONNECTION.sadd(key('devices'), self.device)
+        _REDISCONNECTION.sadd(key('devices'), self.device)                 # add device to 'devices'
         self.name = attribs.pop("name")        # name of Property
+        _REDISCONNECTION.sadd(key('properties', self.device), self.name)   # add property name to 'properties:',<devicename>
+
         self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
         # implied properties
@@ -469,6 +479,12 @@ def receive_tree(root):
         device_names = list(dn.decode("utf-8") for dn in devices)
         device_names.sort()
         print(device_names)
+
+        for name in device_names:
+            properties = _REDISCONNECTION.smembers(key('properties', name))
+            property_names = list(pn.decode("utf-8") for pn in properties)
+            property_names.sort()
+            print(name, property_names)
 
 
 
