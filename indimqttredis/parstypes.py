@@ -27,6 +27,11 @@ _REDISCONNECTION = None
 _KEYPREFIX = ''
 
 
+__all__ = ['open_redis', 'key', 'ParseTextVector', 'ParseText', 'ParseNumberVector', 'ParseNumber',
+           'ParseSwitchVector', 'ParseSwitch', 'ParseLightVector', 'ParseLight', 'ParseBLOBVector', 'ParseBLOB',
+           'ParseMessage' ] 
+
+
 def open_redis(redisserver):
     "Returns a connection to the redis database, on failure returns None"
     global _KEYPREFIX, _REDISCONNECTION
@@ -57,11 +62,16 @@ def key(*keys):
 #   redis keys and data
 #
 #   one key : set
-#   'devices' - set of device names
+#   'devices' - set of device names   ('devices' is a literal string)
 
 #   multiple keys : sets
-#   'properties:<devicename>' - set of property names for the device (properties is a literal string
-#                                                                     <devicename> is an actual device name
+#   'properties:<devicename>' - set of property names for the device ('properties' is a literal string
+#                                                                     <devicename> is an actual device name)
+
+#   multiple keys : hash tables ( python dictionaries )
+#   'attributes:<propertyname>:<devicename>' - dictionary of attributes for the property ('attributes' is a literal string
+#                                                                                         <propertyname> is an actual property name
+#                                                                                         <devicename> is an actual device name
 
 
 ############# Define properties
@@ -76,11 +86,7 @@ class ParseProperty():
         attribs = vector.attrib
         # Required properties
         self.device = attribs.pop("device")    # name of Device
-        # add this device to redis set 'devices'
-        _REDISCONNECTION.sadd(key('devices'), self.device)                 # add device to 'devices'
         self.name = attribs.pop("name")        # name of Property
-        _REDISCONNECTION.sadd(key('properties', self.device), self.name)   # add property name to 'properties:',<devicename>
-
         self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
 
         # implied properties
@@ -95,7 +101,17 @@ class ParseProperty():
         if permission in ('ro', 'wo', 'rw'):
             self.permission = permission
         else:
-            self.permission = 'ro'       
+            self.permission = 'ro'
+
+
+    def save_attributes(self, rconn):
+        "Saves this device, and property to redis connection rconn"
+        # add the device to redis set 'devices'
+        rconn.sadd(key('devices'), self.device)                 # add device to 'devices'
+        rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:',<devicename>
+        # Saves the instance attributes to redis, apart from self.element_list
+        mapping = {key, value for key,value in self.__dict__.items() if key != "element_list"}
+        rconn.hmset(key('attributes',self.name,self.device), mapping)
 
 
     # To inform a Client of new current values for a Property and their state, a Device sends one settype element. It is only
@@ -443,48 +459,6 @@ class delProperty():
         super().__init__(**kwds)
 
 
-
-
-############ Function which receives the xml tree ###############
-
-def receive_tree(root):
-    "Receives the element tree root"
-    for child in root:
-        if child.tag == "defTextVector":
-            text_vector = ParseTextVector(child)
-            print(text_vector.device, text_vector.name)
-            print(str(text_vector))
-        if child.tag == "defNumberVector":
-            number_vector = ParseNumberVector(child)
-            print(number_vector.device, number_vector.name)
-            print(str(number_vector))
-        if child.tag == "defSwitchVector":
-            switch_vector = ParseSwitchVector(child)
-            print(switch_vector.device, switch_vector.name)
-            print(str(switch_vector))
-        if child.tag == "defLightVector":
-            light_vector = ParseLightVector(child)
-            print(light_vector.device, light_vector.name)
-            print(str(light_vector))
-        if child.tag == "defBLOBVector":
-            blob_vector = ParseBLOBVector(child)
-            print(blob_vector.device, blob_vector.name)
-            print(str(blob_vector))
-        if child.tag == "message":
-            message = ParseMessage(child)
-            print(message.device, str(message))
-    # devices are those received in this exchange, list of binary names
-    devices = _REDISCONNECTION.smembers(key('devices'))
-    if devices:
-        device_names = list(dn.decode("utf-8") for dn in devices)
-        device_names.sort()
-        print(device_names)
-
-        for name in device_names:
-            properties = _REDISCONNECTION.smembers(key('properties', name))
-            property_names = list(pn.decode("utf-8") for pn in properties)
-            property_names.sort()
-            print(name, property_names)
 
 
 
