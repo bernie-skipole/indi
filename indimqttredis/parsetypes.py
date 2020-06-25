@@ -110,7 +110,7 @@ class ParseProperty():
         rconn.sadd(key('devices'), self.device)                 # add device to 'devices'
         rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:',<devicename>
         # Saves the instance attributes to redis, apart from self.element_list
-        mapping = {key, value for key,value in self.__dict__.items() if key != "element_list"}
+        mapping = {key:value for key,value in self.__dict__.items() if key != "element_list"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
 
 

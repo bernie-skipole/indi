@@ -31,13 +31,13 @@ ready for reading by the web server."""
 import xml.etree.ElementTree as ET
 
 
-from parsetypes import *
+from .parsetypes import *
 
 
 
 def receive_from_indiserver(data, redisserver):
     "receives xml data from the indiserver"
-    rconn = parsetypes.open_redis(redisserver)
+    rconn = open_redis(redisserver)
     # if no redis connection is possible, return
     if rconn is None:
         return
