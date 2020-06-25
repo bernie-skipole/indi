@@ -79,8 +79,8 @@ def receive_from_indiserver(data, redisserver):
             property_names.sort()
             print(name, property_names)
 
+        # print attributes dictionary for property ACTIVE_DEVICES
+        # note the keys and values in this dictionary will be binary values.
+        print(rconn.hgetall(key('attributes','ACTIVE_DEVICES',device_names[0])))
 
-
-               
-    
 
