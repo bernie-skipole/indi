@@ -12,12 +12,11 @@
    Receives XML data from indiserver on port 7624 and stores in redis."""
 
 
-import sys, collections, socket, selectors, threading
+import sys, collections, socket, selectors, threading, redis
 
 from time import sleep
 
-from . import toxml, fromxml
-
+from . import toxml, fromxml, parsetypes
 
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
@@ -34,6 +33,20 @@ def _sendertoindiserver(data):
     _TO_INDI.append(data)
 
 
+def _open_redis(redisserver):
+    "Opens a redis connection"
+    try:
+        # create a connection to redis
+        rconn = redis.StrictRedis(host=redisserver.host,
+                                  port=redisserver.port,
+                                  db=redisserver.db,
+                                  password=redisserver.password,
+                                  socket_timeout=5)
+    except Exception:
+        return
+    return rconn
+
+
 def run(indiserver, redisserver):
     "Blocking call that provides the indiserver - redis conversion"
     global _TO_INDI
@@ -41,6 +54,13 @@ def run(indiserver, redisserver):
     # wait for five seconds before starting, to give servers
     # time to start up
     sleep(5)
+
+    # set up the redis server
+    rconn = _open_redis(redisserver)
+    # set the prefix to use for redis keys
+    parsetypes.set_prefix(redisserver.keyprefix)
+    
+
     # register the function _sendertoindiserver with toxml
     toxml.sender(_sendertoindiserver)
     # run toxml.loop - which is blocking, so run in its own thread
@@ -61,7 +81,7 @@ def run(indiserver, redisserver):
         print('waiting for I/O')
 
         # get blocks of data from the indiserver and fill up this list
-        _FROM_INDI = []
+        from_indi_list = []
 
         while True:
 
@@ -72,14 +92,14 @@ def run(indiserver, redisserver):
                     data = connection.recv(1024)
                     if data:
                         # A readable client socket has data
-                        _FROM_INDI.append(data)
-                elif _FROM_INDI:
+                        from_indi_list.append(data)
+                elif from_indi_list:
                     # no data to read, so gather the data received so far into a string
-                    from_indi = b"".join(_FROM_INDI)
-                    # and empty the _FROM_INDI list
-                    _FROM_INDI.clear()
+                    from_indi = b"".join(from_indi_list)
+                    # and empty the from_indi_list
+                    from_indi_list.clear()
                     # send the data to fromxml to parse and store in redis
-                    fromxml.receive_from_indiserver(from_indi, redisserver)
+                    fromxml.receive_from_indiserver(from_indi, rconn)
 
                 if mask & selectors.EVENT_WRITE:
                     if _TO_INDI:

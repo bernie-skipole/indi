@@ -2,8 +2,6 @@
 
 from datetime import datetime
 
-import redis
-
 
 # From the INDI white paper:
 
@@ -18,40 +16,25 @@ import redis
 # all members of the vector for each Property.
 
 
-############## redis connection
+__all__ = ['set_prefix', 'key', 'ParseTextVector', 'ParseText', 'ParseNumberVector', 'ParseNumber',
+           'ParseSwitchVector', 'ParseSwitch', 'ParseLightVector', 'ParseLight', 'ParseBLOBVector',
+           'ParseBLOB', 'ParseMessage' ] 
 
-# redisserver is a named tuple with attributes: 'host', 'port', 'db', 'password', 'keyprefix'
-
-_REDISCONNECTION = None
-
-_KEYPREFIX = ''
-
-
-__all__ = ['open_redis', 'key', 'ParseTextVector', 'ParseText', 'ParseNumberVector', 'ParseNumber',
-           'ParseSwitchVector', 'ParseSwitch', 'ParseLightVector', 'ParseLight', 'ParseBLOBVector', 'ParseBLOB',
-           'ParseMessage' ] 
-
-
-def open_redis(redisserver):
-    "Returns a connection to the redis database, on failure returns None"
-    global _KEYPREFIX, _REDISCONNECTION
-    _KEYPREFIX = redisserver.keyprefix
-    if _KEYPREFIX:
-        _KEYPREFIX += ":"
-    try:
-        if _REDISCONNECTION is None:
-            # create a connection to redis
-            _REDISCONNECTION = redis.StrictRedis(host=redisserver.host,
-                                                 port=redisserver.port,
-                                                 db=redisserver.db,
-                                                 password=redisserver.password,
-                                                 socket_timeout=5)
-    except Exception:
-        _REDISCONNECTION = None
-    return _REDISCONNECTION
 
 
 ########## redis keys
+
+_KEYPREFIX = ""
+
+
+def set_prefix(key_prefix):
+    "Sets the redis key prefix"
+    global _KEYPREFIX
+    if key_prefix:
+        _KEYPREFIX = key_prefix
+    else:
+        _KEYPREFIX = ""
+
 
 def key(*keys):
     "Add the prefix to keys, delimit keys with :"
@@ -72,6 +55,13 @@ def key(*keys):
 #   'attributes:<propertyname>:<devicename>' - dictionary of attributes for the property ('attributes' is a literal string
 #                                                                                         <propertyname> is an actual property name
 #                                                                                         <devicename> is an actual device name
+
+#   one key : list
+#  'messages" - list of "Timestamp space message"
+
+#  multiple keys : lists
+#  'messages:<devicename>' - list of "Timestamp space message"
+
 
 
 ############# Define properties
@@ -438,6 +428,21 @@ class ParseMessage():
         self.device = child.attrib.get["device", ""]                                  # considered to be site-wide if absent
         self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
         self.message = child.attrib.get("message", "")                                # Received message
+
+
+    def save_attributes(self, rconn):
+        "Saves this message to a list, which contains the last ten messages"
+        if not self.message:
+            return
+        time_and_message = self.timestamp + " " + self.message
+        if self.device:
+            rconn.lpush(key('messages', self.device), time_and_message)
+            # and limit number of messages to 10
+            rconn.ltrim(key('messages', self.device), 0, 9)
+        else:
+            rconn.lpush(key('messages'), time_and_message)
+            # and limit number of messages to 10
+            rconn.ltrim(key('messages'), 0, 9)
 
     def __str__(self):
         return self.message

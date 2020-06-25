@@ -35,10 +35,9 @@ from .parsetypes import *
 
 
 
-def receive_from_indiserver(data, redisserver):
+def receive_from_indiserver(data, rconn):
     "receives xml data from the indiserver"
-    rconn = open_redis(redisserver)
-    # if no redis connection is possible, return
+
     if rconn is None:
         return
     
@@ -78,9 +77,20 @@ def receive_from_indiserver(data, redisserver):
             property_names = list(pn.decode("utf-8") for pn in properties)
             property_names.sort()
             print(name, property_names)
+            # any messages
+            devicemessagelist = rconn.lrange(key('messages', name), 0, -1)
+            if devicemessagelist:
+                print(name, devicemessagelist)
 
         # print attributes dictionary for property ACTIVE_DEVICES
         # note the keys and values in this dictionary will be binary values.
         print(rconn.hgetall(key('attributes','ACTIVE_DEVICES',device_names[0])))
+
+    # system message list
+    system_messages = rconn.lrange(key('messages'), 0, -1)
+    if system_messages:
+        print(system_messages)
+
+        
 
 
