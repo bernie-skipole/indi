@@ -142,6 +142,11 @@ class ParentProperty():
         self.elements[key] = value
 
 
+    def __iter__(self):
+        "Iterating over the property gives the elements"
+        for element in self.elements.values():
+            yield element
+
 
     def __str__(self):
         "Creates a string of label:states"
