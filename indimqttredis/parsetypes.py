@@ -181,8 +181,7 @@ class TextVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            element = TextElement(child)
-            self.elements[element.name] = element
+            self.elements[element.name] = TextElement(child)
 
 
     def write(self, rconn):
@@ -221,8 +220,7 @@ class NumberVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            element = NumberElement(child)
-            self.elements[element.name] = element
+            self.elements[element.name] = NumberElement(child)
 
     def write(self, rconn):
         "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -377,8 +375,7 @@ class SwitchVector(ParentProperty):
         self.rule = attribs.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            element = SwitchElement(child)
-            self.elements[element.name] = element
+            self.elements[element.name] = SwitchElement(child)
 
 
     def write(self, rconn):
@@ -421,8 +418,7 @@ class LightVector(ParentProperty):
         super().__init__(vector)
         self.perm = 'ro'                      # permission always Read-Only
         for child in vector:
-            element = LightElement(child)
-            self.elements[element.name] = element
+            self.elements[element.name] = LightElement(child)
 
 
     def write(self, rconn):
@@ -451,8 +447,6 @@ class LightElement(ParentElement):
 
 class BLOBVector(ParentProperty):
 
-
-
     def __init__(self, vector):
         "The vector is the defBLOBVector"
         super().__init__(vector)
@@ -461,17 +455,13 @@ class BLOBVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            element = BLOBElement(child)
-            self.elements[element.name] = element
-
-
+            self.elements[element.name] = BLOBElement(child)
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.elements.values():
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
-
 
     def __str__(self):
         "Creates a string of labels"
@@ -632,11 +622,17 @@ class _Vector():
         self.elements = child_list
 
     def __iter__(self):
-        self.e_iterator = iter(self.elements)
-        return self
+        "Iterating over the vector gives the elements"
+        for element in self.elements:
+            yield element
 
-    def __next__(self):
-        return next(self.e_iterator)
+
+   # def __iter__(self):
+   #     self.e_iterator = iter(self.elements)
+   #     return self
+
+   # def __next__(self):
+   #     return next(self.e_iterator)
 
 
 class _Child():
