@@ -91,27 +91,6 @@ class ParentProperty():
 
     "Parent to Text, Number, Switch, Lights, Blob vectors"
 
-
-    @classmethod
-    def _read(cls, rconn, vector):
-        "Create and return a class instance"
-        device = vector.attrib['device']
-        name = vector.attrib['name']
-        # read the elements
-        elements = rconn.smembers(key('elements', name, device))
-        child_list = []
-        for element_name in elements:
-            ename = element_name.decode("utf-8")
-            # for each element, read from redis and create a _Child object, and set into child_list
-            attributes = rconn.hgetall(key('elementattributes', ename, name, device))
-            text = attributes.pop(b'value')
-            child_list.append( _Child(text, attributes) )
-        vector.set_sequence(child_list)
-        # this vector object can now be used to create a TextVector object
-        return cls(vector)
-
-
-
     def __init__(self, vector):
         "Parent Item"
         attribs = vector.attrib
@@ -177,13 +156,6 @@ class ParentElement():
 
 class TextVector(ParentProperty):
 
-    @classmethod
-    def _read(cls, rconn, vector):
-        "set vector.text, and vector elements"
-        return super(TextVector, cls)._read(rconn, vector)
-
-
-
     def __init__(self, vector):
         "The vector is the xml defTextVector"
         attribs = vector.attrib
@@ -223,10 +195,6 @@ class TextElement(ParentElement):
 
 class NumberVector(ParentProperty):
 
-    @classmethod
-    def _read(cls, rconn, vector):
-        "set vector.text, and vector elements"
-        return super(NumberVector, cls)._read(rconn, vector)
 
     def __init__(self, vector):
         "The vector is the defNumberVector"
@@ -385,10 +353,6 @@ class NumberElement(ParentElement):
 
 class SwitchVector(ParentProperty):
 
-    @classmethod
-    def _read(cls, rconn, vector):
-        "set vector.text, and vector elements"
-        return super(SwitchVector, cls)._read(rconn, vector)
 
 
     def __init__(self, vector):
@@ -438,10 +402,6 @@ class SwitchElement(ParentElement):
 
 class LightVector(ParentProperty):
 
-    @classmethod
-    def _read(cls, rconn, vector):
-        "set vector.text, and vector elements"
-        return super(LightVector, cls)._read(rconn, vector)
 
     def __init__(self, vector):
         "The vector is the defLightVector"
@@ -478,10 +438,7 @@ class LightElement(ParentElement):
 
 class BLOBVector(ParentProperty):
 
-    @classmethod
-    def _read(cls, rconn, vector):
-        "set vector.text, and vector elements"
-        return super(BLOBVector, cls)._read(rconn, vector)
+
 
     def __init__(self, vector):
         "The vector is the defBLOBVector"
@@ -638,17 +595,28 @@ class _Vector():
        is an xml element object. However this class will be used to provide
        an object with the equivalent attrib dictionary attribute, and will be iterable
        with child elements.
-       It will be filled by the property _read classmethod, and then used to create
-       the property vector object"""
+       It will be used to create the property vector object"""
 
-    def __init__(self, attributes):
+    def __init__(self, rconn, device, name):
         "Provides a sequence object with attrib"
-        self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attributes.items()}
-        self.elements = []
-
-    def set_sequence(self, elements):
-        "Set a list of elements into this vector"
-        self.elements = elements
+        # get the property attributes
+        attribs = rconn.hgetall( key('attributes', name, device) )
+        self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attribs.items()}
+        if not self.attrib:
+            self.vector_type = None
+            self.elements = []
+            return
+        self.vector_type = self.attrib['vector']
+        # read the elements
+        elements = rconn.smembers(key('elements', name, device))
+        child_list = []
+        for element_name in elements:
+            ename = element_name.decode("utf-8")
+            # for each element, read from redis and create a _Child object, and set into child_list
+            attributes = rconn.hgetall(key('elementattributes', ename, name, device))
+            text = attributes.pop(b'value')
+            child_list.append( _Child(text, attributes) )
+        self.elements = child_list)
 
     def __iter__(self):
         self.e_iterator = iter(self.elements)
@@ -658,9 +626,8 @@ class _Vector():
         return next(self.e_iterator)
 
 
-
-
 class _Child():
+    """Set as elements within _Vector, each with attrib and text attributes"""
 
     def __init__(self, text, attributes):
         "Provides an object with attrib and text attributes"
@@ -677,24 +644,21 @@ def readvector(rconn, device, name):
     # If the vector is not recognised as a property of the device, return None
     if not rconn.sismember(key('properties', device), name):
         return
-    # get the property attributes
-    attributes = rconn.hgetall( key('attributes', name, device) )
-    if not attributes:
-        return None
-    # keys and values of all attributes are binary
     # create an object with attrib and a sequence
-    vector = _Vector(attributes)
-    # The vector attribute gives the class
-    vector_type = attributes[b'vector']
-    if vector_type == b"TextVector":
-        return TextVector._read(rconn, vector)
-    elif vector_type == b"NumberVector":
-        return NumberVector._read(rconn, vector)
-    elif vector_type == b"SwitchVector":
-        return SwitchVector._read(rconn, vector)
-    elif vector_type == b"LightVector":
-        return LightVector._read(rconn, vector)
-    elif vector_type == b"BLOBVector":
-        return BLOBVector._read(rconn, vector)
+    vector = _Vector(rconn, device, name)
+    # The vector_type gives the class
+    vector_type = vector.vector_type
+    if vector_type is None:
+        return
+    if vector_type == "TextVector":
+        return TextVector(vector)
+    elif vector_type == "NumberVector":
+        return NumberVector(vector)
+    elif vector_type == "SwitchVector":
+        return SwitchVector(vector)
+    elif vector_type == "LightVector":
+        return LightVector(vector)
+    elif vector_type == "BLOBVector":
+        return BLOBVector(vector)
 
 
