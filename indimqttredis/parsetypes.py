@@ -483,9 +483,10 @@ class BLOBElement(ParentElement):
 
 
     def __init__(self, child):
-        value = child.text
+        "value is a binary value"
+        self.value = child.text
         if not value:
-            self.value = ""
+            self.value = b""
         super().__init__(child)
 
 
@@ -622,7 +623,10 @@ class _Vector():
             ename = element_name.decode("utf-8")
             # for each element, read from redis and create a _Child object, and set into child_list
             attributes = rconn.hgetall(key('elementattributes', ename, name, device))
-            text = attributes.pop(b'value')
+            if self.vector_type == "BLOBVector":
+                text = attributes.pop(b'value')      # Blobs are binary values
+            else:
+                text = attributes.pop(b'value').decode("utf-8")
             child_list.append( _Child(text, attributes) )
         self.elements = child_list
 
@@ -632,21 +636,13 @@ class _Vector():
             yield element
 
 
-   # def __iter__(self):
-   #     self.e_iterator = iter(self.elements)
-   #     return self
-
-   # def __next__(self):
-   #     return next(self.e_iterator)
-
-
 class _Child():
     """Set as elements within _Vector, each with attrib and text attributes"""
 
     def __init__(self, text, attributes):
         "Provides an object with attrib and text attributes"
         self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attributes.items()}
-        self.text = text.decode("utf-8")
+        self.text = text
 
 
 def readvector(rconn, device, name):
