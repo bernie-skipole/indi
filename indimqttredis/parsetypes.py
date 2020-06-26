@@ -107,8 +107,8 @@ class ParentProperty():
 
         # add the class name so it is saved with attributes to redis, so the type of vector can be read
         self.vector = self.__class__.__name__
-        # the element_list will hold the elements within this vector
-        self.element_list = []
+        # self.elements is a dictionary which will hold the elements within this vector, keys are element names
+        self.elements = {}
 
 
     def _set_permission(self, permission):
@@ -124,21 +124,31 @@ class ParentProperty():
         # add the device to redis set 'devices'
         rconn.sadd(key('devices'), self.device)                 # add device to 'devices'
         rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:<devicename>'
-        # Saves the instance attributes to redis, apart from self.element_list
-        mapping = {key:value for key,value in self.__dict__.items() if key != "element_list"}
+        # Saves the instance attributes to redis, apart from self.elements
+        mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
         # save list of element names
-        for element in self.element_list:
-            rconn.sadd(key('elements', self.name, self.device), element.name)   # add element name to 'elements:<propertyname>:<devicename>'
+        for elementname in self.elements:
+            rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
+
+
+    def __getitem__(self, key):
+        "key is an element name"
+        return self.elements[key]
+
+
+    def __setitem__(self, key, value):
+        "key is an element name, value is an element"
+        self.elements[key] = value
 
 
 
     def __str__(self):
         "Creates a string of label:states"
-        if not self.element_list:
+        if not self.elements:
             return ""
         result = ""
-        for element in self.element_list:
+        for element in self.elements.values():
             result += element.label + " : " + str(element)+"\n"
         return result
 
@@ -167,12 +177,12 @@ class TextVector(ParentProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = TextElement(child)
-            self.element_list.append(element)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.element_list:
+        for element in self.elements.values():
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
 
@@ -207,11 +217,11 @@ class NumberVector(ParentProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = NumberElement(child)
-            self.element_list.append(element)
+            self.elements[element.name] = element
 
     def write(self, rconn):
         "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.element_list:
+        for element in self.elements.values():
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
@@ -363,12 +373,12 @@ class SwitchVector(ParentProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = SwitchElement(child)
-            self.element_list.append(element)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.element_list:
+        for element in self.elements.values():
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
 
@@ -407,12 +417,12 @@ class LightVector(ParentProperty):
         self.perm = 'ro'                      # permission always Read-Only
         for child in vector:
             element = LightElement(child)
-            self.element_list.append(element)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.element_list:
+        for element in self.elements.values():
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
 
@@ -447,23 +457,23 @@ class BLOBVector(ParentProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = BLOBElement(child)
-            self.element_list.append(element)
+            self.elements[element.name] = element
 
 
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.element_list:
+        for element in self.elements.values():
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
 
 
     def __str__(self):
         "Creates a string of labels"
-        if not self.element_list:
+        if not self.elements:
             return ""
         result = ""
-        for element in self.element_list:
+        for element in self.elements.values():
             result += element.label + "\n"
         return result
 
