@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from collections.abc import MutableSequence
+
 
 # From the INDI white paper:
 
@@ -16,9 +18,10 @@ from datetime import datetime
 # all members of the vector for each Property.
 
 
-__all__ = ['set_prefix', 'key', 'ParseTextVector', 'ParseText', 'ParseNumberVector', 'ParseNumber',
-           'ParseSwitchVector', 'ParseSwitch', 'ParseLightVector', 'ParseLight', 'ParseBLOBVector',
-           'ParseBLOB', 'ParseMessage' ] 
+
+# set the items for this module's api
+
+__all__ = ['set_prefix', 'key', 'readvector', 'TextVector', 'NumberVector', 'SwitchVector', 'LightVector', 'BLOBVector', 'Message', 'delProperty' ] 
 
 
 
@@ -57,19 +60,56 @@ def key(*keys):
 #                                                                                         <devicename> is an actual device name
 
 #   one key : list
-#  'messages" - list of "Timestamp space message"
+#   'messages' - list of "Timestamp space message"
 
-#  multiple keys : lists
-#  'messages:<devicename>' - list of "Timestamp space message"
+#   multiple keys : lists
+#   'devicemessages:<devicename>' - list of "Timestamp space message"
+
+
+#   multiple keys : sets
+#   'elements:<propertyname>:<devicename>' - set of element names for the device property
+#                                             ('elements' is a literal string
+#                                              <propertyname> is an actual property name
+#                                              <devicename> is an actual device name)
+
+
+#   multiple keys : hash tables ( python dictionaries )
+#   'elementattributes:<elementname>:<propertyname>:<devicename>' - dictionary of attributes for the element
+#                                                                   ('elementattributes' is a literal string
+#                                                                    <elementname> is an actual element name
+#                                                                    <propertyname> is an actual property name
+#                                                                    <devicename> is an actual device name)
+
 
 
 
 ############# Define properties
 
 
-class ParseProperty():
+
+class ParentProperty():
 
     "Parent to Text, Number, Switch, Lights, Blob vectors"
+
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "Create and return a class instance"
+        device = vector.attrib['device']
+        name = vector.attrib['name']
+        # read the elements
+        elements = rconn.smembers(key('elements', name, device))
+        child_list = []
+        for element_name in elements:
+            # for each element, read from redis and create a _Child object, and set into child_list
+            attributes = rconn.hgetall(key('elementattributes', element_name, name, device))
+            text = attributes.pop('value')
+            child = _Child(text, attributes)
+        vector.set_sequence(child_list)
+        # this vector object can now be used to create a TextVector object
+        return cls(vector)
+
+
 
     def __init__(self, vector):
         "Parent Item"
@@ -85,31 +125,30 @@ class ParseProperty():
         self.timestamp = attribs.pop("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
         self.message = attribs.pop("message", "")
 
+        # add the class name so it is saved with attributes to redis, so the type of vector can be read
+        self.vector = self.__class__.__name__
+
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only, Write-Only or Read-Write"
         if permission in ('ro', 'wo', 'rw'):
-            self.permission = permission
+            self.perm = permission
         else:
-            self.permission = 'ro'
+            self.perm = 'ro'
 
 
-    def save_attributes(self, rconn):
+    def write(self, rconn):
         "Saves this device, and property to redis connection rconn"
         # add the device to redis set 'devices'
         rconn.sadd(key('devices'), self.device)                 # add device to 'devices'
-        rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:',<devicename>
+        rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:<devicename>'
         # Saves the instance attributes to redis, apart from self.element_list
         mapping = {key:value for key,value in self.__dict__.items() if key != "element_list"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
+        # save list of element names
+        for element in self.element_list:
+            rconn.sadd(key('elements', self.name, self.device), element.name)   # add element name to 'elements:<propertyname>:<devicename>'
 
-
-    # To inform a Client of new current values for a Property and their state, a Device sends one settype element. It is only
-    # required to send those members of the vector that have changed.
-
-    def settype(self, values):
-        "elements:values that have changed"
-        pass
 
 
     def __str__(self):
@@ -123,7 +162,7 @@ class ParseProperty():
 
 
 
-class ParseElement():
+class ParentElement():
     "Parent to Text, Number, Switch, Lights, Blob elements"
 
     def __init__(self, child):
@@ -135,7 +174,14 @@ class ParseElement():
 
 ################ Text ######################
 
-class ParseTextVector(ParseProperty):
+class TextVector(ParentProperty):
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "set vector.text, and vector elements"
+        return super(TextVector, cls)._read(rconn, vector)
+
+
 
     def __init__(self, vector):
         "The vector is the xml defTextVector"
@@ -145,13 +191,19 @@ class ParseTextVector(ParseProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
         for child in vector:
-            element = ParseText(child)
+            element = TextElement(child)
             self.element_list.append(element)
         super().__init__(vector)
 
+   def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+        for element in self.element_list:
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
+        super().write(rconn)
 
-class ParseText(ParseElement):
-    "text elements contained in a ParseTextVector"
+
+class TextElement(ParentElement):
+    "text elements contained in a TextVector"
 
     def __init__(self, child):
         value = child.text
@@ -168,7 +220,12 @@ class ParseText(ParseElement):
 
 ################ Number ######################
 
-class ParseNumberVector(ParseProperty):
+class NumberVector(ParentProperty):
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "set vector.text, and vector elements"
+        return super(NumberVector, cls)._read(rconn, vector)
 
     def __init__(self, vector):
         "The vector is the defNumberVector"
@@ -178,14 +235,23 @@ class ParseNumberVector(ParseProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
         for child in vector:
-            element = ParseNumber(child)
+            element = NumberElement(child)
             self.element_list.append(element)
         super().__init__(vector)
 
 
+   def write(self, rconn):
+        "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+        for element in self.element_list:
+            mapping = {key:value for key,value in element.__dict__.items()}
+            mapping["formatted_number"] = element.formatted_number()
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
+        super().write(rconn)
 
-class ParseNumber(ParseElement):
-    "number elements contained in a defNumberVector"
+
+
+class NumberElement(ParentElement):
+    "number elements contained in a NumberVector"
 
     def __init__(self, child):
         # required number attributes
@@ -197,7 +263,7 @@ class ParseNumber(ParseElement):
         self.value = child.text.strip()
         super().__init__(child)
 
-    def __str__(self):
+    def formatted_number(self):
         """Returns the string of the number using the format value"""
         # Splits the number into a negative flag and three sexagesimal parts
         # then calls self._sexagesimal or self._printf to create the formatted string"""
@@ -309,9 +375,19 @@ class ParseNumber(ParseElement):
         return self.format % value
 
 
+    def __str__(self):
+        "Returns the formatted number, equivalent to self.formatted_number()"
+        return self.formatted_number()
+
+
 ################ Switch ######################
 
-class ParseSwitchVector(ParseProperty):
+class SwitchVector(ParentProperty):
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "set vector.text, and vector elements"
+        return super(SwitchVector, cls)._read(rconn, vector)
 
 
     def __init__(self, vector):
@@ -323,22 +399,28 @@ class ParseSwitchVector(ParseProperty):
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
         for child in vector:
-            element = ParseSwitch(child)
+            element = SwitchElement(child)
             self.element_list.append(element)
         super().__init__(vector)
+
+   def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+        for element in self.element_list:
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
+        super().write(rconn)
 
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only or Read-Write"
         if permission in ('ro', 'rw'):
-            self.permission = permission
+            self.perm = permission
         else:
-            self.permission = 'ro'
+            self.perm = 'ro'
 
 
 
-class ParseSwitch(ParseElement):
-    "switch elements contained in a ParseSwitchVector"
+class SwitchElement(ParentElement):
+    "switch elements contained in a SwitchVector"
 
     def __init__(self, child):
         value = child.text
@@ -353,20 +435,31 @@ class ParseSwitch(ParseElement):
 
 ################ Lights ######################
 
-class ParseLightVector(ParseProperty):
+class LightVector(ParentProperty):
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "set vector.text, and vector elements"
+        return super(LightVector, cls)._read(rconn, vector)
 
     def __init__(self, vector):
         "The vector is the defLightVector"
-        self.permission = 'ro'                      # permission always Read-Only
+        self.perm = 'ro'                      # permission always Read-Only
         self.element_list = []
         for child in vector:
-            element = ParseLight(child)
+            element = LightElement(child)
             self.element_list.append(element)
         super().__init__(vector)
 
+   def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+        for element in self.element_list:
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
+        super().write(rconn)
 
-class ParseLight(ParseElement):
-    "light elements contained in a ParseLightVector"
+
+class LightElement(ParentElement):
+    "light elements contained in a LightVector"
 
     def __init__(self, child):
         value = child.text
@@ -382,19 +475,31 @@ class ParseLight(ParseElement):
 
 ################ BLOB ######################
 
-class ParseBLOBVector(ParseProperty):
+class BLOBVector(ParentProperty):
+
+    @classmethod
+    def _read(cls, rconn, vector):
+        "set vector.text, and vector elements"
+        return super(BLOBVector, cls)._read(rconn, vector)
 
     def __init__(self, vector):
         "The vector is the defBLOBVector"
         attribs = vector.attrib
         perm = attribs.pop("perm")
-        self._set_permission(perm)      # ostensible Client controlability
+        self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         self.element_list = []
         for child in vector:
-            element = ParseBLOB(child)
+            element = BLOBElement(child)
             self.element_list.append(element)
         super().__init__(vector)
+
+
+   def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+        for element in self.element_list:
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
+        super().write(rconn)
 
 
     def __str__(self):
@@ -407,11 +512,16 @@ class ParseBLOBVector(ParseProperty):
         return result
 
 
-class ParseBLOB(ParseElement):
-    "BLOB elements contained in a ParseBLOBVector"
+class BLOBElement(ParentElement):
+    "BLOB elements contained in a BLOBVector"
 
-    # Unlike other defXXX elements, this does not contain an
-    # initial value for the BLOB.
+
+    def __init__(self, child):
+        value = child.text
+        if not value:
+            self.value = ""
+        super().__init__(child)
+
 
     def __str__(self):
         return ""
@@ -421,24 +531,24 @@ class ParseBLOB(ParseElement):
 ################ Message ####################
 
 
-class ParseMessage():
+class Message():
     "a message associated with a device or entire system"
 
     def __init__(self, child):
-        self.device = child.attrib.get["device", ""]                                  # considered to be site-wide if absent
+        self.device = child.attrib.get("device", "")                                  # considered to be site-wide if absent
         self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
         self.message = child.attrib.get("message", "")                                # Received message
 
 
-    def save_attributes(self, rconn):
+    def write(self, rconn):
         "Saves this message to a list, which contains the last ten messages"
         if not self.message:
             return
         time_and_message = self.timestamp + " " + self.message
         if self.device:
-            rconn.lpush(key('messages', self.device), time_and_message)
+            rconn.lpush(key('devicemessages', self.device), time_and_message)
             # and limit number of messages to 10
-            rconn.ltrim(key('messages', self.device), 0, 9)
+            rconn.ltrim(key('devicemessages', self.device), 0, 9)
         else:
             rconn.lpush(key('messages'), time_and_message)
             # and limit number of messages to 10
@@ -457,19 +567,132 @@ class delProperty():
 # Device without a Property, the Client must assume all the Properties for that Device, and indeed the Device itself, are no
 # longer available.
 
-    def __init__(self, device, dproperty, **kwds):    # dproperty is used instead of property to avoid confusion with the Python 'property'
-        "Delete the given property, or all if dproperty is None"
-        self.device = device
-        self.dproperty = dproperty
-        super().__init__(**kwds)
+    def __init__(self, child):
+        "Delete the given property, or device if property name is None"
+        self.device = child.attrib.get("device")
+        self.name = child.attrib.get("name", "")
+        self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.attrib.get("message", "")                                # Received message
+
+
+    def write(self, rconn):
+        "Deletes the property or device from redis"
+        if self.name:
+            # delete the property and add the message to the device message list
+            if self.message:
+                time_and_message = f"{self.timestamp} {self.message}"
+            else:
+                time_and_message = f"{self.timestamp} Property {self.name} deleted from device {self.device}"
+            rconn.lpush(key('messages', self.device), time_and_message)
+            # and limit number of messages to 10
+            rconn.ltrim(key('messages', self.device), 0, 9)
+            # delete all elements associated with the property
+            elements = rconn.smembers(key('elements', self.name, self.device))
+            # delete the set of elements for this property
+            rconn.delete(key('elements', self.name, self.device))
+            element_names = list(en.decode("utf-8") for en in elements)
+            for name in element_names:
+                # delete the element attributes
+                rconn.delete(key('elementattributes', name, self.name, self.device))
+            # and delete the property
+            rconn.srem(key('properties', self.device), self.name)
+            rconn.delete(key('attributes', self.name, self.device))
+        else:
+            # delete the device and add the message to the system message list
+            if self.message:
+                time_and_message = f"{self.timestamp} {self.message}"
+            else:
+                time_and_message = f"{self.timestamp} {self.device} deleted"
+            rconn.lpush(key('messages'), time_and_message)
+            # and limit number of messages to 10
+            rconn.ltrim(key('messages'), 0, 9)
+            # and delete all keys associated with the device
+            properties = rconn.smembers(key('properties', self.device))
+            # delete the set of properties
+            rconn.delete(key('properties', self.device))
+            property_names = list(pn.decode("utf-8") for pn in properties)
+            for name in property_names:
+                # delete all elements associated with the property
+                elements = rconn.smembers(key('elements', name, self.device))
+                # delete the set of elements for this property
+                rconn.delete(key('elements', name, self.device))
+                element_names = list(en.decode("utf-8") for en in elements)
+                for ename in element_names:
+                    # delete the element attributes
+                    rconn.delete(key('elementattributes', ename, name, self.device))
+                # delete the properties attributes
+                rconn.delete(key('attributes', name, self.device))
+            # delete messages associated with the device
+            rconn.delete(key('messages', self.device))
+            # delete the device from the 'devices' set
+            rconn.srem(key('devices'), self.device)
+
+
+######## Read a vector from redis ################
+
+
+class _Vector():
+
+    """Normally the vector used to create a property such as a TextVector
+       is an xml element object. However this class will be used to provide
+       an object with the equivalent attrib dictionary attribute, and will be iterable
+       with child elements.
+       It will be filled by the property _read classmethod, and then used to create
+       the property vector object"""
+
+    def __init__(self, attributes):
+        "Provides a sequence object with attrib"
+        self.attrib = {key:value.decode("utf-8") for key,value in attributes.items()}
+        self.elements = []
+
+    def set_sequence(self, elements):
+        "Set a list of elements into this vector"
+        self.elements = elements
+
+    def __iter__(self):
+        self.e_iterator = iter(self.elements)
+        return self
+
+    def __next__(self):
+        return next(self.e_iterator)
 
 
 
 
+class _Child():
+
+    def __init__(self, text, attributes):
+        "Provides an object with attrib and text attributes"
+        self.attrib = {key:value.decode("utf-8") for key,value in attributes.items()}
+        self.text = text
 
 
-
-
-
+def readvector(rconn, device, name):
+    """Where device is the device name, name is the vector name,
+       reads redis and returns an instance of a *Vector class"""
+    # If device is not in the 'devices' set, return None
+    if not rconn.sismember(key('devices'), name):
+        return
+    # If the vector is not recognised as a property of the device, return None
+    if not rconn.sismember(key('properties', device), name):
+        return
+    # get the property attributes
+    attributes = rconn.hgetall( key('attributes', name, device) )
+    if not attributes:
+        return None
+    # create an object with attrib and a sequence
+    vector = _Vector(attributes)
+    # The vector attribute gives the class
+    vector_type = attributes['vector']
+    if vector_type == b"TextVector":
+        return TextVector._read(rconn, vector)
+    elif vector_type == b"NumberVector":
+        return NumberVector._read(rconn, vector)
+    elif vector_type == b"SwitchVector":
+        return SwitchVector._read(rconn, vector)
+    elif vector_type == b"LightVector":
+        return LightVector._read(rconn, vector)
+    elif vector_type == b"BLOBVector":
+        return BLOBVector._read(rconn, vector)
 
 

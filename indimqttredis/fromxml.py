@@ -48,23 +48,26 @@ def receive_from_indiserver(data, rconn):
 
     for child in root:
         if child.tag == "defTextVector":
-            text_vector = ParseTextVector(child)
-            text_vector.save_attributes(rconn)
+            text_vector = TextVector(child)
+            text_vector.write(rconn)
         if child.tag == "defNumberVector":
-            number_vector = ParseNumberVector(child)
-            number_vector.save_attributes(rconn)
+            number_vector = NumberVector(child)
+            number_vector.write(rconn)
         if child.tag == "defSwitchVector":
-            switch_vector = ParseSwitchVector(child)
-            switch_vector.save_attributes(rconn)
+            switch_vector = SwitchVector(child)
+            switch_vector.write(rconn)
         if child.tag == "defLightVector":
-            light_vector = ParseLightVector(child)
-            light_vector.save_attributes(rconn)
+            light_vector = LightVector(child)
+            light_vector.write(rconn)
         if child.tag == "defBLOBVector":
-            blob_vector = ParseBLOBVector(child)
-            blob_vector.save_attributes(rconn)
+            blob_vector = BLOBVector(child)
+            blob_vector.write(rconn)
         if child.tag == "message":
-            message = ParseMessage(child)
-            print(message.device, str(message))
+            message = Message(child)
+            message.write(rconn)
+        if child.tag == "delProperty":
+            delprop = delProperty(child)
+            delprop.write(rconn)
     # devices are those received in this exchange, list of binary names
     devices = rconn.smembers(key('devices'))
     if devices:
