@@ -101,10 +101,11 @@ class ParentProperty():
         elements = rconn.smembers(key('elements', name, device))
         child_list = []
         for element_name in elements:
+            ename = element_name.decode("utf-8")
             # for each element, read from redis and create a _Child object, and set into child_list
-            attributes = rconn.hgetall(key('elementattributes', element_name, name, device))
-            text = attributes.pop('value')
-            child = _Child(text, attributes)
+            attributes = rconn.hgetall(key('elementattributes', ename, name, device))
+            text = attributes.pop(b'value')
+            child_list.append( _Child(text, attributes) )
         vector.set_sequence(child_list)
         # this vector object can now be used to create a TextVector object
         return cls(vector)
@@ -195,8 +196,8 @@ class TextVector(ParentProperty):
             self.element_list.append(element)
         super().__init__(vector)
 
-   def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+    def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.element_list:
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
@@ -240,8 +241,8 @@ class NumberVector(ParentProperty):
         super().__init__(vector)
 
 
-   def write(self, rconn):
-        "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+    def write(self, rconn):
+        "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.element_list:
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
@@ -266,7 +267,7 @@ class NumberElement(ParentElement):
     def formatted_number(self):
         """Returns the string of the number using the format value"""
         # Splits the number into a negative flag and three sexagesimal parts
-        # then calls self._sexagesimal or self._printf to create the formatted string"""
+        # then calls self._sexagesimal or self._printf to create the formatted string
         value = self.value
         # negative is True, if the value is negative
         negative = value.startswith("-")
@@ -403,8 +404,8 @@ class SwitchVector(ParentProperty):
             self.element_list.append(element)
         super().__init__(vector)
 
-   def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+    def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.element_list:
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
@@ -451,8 +452,8 @@ class LightVector(ParentProperty):
             self.element_list.append(element)
         super().__init__(vector)
 
-   def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+    def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.element_list:
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
@@ -495,8 +496,8 @@ class BLOBVector(ParentProperty):
         super().__init__(vector)
 
 
-   def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'
+    def write(self, rconn):
+        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
         for element in self.element_list:
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().write(rconn)
@@ -642,7 +643,7 @@ class _Vector():
 
     def __init__(self, attributes):
         "Provides a sequence object with attrib"
-        self.attrib = {key:value.decode("utf-8") for key,value in attributes.items()}
+        self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attributes.items()}
         self.elements = []
 
     def set_sequence(self, elements):
@@ -663,15 +664,15 @@ class _Child():
 
     def __init__(self, text, attributes):
         "Provides an object with attrib and text attributes"
-        self.attrib = {key:value.decode("utf-8") for key,value in attributes.items()}
-        self.text = text
+        self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attributes.items()}
+        self.text = text.decode("utf-8")
 
 
 def readvector(rconn, device, name):
     """Where device is the device name, name is the vector name,
        reads redis and returns an instance of a *Vector class"""
     # If device is not in the 'devices' set, return None
-    if not rconn.sismember(key('devices'), name):
+    if not rconn.sismember(key('devices'), device):
         return
     # If the vector is not recognised as a property of the device, return None
     if not rconn.sismember(key('properties', device), name):
@@ -680,10 +681,11 @@ def readvector(rconn, device, name):
     attributes = rconn.hgetall( key('attributes', name, device) )
     if not attributes:
         return None
+    # keys and values of all attributes are binary
     # create an object with attrib and a sequence
     vector = _Vector(attributes)
     # The vector attribute gives the class
-    vector_type = attributes['vector']
+    vector_type = attributes[b'vector']
     if vector_type == b"TextVector":
         return TextVector._read(rconn, vector)
     elif vector_type == b"NumberVector":

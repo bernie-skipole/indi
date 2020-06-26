@@ -68,32 +68,15 @@ def receive_from_indiserver(data, rconn):
         if child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
-    # devices are those received in this exchange, list of binary names
-    devices = rconn.smembers(key('devices'))
-    if devices:
-        device_names = list(dn.decode("utf-8") for dn in devices)
-        device_names.sort()
-        print(device_names)
 
-        for name in device_names:
-            properties = rconn.smembers(key('properties', name))
-            property_names = list(pn.decode("utf-8") for pn in properties)
-            property_names.sort()
-            print(name, property_names)
-            # any messages
-            devicemessagelist = rconn.lrange(key('messages', name), 0, -1)
-            if devicemessagelist:
-                print(name, devicemessagelist)
+    # tests
 
-        # print attributes dictionary for property ACTIVE_DEVICES
-        # note the keys and values in this dictionary will be binary values.
-        print(rconn.hgetall(key('attributes','ACTIVE_DEVICES',device_names[0])))
-
-    # system message list
-    system_messages = rconn.lrange(key('messages'), 0, -1)
-    if system_messages:
-        print(system_messages)
-
+    x = readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
+    print(f"{x.label}\n{x}")
         
 
+### 'Telescope Simulator'
 
+
+###'ACTIVE_DEVICES', 'CONFIG_PROCESS', 'CONNECTION', 'CONNECTION_MODE', 'DEBUG', 'DEVICE_AUTO_SEARCH', 'DEVICE_BAUD_RATE', 'DEVICE_PORT', 'DEVICE_PORT_SCAN'
+### 'DOME_POLICY', 'DRIVER_INFO', 'POLLING_PERIOD', 'SCOPE_CONFIG_NAME', 'TELESCOPE_INFO'
