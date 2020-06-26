@@ -107,6 +107,8 @@ class ParentProperty():
 
         # add the class name so it is saved with attributes to redis, so the type of vector can be read
         self.vector = self.__class__.__name__
+        # the element_list will hold the elements within this vector
+        self.element_list = []
 
 
     def _set_permission(self, permission):
@@ -158,15 +160,15 @@ class TextVector(ParentProperty):
 
     def __init__(self, vector):
         "The vector is the xml defTextVector"
+        super().__init__(vector)
         attribs = vector.attrib
         perm = attribs.pop("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self.element_list = []
         for child in vector:
             element = TextElement(child)
             self.element_list.append(element)
-        super().__init__(vector)
+
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -198,16 +200,14 @@ class NumberVector(ParentProperty):
 
     def __init__(self, vector):
         "The vector is the defNumberVector"
+        super().__init__(vector)
         attribs = vector.attrib
         perm = attribs.pop("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self.element_list = []
         for child in vector:
             element = NumberElement(child)
             self.element_list.append(element)
-        super().__init__(vector)
-
 
     def write(self, rconn):
         "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -353,20 +353,18 @@ class NumberElement(ParentElement):
 
 class SwitchVector(ParentProperty):
 
-
-
     def __init__(self, vector):
         "The vector is the xml defSwitchVector, containing child defSwich elements"
+        super().__init__(vector)
         attribs = vector.attrib
         perm = attribs.pop("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.rule = attribs.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self.element_list = []
         for child in vector:
             element = SwitchElement(child)
             self.element_list.append(element)
-        super().__init__(vector)
+
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -405,12 +403,12 @@ class LightVector(ParentProperty):
 
     def __init__(self, vector):
         "The vector is the defLightVector"
+        super().__init__(vector)
         self.perm = 'ro'                      # permission always Read-Only
-        self.element_list = []
         for child in vector:
             element = LightElement(child)
             self.element_list.append(element)
-        super().__init__(vector)
+
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -442,15 +440,15 @@ class BLOBVector(ParentProperty):
 
     def __init__(self, vector):
         "The vector is the defBLOBVector"
+        super().__init__(vector)
         attribs = vector.attrib
         perm = attribs.pop("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
-        self.element_list = []
         for child in vector:
             element = BLOBElement(child)
             self.element_list.append(element)
-        super().__init__(vector)
+
 
 
     def write(self, rconn):
@@ -616,7 +614,7 @@ class _Vector():
             attributes = rconn.hgetall(key('elementattributes', ename, name, device))
             text = attributes.pop(b'value')
             child_list.append( _Child(text, attributes) )
-        self.elements = child_list)
+        self.elements = child_list
 
     def __iter__(self):
         self.e_iterator = iter(self.elements)
