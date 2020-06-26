@@ -181,7 +181,8 @@ class TextVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            self.elements[element.name] = TextElement(child)
+            element = TextElement(child)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
@@ -220,7 +221,8 @@ class NumberVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            self.elements[element.name] = NumberElement(child)
+            element = NumberElement(child)
+            self.elements[element.name] = element
 
     def write(self, rconn):
         "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
@@ -375,7 +377,8 @@ class SwitchVector(ParentProperty):
         self.rule = attribs.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            self.elements[element.name] = SwitchElement(child)
+            element = SwitchElement(child)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
@@ -418,7 +421,8 @@ class LightVector(ParentProperty):
         super().__init__(vector)
         self.perm = 'ro'                      # permission always Read-Only
         for child in vector:
-            self.elements[element.name] = LightElement(child)
+            element = LightElement(child)
+            self.elements[element.name] = element
 
 
     def write(self, rconn):
@@ -455,7 +459,8 @@ class BLOBVector(ParentProperty):
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
-            self.elements[element.name] = BLOBElement(child)
+            element = BLOBElement(child)
+            self.elements[element.name] = element
 
     def write(self, rconn):
         "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
