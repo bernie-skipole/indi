@@ -50,24 +50,28 @@ def receive_from_indiserver(data, rconn):
         if child.tag == "defTextVector":
             text_vector = TextVector(child)
             text_vector.write(rconn)
-        if child.tag == "defNumberVector":
+        elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
-        if child.tag == "defSwitchVector":
+        elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
-        if child.tag == "defLightVector":
+        elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
-        if child.tag == "defBLOBVector":
+        elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
-        if child.tag == "message":
+        elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
-        if child.tag == "delProperty":
+        elif child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
+        elif child.tag == "setTextVector":
+            setVector(rconn, child)
+        elif child.tag == "setNumberVector":
+            setVector(rconn, child)
 
     # tests
 

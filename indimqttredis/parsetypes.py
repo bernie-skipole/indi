@@ -21,7 +21,8 @@ from collections.abc import MutableSequence
 
 # set the items for this module's api
 
-__all__ = ['set_prefix', 'key', 'readvector', 'TextVector', 'NumberVector', 'SwitchVector', 'LightVector', 'BLOBVector', 'Message', 'delProperty' ] 
+__all__ = ['set_prefix', 'key', 'readvector', 'TextVector', 'NumberVector', 'SwitchVector', 'LightVector', 'BLOBVector', 'Message', 'delProperty',
+           'setVector' ] 
 
 
 
@@ -95,15 +96,15 @@ class ParentProperty():
         "Parent Item"
         attribs = vector.attrib
         # Required properties
-        self.device = attribs.pop("device")    # name of Device
-        self.name = attribs.pop("name")        # name of Property
-        self.state = attribs.pop("state")      # current state of Property; Idle, OK, Busy or Alert
+        self.device = attribs.get("device")    # name of Device
+        self.name = attribs.get("name")        # name of Property
+        self.state = attribs.get("state")      # current state of Property; Idle, OK, Busy or Alert
 
         # implied properties
-        self.label = attribs.pop("label", self.name)                             # GUI label, use name by default
-        self.group = attribs.pop("group", "")                                    # Property group membership, blank by default
-        self.timestamp = attribs.pop("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
-        self.message = attribs.pop("message", "")
+        self.label = attribs.get("label", self.name)                             # GUI label, use name by default
+        self.group = attribs.get("group", "")                                    # Property group membership, blank by default
+        self.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = attribs.get("message", "")
 
         # add the class name so it is saved with attributes to redis, so the type of vector can be read
         self.vector = self.__class__.__name__
@@ -132,14 +133,33 @@ class ParentProperty():
             rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
 
 
+    def update(self, rconn):
+        "Update the object attributes to redis"
+        # Saves the instance attributes to redis, apart from self.elements
+        mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
+        rconn.hmset(key('attributes',self.name,self.device), mapping)
+
+
+    def element_names(self):
+        "Returns a list of element names"
+        return list(self.elements.keys())
+
+
     def __getitem__(self, key):
-        "key is an element name"
+        "key is an element name, returns an element object"
         return self.elements[key]
 
 
     def __setitem__(self, key, value):
         "key is an element name, value is an element"
+        if key != value.name:
+            raise ValueError("The key should be equal to the name set in the element")
         self.elements[key] = value
+
+
+    def __contains__(self, name):
+        "Check if an element with this name is in the vector"
+        return name in self.elements
 
 
     def __iter__(self):
@@ -192,16 +212,28 @@ class TextVector(ParentProperty):
         super().write(rconn)
 
 
+    def update(self, rconn, elements):
+        "Update the object attributes and changed elements to redis"
+        # save changed element attributes
+        for element in elements:
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
+        super().update(rconn)
+
+
+
+
 class TextElement(ParentElement):
     "text elements contained in a TextVector"
 
     def __init__(self, child):
-        value = child.text
-        if value is None:
+        self.set_value(child.text)
+        super().__init__(child)
+
+    def set_value(self, value):
+        if not value:
             self.value = ""
         else:
             self.value = value.strip()       # remove any newlines around the xml text
-        super().__init__(child)
 
     def __str__(self):
         return self.value
@@ -233,6 +265,16 @@ class NumberVector(ParentProperty):
         super().write(rconn)
 
 
+    def update(self, rconn, elements):
+        "Update the object attributes and changed elements to redis"
+        # save changed element attributes
+        for element in elements:
+            mapping = {key:value for key,value in element.__dict__.items()}
+            mapping["formatted_number"] = element.formatted_number()
+            rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
+        super().update(rconn)
+
+
 
 class NumberElement(ParentElement):
     "number elements contained in a NumberVector"
@@ -244,8 +286,12 @@ class NumberElement(ParentElement):
         self.max = child.attrib["max"]       # maximum value, ignore if min == max
         self.step = child.attrib["step"]      # allowed increments, ignore if 0
         # get the raw self.value
-        self.value = child.text.strip()
+        self.set_value(child.text)
         super().__init__(child)
+
+    def set_value(self, value):
+        self.value = value.strip()       # remove any newlines around the xml text
+
 
     def formatted_number(self):
         """Returns the string of the number using the format value"""
@@ -670,5 +716,36 @@ def readvector(rconn, device, name):
         return LightVector(vector)
     elif vector_type == "BLOBVector":
         return BLOBVector(vector)
+
+
+def setVector(rconn, vector):
+    "set values for a Text, Number vector"
+    attribs = vector.attrib
+    device = attribs.get("device")         # device name
+    name = attribs.get("name")             # name of property
+    # read the Vector from redis
+    oldvector = readvector(rconn, device, name)
+    if oldvector is None:
+        # device or property name is unknown
+        return
+    # alter it according to the values to be set
+    state = attribs.get("state", None)     # current state of Property; Idle, OK, Busy or Alert, no change if absent
+    if state:
+        oldvector.state = state
+    oldvector.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
+    oldvector.message = attribs.get("message", "")
+    oldvector.timeout = attribs.get("timeout", 0)
+    elements = []
+    for child in vector:
+        element = oldvector[child.name]   # get the element from redis
+        element.set_value(child.text)   # change its text to that given by the xml child
+        elements.append(element)
+    # write the new attributes and changed elements back to redis
+    oldvector.update(rconn, elements)
+
+
+
+
+
 
 
