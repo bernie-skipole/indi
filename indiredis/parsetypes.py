@@ -135,8 +135,15 @@ class ParentProperty():
             rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
 
 
-    def update(self, rconn):
+    def update(self, rconn, vector):
         "Update the object attributes to redis"
+        attribs = vector.attrib
+        # alter self according to the values to be set
+        state = attribs.get("state", None)     # set state of Property; Idle, OK, Busy or Alert, no change if absent
+        if state:
+            self.state = state
+        self.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = attribs.get("message", "")
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
@@ -214,14 +221,15 @@ class TextVector(ParentProperty):
         super().write(rconn)
 
 
-    def update(self, rconn, elements):
+    def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        # save changed element attributes
-        for element in elements:
+        attribs = vector.attrib
+        self.timeout = attribs.get("timeout", 0)
+        for child in vector:
+            element = self.elements[child.name]
+            element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn)
-
-
 
 
 class TextElement(ParentElement):
@@ -267,10 +275,13 @@ class NumberVector(ParentProperty):
         super().write(rconn)
 
 
-    def update(self, rconn, elements):
+    def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        # save changed element attributes
-        for element in elements:
+        attribs = vector.attrib
+        self.timeout = attribs.get("timeout", 0)
+        for child in vector:
+            element = self.elements[child.name]
+            element.set_value(child)   # change its value to that given by the xml child
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
@@ -436,12 +447,16 @@ class SwitchVector(ParentProperty):
         super().write(rconn)
 
 
-    def update(self, rconn, elements):
+    def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        # save changed element attributes
-        for element in elements:
+        attribs = vector.attrib
+        self.timeout = attribs.get("timeout", 0)
+        for child in vector:
+            element = self.elements[child.name]
+            element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn)
+
 
 
     def _set_permission(self, permission):
@@ -484,10 +499,12 @@ class LightVector(ParentProperty):
             self.elements[element.name] = element
 
 
-    def update(self, rconn, elements):
+    def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        # save changed element attributes
-        for element in elements:
+        attribs = vector.attrib
+        for child in vector:
+            element = self.elements[child.name]
+            element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn)
 
@@ -531,10 +548,15 @@ class BLOBVector(ParentProperty):
             self.elements[element.name] = element
 
 
-    def update(self, rconn, elements):
+    def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        # save changed element attributes
-        for element in elements:
+        attribs = vector.attrib
+        self.timeout = attribs.get("timeout", 0)
+        for child in vector:
+            element = self.elements[child.name]
+            element.size = attribs.get("size")     # number of bytes in decoded and uncompressed BLOB
+            element.format = attribs.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
+            element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn)
 
@@ -758,30 +780,19 @@ def readvector(rconn, device, name):
 
 
 def setVector(rconn, vector):
-    "set values for a Text, Number vector"
+    "set values for a vector property"
     attribs = vector.attrib
     device = attribs.get("device")         # device name
     name = attribs.get("name")             # name of property
-    # read the Vector from redis
+    # read the current Vector property from redis
     oldvector = readvector(rconn, device, name)
     if oldvector is None:
         # device or property name is unknown
         return
-    # alter it according to the values to be set
-    state = attribs.get("state", None)     # current state of Property; Idle, OK, Busy or Alert, no change if absent
-    if state:
-        oldvector.state = state
-    oldvector.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
-    oldvector.message = attribs.get("message", "")
-    if vector.tag != "setLightVector":
-        oldvector.timeout = attribs.get("timeout", 0)    # LightVector does not have a timeout attribute
-    elements = []
-    for child in vector:
-        element = oldvector[child.name]   # get the element from redis
-        element.set_value(child)   # change its text to that given by the xml child
-        elements.append(element)
-    # write the new attributes and changed elements back to redis
-    oldvector.update(rconn, elements)
+    # call the update method of the property
+    oldvector.update(rconn, vector)
+
+
 
 
 

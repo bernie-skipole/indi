@@ -76,6 +76,8 @@ def receive_from_indiserver(data, rconn):
             setVector(rconn, child)
         elif child.tag == "setLightVector":
             setVector(rconn, child)
+        elif child.tag == "setBLOBVector":
+            setVector(rconn, child)
 
     # tests
 
