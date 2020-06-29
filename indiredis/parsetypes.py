@@ -240,7 +240,7 @@ class TextElement(ParentElement):
         super().__init__(child)
 
     def set_value(self, child):
-        if child is None:
+        if (child is None) or (not child.text):
             self.value = ""
         else:
             self.value = child.text.strip()       # remove any newlines around the xml text
