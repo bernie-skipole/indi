@@ -8,7 +8,8 @@
 
 from indiredis import inditoredis, indi_server, redis_server
 
-# define the hosts/ports where servers are listenning, these functions return named tuples.
+# define the hosts/ports where servers are listenning, these functions return named tuples
+# which are required as arguments to inditoredis().
 
 indi_host = indi_server(host='localhost', port=7624)
 redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
