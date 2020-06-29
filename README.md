@@ -89,7 +89,7 @@ inditomqtt(indi_host, mqtt_host)
 Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
 
 
-### indiredis.mqttredis
+### indiredis.mqtttoredis
 
 Intended to be run on the server with the gui or web service which can read/write to redis.
 
@@ -99,7 +99,7 @@ Reads data published to redis, and converts to indi XML and sends by MQTT.
 
 Example Python script running at the web server:
 ```
-from indiredis import mqttredis, mqtt_server, redis_server
+from indiredis import mqtttoredis, mqtt_server, redis_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
@@ -108,7 +108,7 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 # blocking call which runs the service, communicating between mqtt and redis
 
-mqttredis.run(mqtt_host, redis_host)
+mqtttoredis(mqtt_host, redis_host)
 
 ```
 Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
@@ -131,16 +131,16 @@ the Python bindings that can use it.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
-mqtt is used since it makes out-of-band communications easy, for example, if other none-indi communications
+MQTT is used since it makes out-of-band communications easy, for example, if other none-INDI communications
 are needed between devices, then merely subscribing and publishing with another topic is possible.
 
-There is flexibility in where the mqtt server is sited, it could run on the web server, or on a different
+There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different
 machine entirely. This makes it possible to choose the direction of the initial connection - which may be
 useful when passing through NAT firewalls.
 
-As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a Raspberry
-Pi running INDIServer could, for instance, have a dynamic DHCP served address, but since it initiates the
-call to the MQTT server, this does not matter.
+As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a device
+running INDIServer could, for instance, have a dynamic DHCP served address, and a remote GUI could also
+have a dynamic address, but since both initiate the call to the MQTT server, this does not matter.
 
 It allows monitoring of the communications by a third device or service by simply subscribing to the topic
 used. This makes a possible logging service easy to implement.
@@ -149,7 +149,8 @@ A Python MQTT client is freely available.
 
 ### Security
 
-Only open MQTT communications is defined in this package, security and authentication is not considered.
-Transmission between servers could pass over an encrypted VPN. One method is suggested in the github wiki.
+Only open communications is defined in this package, security and authentication is not considered.
+Transmission between servers could pass over an encrypted VPN or SSH tunnel. Any such implementation
+is not described here.
 
 
