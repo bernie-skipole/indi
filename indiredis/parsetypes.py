@@ -240,7 +240,7 @@ class TextElement(ParentElement):
         super().__init__(child)
 
     def set_value(self, child):
-        if not child:
+        if child is None:
             self.value = ""
         else:
             self.value = child.text.strip()       # remove any newlines around the xml text
@@ -590,7 +590,7 @@ class BLOBElement(ParentElement):
 
 
     def set_value(self, child):
-        if not child.text:
+        if (child is None) or (not child.text):
             self.value = b""
         else:
              self.value = standard_b64decode(child.text)   ## decode from base64

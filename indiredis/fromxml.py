@@ -37,10 +37,8 @@ from .parsetypes import *
 
 def receive_from_indiserver(data, rconn):
     "receives xml data from the indiserver"
-
     if rconn is None:
         return
-    
     # data comes in block of xml elements, not inside a root, so create a root
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
