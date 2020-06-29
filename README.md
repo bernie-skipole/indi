@@ -41,7 +41,7 @@ Python dependencies from pypi: "pip install redis" and "pip install paho-mqtt"  
 Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an
 MQTT server (apt-get install mosquitto)
 
-Within indiredis, three sub packages are available which can be used by your own script:
+Within indiredis, functions are available which can be used by your own script:
 
 ### indiredis.inditoredis
 
@@ -58,7 +58,7 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 # blocking call which runs the service, communicating between indiserver and redis
 
-inditoredis.run(indi_host, redis_host)
+inditoredis(indi_host, redis_host)
 ```
 
 ### indiredis.indimqtt
