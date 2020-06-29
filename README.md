@@ -1,4 +1,4 @@
-# indimqttredis
+# indiredis
 
 Python indi client package, suitable for a web or gui service. With option of MQTT transmission.
 
@@ -12,7 +12,7 @@ the observatory.  See https://indilib.org/ for these components.
 
 A Python3 package is provided:
 
-### indimqttredis
+### indiredis
 
 An indi client with the capability to read data from redis and send it in indi XML format to indiserver, and in the other
 direction; can read device properties from indiserver and store them in redis.
@@ -28,27 +28,28 @@ or
 
 The data can be transferred between redis and indiserver on different machines by MQTT.
 
-In the first case, the web/gui, redis server, indiserver are all typically running on one machine. The indimqttredis
+In the first case, the web/gui, redis server, indiserver are all typically running on one machine. The indiredis
 package would be imported into a script which will provide the indiserver - redis conversion. The MQTT facility will
-not be enabled.
+not be enabled.  Note: indiserver could run on a remote machine, by port forwarding over SSH for example.
 
 In the second case the web/gui, redis server and MQTT server are typically running on one machine (the web server) 
-and indiserver is running on a remote machine at the observatory.  A script running indimqttredis will be running
+and indiserver is running on a remote machine at the observatory.  A script running indiredis will be running
 at both sites, and will provide the indiserver-MQTT conversion at the observatory, and MQTT-redis at the web/gui server.
  
 Python dependencies from pypi: "pip install redis" and "pip install paho-mqtt"  (all python3 versions)
 
-Server dependencies: A redis server (apt-get install redis-server), and an MQTT server (apt-get install mosquitto)
+Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an
+MQTT server (apt-get install mosquitto)
 
-Within indimqttredis, three sub packages are available which can be used by your own script:
+Within indiredis, three sub packages are available which can be used by your own script:
 
-### indimqttredis.indiredis
+### indiredis.inditoredis
 
 Converts directly between indiserver (port 7624) and redis, converts indi XML to redis key-value storage.
 For example, your Python script to import and run this service could be:
 
 ```
-from indimqttredis import indiredis, indi_server, redis_server
+from indiredis import inditoredis, indi_server, redis_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
@@ -57,10 +58,10 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 # blocking call which runs the service, communicating between indiserver and redis
 
-indiredis.run(indi_host, redis_host)
+inditoredis.run(indi_host, redis_host)
 ```
 
-### indimqttredis.indimqtt
+### indiredis.indimqtt
 
 Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver or an indi driver.
 
@@ -69,7 +70,7 @@ Receives/transmitts XML data between indiserver on port 7624 and MQTT which send
 Example Python script running at the observatory:
 
 ```
-from indimqttredis import indimqtt, indi_server, mqtt_server
+from indiredis import indimqtt, indi_server, mqtt_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
@@ -85,7 +86,7 @@ indimqtt.run(indi_host, mqtt_host)
 Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
 
 
-### indimqttredis.mqttredis
+### indiredis.mqttredis
 
 Intended to be run on the server with the gui or web service which can read/write to redis.
 
@@ -95,7 +96,7 @@ Reads data published to redis, and converts to indi XML and sends by MQTT.
 
 Example Python script running at the web server:
 ```
-from indimqttredis import mqttredis, mqtt_server, redis_server
+from indiredis import mqttredis, mqtt_server, redis_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
@@ -108,21 +109,6 @@ mqttredis.run(mqtt_host, redis_host)
 
 ```
 Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
-
-The above packages provide the networking element (reading port 7624 and running MQTT clients), they
-call on further sub packages within indimqttredis, to do the xml conversion. These sub packages are
-not usually directly imported by a client script, but could be if their functionality is needed
-separated from the network elements.
-
-
-### indimqttredis.toxml
-
-A package that reads values published via redis and converts to indi xml strings.
-
-
-### indimqttredis.fromxml
-
-A package that reads indi xml strings, parses them and places values into redis.
 
 ### The web service
 
