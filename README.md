@@ -1,10 +1,10 @@
 # indiredis
 
-Python indi client package, suitable for a web or gui service. With option of MQTT transmission.
+Python INDI client package, suitable for a web or gui service. With option of MQTT transmission.
 
-indi - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
+INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-Though indi is used for astronomical observatory use, it can also be used for any instrument control if appropriate indi
+Though INDI is used for astronomical observatory use, it can also be used for any instrument control if appropriate INDI
 drivers are available.
 
 This project provides a client, not drivers, nor indiserver. It is assumed that indiserver is installed and running at
@@ -14,21 +14,21 @@ A Python3 package is provided:
 
 ### indiredis
 
-An indi client with the capability to read data from redis and send it in indi XML format to indiserver, and in the other
-direction; can read device properties from indiserver and store them in redis.
+An INDI client with the capability to read device properties from indiserver (port 7624) and store them in redis, and in the
+other direction; can read data published to redis and send it in INDI XML format to indiserver.
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis
 key value storage. The gui or web framework is not specified.
 
 Two options are provided :
 
-The data can be parsed and transferred between redis and indiserver on one machine.
+The data can be parsed and transferred between indiserver and redis.
 
 or
 
-The data can be transferred between redis and indiserver on different machines by MQTT.
+The data can be transferred between indiserver and redis via an MQTT server.
 
-In the first case, the web/gui, redis server, indiserver are all typically running on one machine. The indiredis
+In the first case, the web/gui, redis server, indiserver could be running on one machine. The indiredis
 package would be imported into a script which will provide the indiserver - redis conversion. The MQTT facility will
 not be enabled.  Note: indiserver could run on a remote machine, by port forwarding over SSH for example.
 
@@ -36,16 +36,18 @@ In the second case the web/gui, redis server and MQTT server are typically runni
 and indiserver is running on a remote machine at the observatory.  A script running indiredis will be running
 at both sites, and will provide the indiserver-MQTT conversion at the observatory, and MQTT-redis at the web/gui server.
  
-Python dependencies from pypi: "pip install redis" and "pip install paho-mqtt"  (all python3 versions)
+Python dependencies from pypi: "pip install redis" and, if the MQTT option is required, "pip install paho-mqtt".
+
+(All python3 versions)
 
 Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an
 MQTT server (apt-get install mosquitto)
 
-Within indiredis, functions are available which can be used by your own script:
+The indiredis package provides functions which can be used by your own script:
 
 ### indiredis.inditoredis
 
-Converts directly between indiserver (port 7624) and redis, converts indi XML to redis key-value storage.
+Converts directly between indiserver (port 7624) and redis, converting indi XML to redis key-value storage.
 For example, your Python script to import and run this service could be:
 
 ```
@@ -62,16 +64,16 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 inditoredis(indi_host, redis_host)
 ```
 
-### indiredis.indimqtt
+### indiredis.inditomqtt
 
-Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver or an indi driver.
+Intended to be run on a device at the observatory (a Raspberry pi), together with indiserver.
 
 Receives/transmitts XML data between indiserver on port 7624 and MQTT which sends data to the remote web/gui server.
 
 Example Python script running at the observatory:
 
 ```
-from indiredis import indimqtt, indi_server, mqtt_server
+from indiredis import inditomqtt, indi_server, mqtt_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
@@ -80,7 +82,7 @@ mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='',
 
 # blocking call which runs the service, communicating between indiserver and mqtt
 
-indimqtt.run(indi_host, mqtt_host)
+inditomqtt(indi_host, mqtt_host)
 
 ```
 
