@@ -43,48 +43,73 @@ def receive_from_indiserver(data, rconn):
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
+    # notification is published on redis using the from_indi_channel
+    channel = get_from_indi_channel()
+
 
     for child in root:
         if child.tag == "defTextVector":
-            text_vector = TextVector(child)
-            text_vector.write(rconn)
+            text_vector = TextVector(child)         # store the received data in a TextVector object
+            text_vector.write(rconn)                # call the write method to store data in redis
+            rconn.publish(channel, f"defTextVector:{text_vector.name}:{text_vector.device}")   # publishes an alert that property:device has changed
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
+            rconn.publish(channel, f"defNumberVector:{number_vector.name}:{number_vector.device}")
         elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
+            rconn.publish(channel, f"defSwitchVector:{switch_vector.name}:{switch_vector.device}")
         elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
+            rconn.publish(channel, f"defLightVector:{light_vector.name}:{text_vector.device}")
         elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
+            rconn.publish(channel, f"defBLOBVector:{blob_vector.name}:{blob_vector.device}")
         elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
+            if message.device:
+                rconn.publish(channel, f"message:{message.device}")
+            else:
+                rconn.publish(channel, "message")
         elif child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
+            if delprop.name:
+                rconn.publish(channel, f"delProperty:{delprop.name}:{delprop.device}")
+            else:
+                rconn.publish(channel, f"delDevice:{delprop.device}")
         elif child.tag == "setTextVector":
-            setVector(rconn, child)
+            result = setVector(rconn, child)
+            if result is None:
+                continue
+            name,device = result
+            rconn.publish(channel, f"setTextVector:{name}:{device}")
         elif child.tag == "setNumberVector":
-            setVector(rconn, child)
+            result = setVector(rconn, child)
+            if result is None:
+                continue
+            name,device = result
+            rconn.publish(channel, f"setNumberVector:{name}:{device}")
         elif child.tag == "setSwitchVector":
-            setVector(rconn, child)
+            result = setVector(rconn, child)
+            if result is None:
+                continue
+            name,device = result
+            rconn.publish(channel, f"setSwitchVector:{name}:{device}")
         elif child.tag == "setLightVector":
-            setVector(rconn, child)
+            result = setVector(rconn, child)
+            if result is None:
+                continue
+            name,device = result
+            rconn.publish(channel, f"setLightVector:{name}:{device}")
         elif child.tag == "setBLOBVector":
-            setVector(rconn, child)
+            result = setVector(rconn, child)
+            if result is None:
+                continue
+            name,device = result
+            rconn.publish(channel, f"setBLOBVector:{name}:{device}")
 
-    # tests
-
-    x = readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
-    print(f"{x.label}\n{x}")
-        
-
-### 'Telescope Simulator'
-
-
-###'ACTIVE_DEVICES', 'CONFIG_PROCESS', 'CONNECTION', 'CONNECTION_MODE', 'DEBUG', 'DEVICE_AUTO_SEARCH', 'DEVICE_BAUD_RATE', 'DEVICE_PORT', 'DEVICE_PORT_SCAN'
-### 'DOME_POLICY', 'DRIVER_INFO', 'POLLING_PERIOD', 'SCOPE_CONFIG_NAME', 'TELESCOPE_INFO'

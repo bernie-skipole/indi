@@ -50,7 +50,7 @@ _TO_INDI = collections.deque(maxlen=5)
 # define the server parameters
 
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix'])
+RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
 MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
 
 
@@ -63,14 +63,16 @@ def indi_server(host='localhost', port=7624):
         raise ValueError("The port must be an integer, 7624 is default")
     return IndiServer(host, port)
 
-def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_'):
+def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='', from_indi_channel=''):
     "Creates a named tuple to hold redis server parameters"
     if not REDIS_AVAILABLE:
         print("Error - Unable to import the Python redis package")
         sys.exit(1)
+    if (not to_indi_channel) or (not from_indi_channel) or (to_indi_channel == from_indi_channel):
+        raise ValueError("Redis channels must exist and must be different from each other.")
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 6379 is default")
-    return RedisServer(host, port, db, password, keyprefix)
+    return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
 
 def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
     "Creates a named tuple to hold mqtt server parameters"
@@ -125,7 +127,7 @@ def inditoredis(indiserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    parsetypes.set_prefix(redisserver.keyprefix)
+    parsetypes.setup_redis(redisserver.keyprefix)
     
 
     # register the function _sendertoindiserver with toxml

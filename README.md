@@ -57,7 +57,8 @@ from indiredis import inditoredis, indi_server, redis_server
 # which are required as arguments to inditoredis().
 
 indi_host = indi_server(host='localhost', port=7624)
-redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
+                          to_indi_channel='to_indi', from_indi_channel='from_indi')
 
 # blocking call which runs the service, communicating between indiserver and redis
 
@@ -78,7 +79,8 @@ from indiredis import inditomqtt, indi_server, mqtt_server
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
 indi_host = indi_server(host='localhost', port=7624)
-mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
+mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='',
+                        to_indi_topic='to_indi', from_indi_topic='from_indi')
 
 # blocking call which runs the service, communicating between indiserver and mqtt
 
@@ -103,8 +105,10 @@ from indiredis import mqtttoredis, mqtt_server, redis_server
 
 # define the hosts/ports where servers are listenning, these functions return named tuples.
 
-mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
-redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_')
+mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='',
+                        to_indi_topic='to_indi', from_indi_topic='from_indi')
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
+                          to_indi_channel='to_indi', from_indi_channel='from_indi')
 
 # blocking call which runs the service, communicating between mqtt and redis
 
@@ -126,8 +130,12 @@ redis is used as:
 
 More than one web service process or thread may be running, redis makes data visible to all processes.
 
-As well as simply storing values for other processes to read, redis has a pub/sub functionality, and
-the Python bindings that can use it.
+As well as simply storing values for other processes to read, redis has a pub/sub functionality. When
+data is received, indiredis stores it, and publishes a notification on the from_indi_channel, which can
+alert a subscribing GUI application that a value has changed.
+
+When the gui wishes to send data, it can publish it on the to_indi_channel, where it will be picked up by
+this indiredis service, and compiled to XML which is then sent to indiserver.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
@@ -139,13 +147,12 @@ machine entirely. This makes it possible to choose the direction of the initial 
 useful when passing through NAT firewalls.
 
 As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a device
-running INDIServer could, for instance, have a dynamic DHCP served address, and a remote GUI could also
+running indiserver could, for instance, have a dynamic DHCP served address, and a remote GUI could also
 have a dynamic address, but since both initiate the call to the MQTT server, this does not matter.
 
 It allows monitoring of the communications by a third device or service by simply subscribing to the topic
 used. This makes a possible logging service easy to implement.
 
-A Python MQTT client is freely available.
 
 ### Security
 

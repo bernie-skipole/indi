@@ -23,23 +23,41 @@ from base64 import standard_b64decode, standard_b64encode
 
 # set the items for this module's api
 
-__all__ = ['set_prefix', 'key', 'readvector', 'TextVector', 'NumberVector', 'SwitchVector', 'LightVector', 'BLOBVector', 'Message', 'delProperty',
+__all__ = ['setup_redis', 'key', 'get_to_indi_channel', 'get_from_indi_channel', 'readvector',
+           'TextVector', 'NumberVector', 'SwitchVector', 'LightVector', 'BLOBVector', 'Message', 'delProperty',
            'setVector' ] 
 
 
 
-########## redis keys
+########## redis keys and channels
 
 _KEYPREFIX = ""
+_TO_INDI_CHANNEL = ""
+_FROM_INDI_CHANNEL = ""
 
 
-def set_prefix(key_prefix):
-    "Sets the redis key prefix"
-    global _KEYPREFIX
+def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
+    "Sets the redis key prefix and pubsub channels"
+    global _KEYPREFIX, _TO_INDI_CHANNEL, _FROM_INDI_CHANNEL
     if key_prefix:
         _KEYPREFIX = key_prefix
     else:
         _KEYPREFIX = ""
+    if to_indi_channel:
+        _TO_INDI_CHANNEL = to_indi_channel
+    else:
+        _TO_INDI_CHANNEL = ""
+    if from_indi_channel:
+        _FROM_INDI_CHANNEL = from_indi_channel
+    else:
+        _FROM_INDI_CHANNEL = ""
+
+
+def get_to_indi_channel():
+    return _TO_INDI_CHANNEL
+
+def get_from_indi_channel():
+    return _FROM_INDI_CHANNEL
 
 
 def key(*keys):
@@ -303,7 +321,10 @@ class NumberElement(ParentElement):
         super().__init__(child)
 
     def set_value(self, child):
-        self.value = child.text.strip()       # remove any newlines around the xml text
+        if child.text is None:
+            self.value = ""
+        else:
+            self.value = child.text.strip()       # remove any newlines around the xml text
 
 
     def formatted_number(self):
@@ -477,7 +498,10 @@ class SwitchElement(ParentElement):
         super().__init__(child)
 
     def set_value(self, child):
-        self.value = child.text.strip()       # remove any newlines around the xml text
+        if child.text is None:
+            self.value = ""
+        else:
+            self.value = child.text.strip()       # remove any newlines around the xml text
 
 
     def __str__(self):
@@ -524,7 +548,10 @@ class LightElement(ParentElement):
         super().__init__(child)
 
     def set_value(self, child):
-        self.value = child.text.strip()       # remove any newlines around the xml text
+        if child.text is None:
+            self.value = ""
+        else:
+            self.value = child.text.strip()       # remove any newlines around the xml text
 
     def __str__(self):
         return self.value
@@ -590,10 +617,10 @@ class BLOBElement(ParentElement):
 
 
     def set_value(self, child):
-        if (child is None) or (not child.text):
+        if child.text is None:
             self.value = b""
         else:
-             self.value = standard_b64decode(child.text)   ## decode from base64
+            self.value = standard_b64decode(child.text)   ## decode from base64
 
     def __str__(self):
         return ""
@@ -780,7 +807,7 @@ def readvector(rconn, device, name):
 
 
 def setVector(rconn, vector):
-    "set values for a vector property"
+    "set values for a vector property, return (name,device) on success, None if device not known"
     attribs = vector.attrib
     device = attribs.get("device")         # device name
     name = attribs.get("name")             # name of property
@@ -788,9 +815,10 @@ def setVector(rconn, vector):
     oldvector = readvector(rconn, device, name)
     if oldvector is None:
         # device or property name is unknown
-        return
+        return False
     # call the update method of the property
     oldvector.update(rconn, vector)
+    return name,device
 
 
 
