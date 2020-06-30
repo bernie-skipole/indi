@@ -56,7 +56,7 @@ class From_INDI():
         print(data)
 
         if data == b"defTextVector:ACTIVE_DEVICES:Telescope Simulator":
-            x = readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
+            x = parsetypes.readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
             print(f"{x.label}\n{x}")
 
 
