@@ -127,8 +127,7 @@ def inditoredis(indiserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    parsetypes.setup_redis(redisserver.keyprefix)
-    
+    parsetypes.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
 
     # register the function _sendertoindiserver with toxml
     toxml.sender(_sendertoindiserver)
