@@ -44,6 +44,7 @@ class SenderLoop():
         "date received from client, to be sent to indiserver"
         data = message['data'].decode("utf-8")
         et_data = None
+        print(data)
 
         # convert data to an ET
         if data == "getProperties":

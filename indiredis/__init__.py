@@ -143,11 +143,6 @@ def inditoredis(indiserver, redisserver):
         # get blocks of data from the indiserver and fill up this list
         from_indi_list = []
 
-        ##########
-        # Test
-        #
-        rconn.publish(redisserver.to_indi_channel, "getProperties")
-
         while True:
 
             for key, mask in mysel.select(timeout=0.1):    # blocks for .1 second
