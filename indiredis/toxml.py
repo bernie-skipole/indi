@@ -7,10 +7,8 @@
 ###################
 
 
-"""Reads values from redis and converts them to indi xml which are then transmitted by a
-   callable which should be registered by sender(sender_function)
-   where sender_function is a function (or a callable) which can be called with sender_function(data)
-   and which will transmit the data (a bytestring) to an indiserver."""
+"""Reads values from redis and converts them to indi xml which are then transmitted
+   via a deque object."""
 
 
 # if Client wants to learn all Devices and all their Properties
@@ -26,46 +24,52 @@ from time import sleep
 
 import xml.etree.ElementTree as ET
 
-_SEND = None         # will be set with the sender_function
-
-_SEND_START = True   # Initially set to True to indicate startup
 
 _INDI_VERSION = "1.7"
 
 
-def sender(sender_function):
-    "Register a sender function, which will be used to transmit binary data to indiserver"
-    global _SEND
-    _SEND = sender_function
+
+class SenderLoop():
+
+    "An instance of this object is callable, which when called, creates a blocking loop"
+
+    def __init__(self, _TO_INDI, rconn, redisserver):
+        """Set the _TO_INDI dequeue and redis connection"""
+        self._TO_INDI = _TO_INDI
+        self.rconn = rconn
+        self.channel = redisserver.to_indi_channel
 
 
-def transmit_to_indiserver(data):
-    """sends xml data to the indiserver, normally returns True, returns False if no sender function set
-       data should be an ElementTree Element"""
-    if _SEND is None:
-        # sender has not yet been called to register a sender function
-        return False
-    # convert to binary data and send
-    _SEND(ET.tostring(data))
-    return True
+    def _handle(self, message):
+        "date received from client, to be sent to indiserver"
+        data = message['data'].decode("utf-8")
+        et_data = None
+
+        # convert data to an ET
+        if data == "getProperties":
+            et_data = ET.Element('getProperties', {"version":_INDI_VERSION})
+
+        # and transmit it via the deque
+        if et_data:
+            self._TO_INDI.append(ET.tostring(et_data))
 
 
-def loop():
-    "A blocking loop"
-    global _SEND_START
-    while _SEND_START:
-        # initially wait for a few seconds to allow network connections to be made
-        sleep(2)
-        data = getProperties()
-        if transmit_to_indiserver(data):
-            _SEND_START = False
-    while True:
-        sleep(1)
+    def __call__(self):
+        "Create the pubsub"
+        ps = self.rconn.pubsub(ignore_subscribe_messages=True)
 
+        # subscribe with handler
+        ps.subscribe(**{self.channel:self._handle})
 
-def getProperties():
-    "Creates a getProperties xml"
-    return ET.Element('getProperties', {"version":_INDI_VERSION})
+        # any data received via the to_indi_channel will be sent to
+        # the _handle method
+
+        # blocks and listens to redis
+        while True:
+            message = ps.get_message()
+            if message:
+                print(message)
+            sleep(0.1)
 
 
 

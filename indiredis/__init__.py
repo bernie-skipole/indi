@@ -87,14 +87,6 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
 
 
 
-# Define a callable object to be sent to toxml.sender(), which will be used to 'transmit' data
-# to the indiserver
-
-def _sendertoindiserver(data):
-    "Appends data to the global deque _TO_INDI which is used to transmit to indiserver"""
-    global _TO_INDI
-    _TO_INDI.append(data)
-
 
 def _open_redis(redisserver):
     "Opens a redis connection"
@@ -129,11 +121,11 @@ def inditoredis(indiserver, redisserver):
     # set the prefix to use for redis keys
     parsetypes.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
 
-    # register the function _sendertoindiserver with toxml
-    toxml.sender(_sendertoindiserver)
-    # run toxml.loop - which is blocking, so run in its own thread
-    run_toxml = threading.Thread(target=toxml.loop)
-    # and start toxml.loop in its thread
+    # Create a SenderLoop object, with the _TO_INDI dequeue and redis connection
+    senderloop = toxml.SenderLoop(_TO_INDI, rconn, redisserver)
+    # run senderloop - which is blocking, so run in its own thread
+    run_toxml = threading.Thread(target=senderloop)
+    # and start senderloop in its thread
     run_toxml.start()
 
     # set up socket connections to the indiserver
@@ -150,6 +142,11 @@ def inditoredis(indiserver, redisserver):
 
         # get blocks of data from the indiserver and fill up this list
         from_indi_list = []
+
+        ##########
+        # Test
+        #
+        rconn.publish(redisserver.to_indi_channel, "getProperties")
 
         while True:
 
