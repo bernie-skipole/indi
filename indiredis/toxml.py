@@ -44,14 +44,14 @@ class SenderLoop():
         "date received from client, to be sent to indiserver"
         data = message['data'].decode("utf-8")
         et_data = None
-        print(data)
 
         # convert data to an ET
         if data == "getProperties":
             et_data = ET.Element('getProperties', {"version":_INDI_VERSION})
 
         # and transmit it via the deque
-        if et_data:
+        if et_data is not None:
+            print(ET.tostring(et_data))
             self._TO_INDI.append(ET.tostring(et_data))
 
 
