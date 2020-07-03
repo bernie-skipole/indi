@@ -11,20 +11,11 @@
    via a deque object."""
 
 
-# if Client wants to learn all Devices and all their Properties
-#  send <defProperties>
-# if Client wants to change a Property value or state
-#  set State to Busy
-#  send <newXXX> with device, name and value
-# if Client wants to query a Property’s target value or state
-#  send <getTarValue> with device and name attributes
-
-
 from time import sleep
 
 from datetime import datetime
 
-from base64 import standard_b64decode, standard_b64encode
+from base64 import standard_b64encode
 
 import xml.etree.ElementTree as ET
 
@@ -81,6 +72,16 @@ _INDI_VERSION = "1.7"
 #  [<devicename,<propertyname>,"",<Never|Also|Only>]
 #
 # If propertyname is "", this command applies to all properties of the device.
+#
+#
+#
+# When a propert state changes, according to the white paper:
+#
+# When a Client sends a command to change a Property, the Client
+# shall henceforth consider the Property state to be Busy
+#
+# So this indredis package sets the state to Busy in the hash table 'attributes:<propertyname>:<devicename>'
+# but does not publish a setXXXVector alert, as this is not from the indiserver
 
 
 _VECTORELEMENTS = { "newTextVector":"oneText",
@@ -109,7 +110,9 @@ class SenderLoop():
         # convert data to an ET
         if data.startswith("getProperties:"):
             et_data = _getProperties(self.rconn, self.keyprefix, data)
-        if data.startswith("newBLOBVector:"):
+        elif data.startswith("enableBLOB:"):
+            et_data = _enableBLOB(self.rconn, self.keyprefix, data)
+        elif data.startswith("newBLOBVector:"):
             et_data = _newBLOBVector(self.rconn, self.keyprefix, data)
         elif data.startswith("new"):
             et_data = _newVector(self.rconn, self.keyprefix, data)
@@ -138,7 +141,6 @@ class SenderLoop():
             sleep(0.1)
 
 
-
 def _getProperties(rconn, keyprefix, data):
     "Returns the xml, or None on failure"
     command = data.split(sep=":", maxsplit=1)
@@ -156,6 +158,32 @@ def _getProperties(rconn, keyprefix, data):
     if not name:
         return ET.Element('getProperties', {"version":_INDI_VERSION, "device":device})
     return ET.Element('getProperties', {"version":_INDI_VERSION, "device":device, "name":name})
+
+
+def _enableBLOB(rconn, keyprefix, data):
+    "Returns the xml, or None on failure"
+    command = data.split(sep=":", maxsplit=1)
+    if keyprefix:
+        keystring =  keyprefix + ":" + command[1]
+    else:
+        keystring = command[1]
+    if rconn.llen(keystring) != 4:
+        return
+    device = rconn.lpop(keystring).decode("utf-8")
+    name = rconn.lpop(keystring).decode("utf-8")
+    timestamp = rconn.lpop(keystring) # unused
+    value = rconn.lpop(keystring).decode("utf-8")
+    rconn.delete(keystring)
+    if not device:
+        return
+    if value not in ["Never", "Also", "Only"]:
+        return
+    if not name:
+        vector = ET.Element('getProperties', {"device":device})
+    else:
+        vector = ET.Element('getProperties', {"device":device, "name":name})
+    vector.text = value
+    return vector
 
 
 def _newBLOBVector(rconn, keyprefix, data):
@@ -205,6 +233,7 @@ def _newBLOBVector(rconn, keyprefix, data):
         # value is a binary value, to be base64 encoded
         xmlelement.text = standard_b64encode(value)
         vector.append(xmlelement)
+    _set_busy(rconn, keyprefix, device, name)
     return vector
 
 
@@ -255,9 +284,45 @@ def _newVector(rconn, keyprefix, data):
         xmlelement = ET.Element(_VECTORELEMENTS[command[0]], elementattribs)
         xmlelement.text = value
         vector.append(xmlelement)
+    _set_busy(rconn, keyprefix, device, name)
     return vector
 
 
-               
-    
+#   one key : set
+#   'devices' - set of device names   ('devices' is a literal string)
+
+#   multiple keys : sets
+#   'properties:<devicename>' - set of property names for the device ('properties' is a literal string
+#                                                                     <devicename> is an actual device name)
+
+#   multiple keys : hash tables ( python dictionaries )
+#   'attributes:<propertyname>:<devicename>' - dictionary of attributes for the property ('attributes' is a literal string
+#                                                                                         <propertyname> is an actual property name
+#                                                                                         <devicename> is an actual device name
+
+def _set_busy(rconn, keyprefix, device, name):
+    "Set a property state to Busy"
+    if keyprefix:
+        key = keyprefix + ":" + "devices"
+    else:
+        key = "devices"
+    if not rconn.sismember(key, device):
+        return
+    # it is a known device
+    if keyprefix:
+        key = keyprefix + ":properties:" + device
+    else:
+        key = "properties:" + device
+    if not rconn.sismember(key, name):
+        return
+    # it is a known property, set state to Busy
+    if keyprefix:
+        key = keyprefix + ":attributes:" + name + ":" + device
+    else:
+        key = "attributes:" + name + ":" + device
+    rconn.hset(key, "state", "Busy")
+
+
+
+
 
