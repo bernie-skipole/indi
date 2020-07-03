@@ -8,10 +8,12 @@ rconn = redis.Redis()
 
 # getProperties
 
-rconn.rpush("to_indi:teststring", ("","",""))
-rconn.publish("to_indi", "getProperties:teststring")
+#values = ("", "", "")
+#rconn.rpush("indi_:teststring", *values)
+#rconn.publish("to_indi", "getProperties:teststring")
 
 # getProperties
 
-rconn.rpush("to_indi:teststring2", ("Telescope Simulator","ACTIVE_DEVICES",""))
+values = ("Telescope Simulator","ACTIVE_DEVICES","")
+rconn.rpush("indi_:teststring2", *values)
 rconn.publish("to_indi", "getProperties:teststring2")

@@ -88,6 +88,7 @@ class SenderLoop():
         self._TO_INDI = _TO_INDI
         self.rconn = rconn
         self.channel = redisserver.to_indi_channel
+        self.keyprefix = redisserver.keyprefix
 
 
     def _handle(self, message):
@@ -96,8 +97,8 @@ class SenderLoop():
         et_data = None
 
         # convert data to an ET
-        if data.startwith("getProperties:"):
-            et_data = _getProperties(self.rconn, redisserver.keyprefix, data)
+        if data.startswith("getProperties:"):
+            et_data = _getProperties(self.rconn, self.keyprefix, data)
 
         # and transmit it via the deque
         if et_data is not None:
@@ -123,7 +124,7 @@ class SenderLoop():
 
 
 
-def _getProperties(rconn, data):
+def _getProperties(rconn, keyprefix, data):
     "Returns the xml, or None on failure"
     keystring =  keyprefix + ":" + data[14:]
     if rconn.llen(keystring) != 3:
