@@ -42,21 +42,22 @@ _INDI_VERSION = "1.7"
 # The indiredis package subscribes to the <to_indi_channel>, and will then lookup the "keyprefix:mykeystring" list,
 # and interpret it as in the following examples.
 
-# If the command is getProperties, the indiredis package will always inset the indi Protocol Version 1.7 into
+# If the command is getProperties, the indiredis package will always insert the indi Protocol Version 1.7 into
 # the command, and so this value is not needed.
 
-# publish message:   'getProperties:mykeystring'
+# published message received:   'getProperties:mykeystring'
 # using list key "keyprefix:mykeystring" and value ["","",""]
 # this is the  getProperties command, with no device specified, and therefore is a request for all device properties.
 #                   
 #
-# NOTE: the indiredis package will delete the key and contents, once having read it.
+# NOTE: the indiredis package will delete the keys and contents, once having read it.
 #
 #
-# publish message:   'newTextVector:mykeystring'
+# published message redeived:   'newTextVector:mykeystring'
 # using list key "keyprefix:mykeystring" and list value [<devicename,<propertyname>,"",anotherkeystring, yetanotherkeystring]
 #
-# In this case no timestamp is given, so indiredis will insert one. Then indiredis will look up the two keys given
+# In this case no timestamp is given, so indiredis will insert one. Then indiredis will look up the two keys given to read
+# two text elements
 #
 # key "keyprefix:anotherkeystring" should contain a hash table.
 # similarly key "keyprefix:yetanotherkeystring" should contain a hash table.
@@ -67,7 +68,7 @@ _INDI_VERSION = "1.7"
 # generally the hash table will give the attributes of the element, with the attribute 'value' being set as the element's value.
 #
 # There is one exception to this rule. The enableBLOB command does not include any elements, but only one string of Never|Also|Only
-# So the list for the enableBLOB command will be of the form:
+# So the list for the enableBLOB command does not contain element keys, but will be of the form:
 #
 #  [<devicename,<propertyname>,"",<Never|Also|Only>]
 #
@@ -75,10 +76,10 @@ _INDI_VERSION = "1.7"
 #
 #
 #
-# When a propert state changes, according to the white paper:
+# When a property state changes, according to the white paper:
 #
-# When a Client sends a command to change a Property, the Client
-# shall henceforth consider the Property state to be Busy
+#    When a Client sends a command to change a Property, the Client
+#    shall henceforth consider the Property state to be Busy
 #
 # So this indredis package sets the state to Busy in the hash table 'attributes:<propertyname>:<devicename>'
 # but does not publish a setXXXVector alert, as this is not from the indiserver
@@ -94,20 +95,25 @@ class SenderLoop():
 
     "An instance of this object is callable, which when called, creates a blocking loop"
 
-    def __init__(self, _TO_INDI, rconn, redisserver):
-        """Set the _TO_INDI dequeue and redis connection"""
-        self._TO_INDI = _TO_INDI
+    def __init__(self, sender, rconn, redisserver):
+        """Set the sender object and a loop to read redis published alerts from the client
+
+           The sender object should have an append method, when data is appended to this object
+           it should be sent to the indisserver.
+           """
+        self.sender = sender
         self.rconn = rconn
         self.channel = redisserver.to_indi_channel
         self.keyprefix = redisserver.keyprefix
 
 
     def _handle(self, message):
-        "date received from client, to be sent to indiserver"
+        "data published by the client, to be sent to indiserver"
+        # an alert is published by the client, giving the command
+        # and a redis key string pointing to the data to be sent 
         data = message['data'].decode("utf-8")
         et_data = None
-
-        # convert data to an ET
+        # get the details from redis key stores and convert to xml 
         if data.startswith("getProperties:"):
             et_data = _getProperties(self.rconn, self.keyprefix, data)
         elif data.startswith("enableBLOB:"):
@@ -117,14 +123,15 @@ class SenderLoop():
         elif data.startswith("new"):
             et_data = _newVector(self.rconn, self.keyprefix, data)
         else:
+            # the published alert from the client is not recognised
             return
-        # and transmit it via the deque
+        # and transmit the xml data via the sender object
         if et_data is not None:
-            self._TO_INDI.append(ET.tostring(et_data))
+            self.sender.append(ET.tostring(et_data))
 
 
     def __call__(self):
-        "Create the pubsub"
+        "Create the redis pubsub loop"
         ps = self.rconn.pubsub(ignore_subscribe_messages=True)
 
         # subscribe with handler
@@ -141,14 +148,24 @@ class SenderLoop():
             sleep(0.1)
 
 
+############################################################
+# Different commands have to be treated in different ways,
+# the _handle method calls these functions which are used to
+# read redis stores, and fill the xml structure
+#############################################################
+
+
 def _getProperties(rconn, keyprefix, data):
-    "Returns the xml, or None on failure"
+    "Returns the xml for the getProperties command, or None on failure"
     command = data.split(sep=":", maxsplit=1)
+    # get the store key
     if keyprefix:
         keystring =  keyprefix + ":" + command[1]
     else:
         keystring = command[1]
-    if rconn.llen(keystring) != 3:
+    # getProperties should only have device, property name and optionally timestamp
+    # timestamp is unused, but allowed so a uniform store is used across commands
+    if rconn.llen(keystring) < 2:
         return
     device = rconn.lpop(keystring).decode("utf-8")
     name = rconn.lpop(keystring).decode("utf-8")
@@ -161,7 +178,7 @@ def _getProperties(rconn, keyprefix, data):
 
 
 def _enableBLOB(rconn, keyprefix, data):
-    "Returns the xml, or None on failure"
+    "Returns the xml for the enableBLOB command, or None on failure"
     command = data.split(sep=":", maxsplit=1)
     if keyprefix:
         keystring =  keyprefix + ":" + command[1]
@@ -179,15 +196,15 @@ def _enableBLOB(rconn, keyprefix, data):
     if value not in ["Never", "Also", "Only"]:
         return
     if not name:
-        vector = ET.Element('getProperties', {"device":device})
+        vector = ET.Element('enableBLOB', {"device":device})
     else:
-        vector = ET.Element('getProperties', {"device":device, "name":name})
+        vector = ET.Element('enableBLOB', {"device":device, "name":name})
     vector.text = value
     return vector
 
 
 def _newBLOBVector(rconn, keyprefix, data):
-    "Returns the xml, or None on failure"
+    "Returns the xml for the newBLOBVector command, or None on failure"
     command = data.split(sep=":", maxsplit=1)
     # command[0] is newBLOBVector
     # command[1] is the key string provided by the client
@@ -214,7 +231,7 @@ def _newBLOBVector(rconn, keyprefix, data):
             break
         elementkeys.append(key.decode("utf-8"))
     rconn.delete(keystring)
-    vector = ET.Element(command[0], {"device":device, "name":name, "timestamp":timestamp})
+    vector = ET.Element("newBLOBVector", {"device":device, "name":name, "timestamp":timestamp})
     for key in elementkeys:
         if keyprefix:
             ekey = keyprefix + ":" + key
@@ -225,11 +242,9 @@ def _newBLOBVector(rconn, keyprefix, data):
             continue
         rconn.delete(ekey)
         # get value as a binary item
-        value = attribs.pop(b'value', '')
+        value = attribs.pop(b'value', b'')
         elementattribs = {att.decode("utf-8"):val.decode("utf-8") for att,val in attribs.items()}
-        # get the element tag, for example, command "newTextVector" has element tag "oneText"
-        # which is available by the _VECTORELEMENTS global dictionary
-        xmlelement = ET.Element(_VECTORELEMENTS[command[0]], elementattribs)
+        xmlelement = ET.Element("oneBLOB", elementattribs)
         # value is a binary value, to be base64 encoded
         xmlelement.text = standard_b64encode(value)
         vector.append(xmlelement)
