@@ -19,7 +19,7 @@ from time import sleep
 
 import redis
 
-from indiredis import redis_server, parsetypes
+from indiredis import redis_server, fromxml
 
 
 
@@ -56,7 +56,7 @@ class From_INDI():
         print(data)
 
         if data == b"defTextVector:ACTIVE_DEVICES:Telescope Simulator":
-            x = parsetypes.readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
+            x = fromxml.readvector(rconn, 'Telescope Simulator', 'ACTIVE_DEVICES')
             print(f"{x.label}\n{x}")
 
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
                           to_indi_channel='to_indi', from_indi_channel='from_indi')
 
 
-    parsetypes.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+    fromxml.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
 
     rconn = _open_redis(redisserver)
 
