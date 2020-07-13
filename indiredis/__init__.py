@@ -37,7 +37,7 @@ except:
     MQTT_AVAILABLE = False
 
 
-from . import toxml, fromxml
+from . import toindi, fromindi
 
 
 
@@ -119,14 +119,14 @@ def inditoredis(indiserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    fromxml.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
 
     # Create a SenderLoop object, with the _TO_INDI dequeue and redis connection
-    senderloop = toxml.SenderLoop(_TO_INDI, rconn, redisserver)
+    senderloop = toindi.SenderLoop(_TO_INDI, rconn, redisserver)
     # run senderloop - which is blocking, so run in its own thread
-    run_toxml = threading.Thread(target=senderloop)
+    run_toindi = threading.Thread(target=senderloop)
     # and start senderloop in its thread
-    run_toxml.start()
+    run_toindi.start()
 
     # set up socket connections to the indiserver
     mysel = selectors.DefaultSelector()
@@ -158,8 +158,8 @@ def inditoredis(indiserver, redisserver):
                     from_indi = b"".join(from_indi_list)
                     # and empty the from_indi_list
                     from_indi_list.clear()
-                    # send the data to fromxml to parse and store in redis
-                    fromxml.receive_from_indiserver(from_indi, rconn)
+                    # send the data to fromindi to parse and store in redis
+                    fromindi.receive_from_indiserver(from_indi, rconn)
 
                 if mask & selectors.EVENT_WRITE:
                     if _TO_INDI:
@@ -281,7 +281,7 @@ def inditomqtt(indiserver, mqttserver):
 def _mqtttoredis_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     # we have received a message from the indiserver, load it into redis
-    fromxml.receive_from_indiserver(message.payload, userdata["rconn"] )
+    fromindi.receive_from_indiserver(message.payload, userdata["rconn"] )
  
 
 def _mqtttoredis_on_connect(client, userdata, flags, rc):
@@ -304,7 +304,7 @@ def _mqtttoredis_on_disconnect(client, userdata, rc):
 
 
 # Define an object with an append method to be sent to
-# to toxml.toxml.SenderLoop, which will be used to 'transmit' data
+# to toindi.toindi.SenderLoop, which will be used to 'transmit' data
 
 
 class _SenderToMQTT():
@@ -345,7 +345,7 @@ def mqtttoredis(mqttserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    fromxml.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
 
     # create an mqtt client and connection
     userdata={ "comms"           : False,        # an indication mqtt connection is working
@@ -372,11 +372,11 @@ def mqtttoredis(mqttserver, redisserver):
     sender = _SenderToMQTT(mqtt_client, userdata)
 
     # Create a SenderLoop object, with the sender object and redis connection
-    senderloop = toxml.SenderLoop(sender, rconn, redisserver)
+    senderloop = toindi.SenderLoop(sender, rconn, redisserver)
     # run senderloop - which is blocking, so run in its own thread
-    run_toxml = threading.Thread(target=senderloop)
+    run_toindi = threading.Thread(target=senderloop)
     # and start senderloop in its thread
-    run_toxml.start()
+    run_toindi.start()
 
     # now run the MQTT blocking loop
     print("MQTT loop started")

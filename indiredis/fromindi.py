@@ -884,7 +884,7 @@ def setVector(rconn, vector):
     oldvector = readvector(rconn, device, name)
     if oldvector is None:
         # device or property name is unknown
-        return False
+        return
     # call the update method of the property
     oldvector.update(rconn, vector)
     return name,device
