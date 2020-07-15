@@ -55,16 +55,16 @@ class SenderLoop():
     def _handle(self, message):
         "data published by the client, to be sent to indiserver"
         # an message is published by the client, giving the command
-        data = message['data'].decode("utf-8")
-        root = ET.fromstring(data)
+        data = message['data']
+        root = ET.fromstring(data.decode("utf-8"))
         if root.tag == "newTextVector":
-            self._set_busy(vector)
+            self._set_busy(root)
         elif root.tag == "newNumberVector":
-            self._set_busy(vector)
+            self._set_busy(root)
         elif root.tag == "newSwitchVector":
-            self._set_busy(vector)
+            self._set_busy(root)
         elif root.tag == "newBLOBVector":
-            self._set_busy(vector)
+            self._set_busy(root)
         # and transmit the xml data via the sender object
         if data is not None:
             self.sender.append(data)

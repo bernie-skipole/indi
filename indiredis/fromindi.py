@@ -36,7 +36,6 @@ def receive_from_indiserver(data, rconn):
     root = ET.fromstring(xmlstring)
     # notification is published on redis using the from_indi_channel
     channel = get_from_indi_channel()
-
     for child in root:
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
