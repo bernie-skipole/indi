@@ -131,7 +131,7 @@ def get_from_indi_channel():
 def key(*keys):
     "Add the prefix to keys, delimit keys with :"
     # example - if keys are 'device', 'property' this will result in a key of
-    # 'keyprefix:device:property'
+    # 'keyprefixdevice:property'
     return _KEYPREFIX + ":".join(keys)
 
 #   redis keys and data

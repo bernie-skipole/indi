@@ -1,0 +1,479 @@
+{
+"backcol": "#3b3b5b",
+"body_class": "w3-theme",
+"colours": {
+"w3_border_theme_color": "#649b90",
+"w3_hover_border_theme_hover_color": "#9b7a64",
+"w3_hover_text_theme_color": "#9b7a64",
+"w3_hover_theme_hover_background_color": "#9b6490",
+"w3_hover_theme_hover_color": "#ffffff",
+"w3_text_theme_color": "#649b90",
+"w3_theme_action_background_color": "#0f0f17",
+"w3_theme_action_color": "#c1c1d7",
+"w3_theme_background_color": "#3b3b5b",
+"w3_theme_color": "#ffffff",
+"w3_theme_d1_background_color": "#27273d",
+"w3_theme_d1_color": "#c1c1d7",
+"w3_theme_d2_background_color": "#1a1a29",
+"w3_theme_d2_color": "#c1c1d7",
+"w3_theme_d3_background_color": "#11111b",
+"w3_theme_d3_color": "#c0c0d8",
+"w3_theme_d4_background_color": "#0b0b12",
+"w3_theme_d4_color": "#c0c0d8",
+"w3_theme_d5_background_color": "#07070c",
+"w3_theme_d5_color": "#bfbfd9",
+"w3_theme_dark_background_color": "#1e1e2e",
+"w3_theme_dark_color": "#c1c1d7",
+"w3_theme_l1_background_color": "#b6b6d0",
+"w3_theme_l1_color": "#000000",
+"w3_theme_l2_background_color": "#e7e7ef",
+"w3_theme_l2_color": "#29293d",
+"w3_theme_l3_background_color": "#f7f7fa",
+"w3_theme_l3_color": "#27273f",
+"w3_theme_l4_background_color": "#fcfcfd",
+"w3_theme_l4_color": "#000000",
+"w3_theme_l5_background_color": "#fefefe",
+"w3_theme_l5_color": "#000000",
+"w3_theme_light_background_color": "#9292b8",
+"w3_theme_light_color": "#000000"
+},
+"css_links": [
+"w3_css",
+"w3_theme_ski_css",
+"ski_css"
+],
+"js_links": [
+"jquery_core",
+"skipole_js"
+],
+"widgets": {
+"checkbox": {
+"CheckBox1": {
+"checkbox_class": "w3-check",
+"error_class": "w3-panel w3-red",
+"left_class": "ski_left_label",
+"widget_class": "w3-section"
+},
+"CheckBox2": {
+"checkbox_class": "w3-check"
+},
+"CheckInputs": {
+"checkbox_class": "w3-check",
+"error_class": "w3-panel w3-red"
+},
+"CheckedText": {
+"checkbox_class": "w3-check",
+"error_class": "w3-panel w3-red",
+"input_class": "ski_input",
+"widget_class": "w3-section"
+},
+"SubmitCheckBox1": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"checkbox_class": "w3-check",
+"error_class": "w3-panel w3-red",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+}
+},
+"confirm": {
+"AlertClear1": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d4",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"error_class": "w3-panel w3-red",
+"inner_class": "w3-panel w3-theme-d4",
+"widget_class": "w3-modal"
+},
+"ConfirmBox1": {
+"button1_class": "w3-button w3-round w3-theme-d4",
+"button1_style": "margin-left:20%;margin-right:10px;",
+"button2_class": "w3-button w3-round w3-theme-d4",
+"button2_style": "",
+"buttondiv_class": "w3-bar",
+"paradiv_class": "w3-panel",
+"widget_class": "w3-modal"
+},
+"ConfirmBox2": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-l1",
+"button1_class": "w3-button w3-round w3-theme-d4",
+"button1_style": "margin-left:20%;margin-right:10px;",
+"button2_class": "w3-button w3-round w3-theme-d4",
+"button2_style": "",
+"buttondiv_class": "w3-bar",
+"para_class": "",
+"paradiv_class": "w3-panel",
+"widget_class": "w3-modal"
+}
+},
+"debug_tools": {
+"ShowCallData": {
+"error_class": "w3-panel w3-red",
+"para_class": "w3-section",
+"widget_class": "w3-section"
+},
+"ShowResponders": {
+"table_class": "w3-table w3-bordered"
+}
+},
+"dropdown": {
+"DropDown1": {
+"error_class": "w3-panel w3-red",
+"select_class": "ski_input",
+"widget_class": "w3-section"
+},
+"HiddenContainer": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d2 w3-border",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"buttondiv_style": "",
+"inner_class": "w3-panel",
+"widget_class": "w3-modal",
+"widget_style": ""
+},
+"SubmitDropDown1": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"error_class": "w3-panel w3-red",
+"inputdiv_class": "w3-section",
+"label_class": "ski_left_label",
+"select_class": "ski_input",
+"widget_class": "w3-section"
+}
+},
+"error_messages": {
+"ErrorClear1": {
+"boxdiv_class": "w3-modal-content w3-red",
+"buttondiv_class": "w3-panel",
+"error_class": "w3-panel",
+"widget_class": "w3-modal"
+},
+"ErrorClear2": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d3",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"close_class": "w3-button w3-round w3-theme-l1 w3-right",
+"error_class": "w3-panel w3-center w3-red",
+"widget_class": "w3-modal"
+},
+"ErrorDiv": {
+"error_class": "w3-panel w3-red"
+},
+"ErrorPara": {
+"widget_class": "w3-red"
+}
+},
+"headers": {
+"DropDownButton1": {
+"button_class": "w3-button w3-black",
+"div_class": "w3-dropdown-content w3-bar-block w3-card-4",
+"link_class": "w3-bar-item w3-button",
+"widget_class": "w3-dropdown-hover"
+},
+"HeaderText2": {
+"error_class": "w3-panel w3-red"
+},
+"NavButtons1": {
+"button_class": "w3-button w3-round w3-theme-l1",
+"error_class": "w3-panel w3-red",
+"ul_class": "w3-ul",
+"widget_class": ""
+},
+"TabButtons1": {
+"button_class": "w3-bar-item w3-button",
+"widget_class": "w3-bar"
+}
+},
+"inputforms": {
+"Form1": {
+"error_class": "",
+"widget_class": "w3-section"
+},
+"SubmitButton1": {
+"widget_class": "w3-button w3-theme-d4"
+},
+"SubmitButton2": {
+"widget_class": "w3-button w3-theme-d4 w3-margin-left"
+},
+"SubmitForm1": {
+"button_class": "w3-button w3-theme-d4",
+"div_class": "",
+"error_class": "w3-panel w3-red",
+"left_class": "ski_left_label",
+"widget_class": "w3-section"
+}
+},
+"inputtables": {
+"InputTable5": {
+"button1_class": "w3-button w3-padding-small w3-small w3-theme-dark",
+"button2_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-margin-left",
+"input_class": "ski_input",
+"widget_class": "w3-section"
+}
+},
+"inputtext": {
+"Password2": {
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class": "ski_input",
+"input_errored_class": "w3-pale-red",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+},
+"SubmitDict1": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"inputdiv_class": "w3-center",
+"ul_class": "w3-center",
+"ul_style": "list-style-type: none;",
+"widget_style": "width:30%"
+},
+"SubmitTextInput1": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class": "ski_input",
+"input_errored_class": "w3-pale-red",
+"inputandbutton_class": "ski_nowrap",
+"inputdiv_class": "w3-section",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+},
+"SubmitTextInput2": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_errored_class": "w3-pale-red",
+"inputandbutton_style": "white-space: nowrap;",
+"inputdiv_class": "w3-section",
+"label_style": "display:inline-block;margin-right:1%;text-align:right;width:30%;",
+"widget_class": "w3-container"
+},
+"SubmitTextInput3": {
+"button_class": "w3-button w3-theme-d4",
+"button_label_class": "ski_left_label",
+"buttondiv_class": "w3-section",
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class": "ski_input",
+"input_errored_class": "w3-pale-red",
+"inputdiv_class": "w3-section",
+"label_class": "ski_left_label",
+"outer_class": "w3-section",
+"widget_class": "w3-section"
+},
+"TextInput1": {
+"widget_class": "ski_input"
+},
+"TextInput2": {
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class": "ski_input",
+"input_errored_class": "w3-pale-red",
+"inputdiv_class": "",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+},
+"TextInput3": {
+"input_accepted_class": "w3-pale-green",
+"input_class": "ski_input",
+"input_errored_class": "w3-pale-red",
+"input_style": "margin-right:1em;",
+"left_class": "ski_left_label"
+},
+"TextInput4": {
+"input_accepted_class": "w3-pale-green",
+"input_class": "",
+"input_errored_class": "w3-pale-red",
+"input_style": "padding:8px;border:2px solid #ccc;width:80%",
+"inputdiv_class": "w3-container",
+"label_class": "",
+"labeldiv_class": "w3-container",
+"redstar_class": "w3-margin-left",
+"redstar_style": "color:red",
+"widget_class": ""
+},
+"TwoInputsSubmit1": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class1": "ski_input",
+"input_class2": "ski_input  w3-margin-left",
+"input_errored_class": "w3-pale-red",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+}
+},
+"links": {
+"ButtonLink1": {
+"error_class": "w3-button w3-block w3-theme-action",
+"widget_class": "w3-button w3-block w3-theme-d4"
+},
+"ButtonLink2": {
+"button_class": "w3-button w3-block w3-theme-l1 w3-border",
+"buttondiv_class": "",
+"error_class": "w3-panel w3-red",
+"widget_class": "w3-section",
+"widget_style": ""
+},
+"GeneralButtonTable2": {
+"button_class": "w3-button w3-padding-small w3-small w3-theme-dark",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"JSONButtonLink": {
+"error_class": "w3-button w3-block w3-theme-action",
+"widget_class": "w3-button w3-block w3-theme-d4"
+},
+"LinkTextBlockTable1": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"LinkTextBlockTable2": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"MessageButton": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d4",
+"buttondiv_class": "",
+"inner_class": "w3-panel w3-theme-d4",
+"messagediv_class": "w3-modal",
+"x_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"xdiv_class": "w3-bar"
+},
+"Table1_Button": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"Table1_Buttons4": {
+"even_class": "",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"Table2_Button": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"Table3_Buttons2": {
+"button_class": "w3-button w3-padding-small w3-small w3-theme-dark",
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+}
+},
+"logins": {
+"NamePasswd1": {
+"button_class": "w3-button w3-theme-d4 w3-margin",
+"button_style": "margin-left:40%",
+"div1_class": "w3-section",
+"div2_class": "w3-section",
+"div3_class": "ski_left_40_10",
+"error_class": "w3-panel w3-red",
+"input_accepted_class": "w3-pale-green",
+"input_class1": "ski_input w3-margin-left",
+"input_class2": "ski_input  w3-margin-left",
+"input_errored_class": "w3-pale-red",
+"inputdiv_class": "w3-container",
+"label_class1": "ski_left_label",
+"label_class2": "ski_left_label",
+"widget_class": ""
+},
+"Pin4": {
+"butt_div_class": "w3-section",
+"button_class": "w3-button w3-theme-d4",
+"error_class": "w3-panel w3-red",
+"widget_class": "w3-section"
+}
+},
+"paras": {
+"DivPara": {
+"error_class": "w3-red",
+"widget_class": "w3-section"
+},
+"JSONDivLink": {
+"button_class": "w3-button w3-block w3-theme-l1 w3-border",
+"div_class": "w3-card w3-theme-light w3-padding",
+"widget_class": "w3-section"
+},
+"ShowPara1": {
+"error_class": "w3-panel w3-red",
+"widget_class": "w3-section"
+},
+"ShowPara2": {
+"close_class": "w3-button w3-round w3-theme-l1 w3-right",
+"widget_class": "w3-panel w3-theme-action w3-center"
+}
+},
+"radio": {
+"BooleanRadio": {
+"left_class1": "ski_left_label",
+"left_class2": "ski_left_label",
+"widget_class": "w3-section"
+},
+"RadioButton1": {
+"error_class": "w3-panel w3-red",
+"widget_class": "w3-section"
+},
+"TwoRadioOptions": {
+"widget_class": "w3-section"
+}
+},
+"tables": {
+"ButtonTextBlockTable1": {
+"button_class": "w3-button w3-padding-small w3-small w3-theme-dark",
+"error_class": "w3-panel w3-red",
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"table_class": "w3-table w3-theme-d1 w3-border w3-bordered",
+"widget_class": "w3-section"
+},
+"TextBlockTable2": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"ThreeColTable1": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
+"TwoColTable1": {
+"header_class": "w3-theme-d2",
+"odd_class": "w3-theme-d1",
+"widget_class": "w3-table w3-bordered w3-centered"
+}
+},
+"textarea": {
+"SubmitTextArea": {
+"button_class": "w3-button w3-theme-d4 w3-margin-left",
+"error_class": "w3-panel w3-red",
+"inputdiv_class": "",
+"textarea_class": "ski_input",
+"widget_class": "w3-section"
+},
+"TextArea2": {
+"error_class": "w3-panel w3-red",
+"label_class": "",
+"textarea_class": "ski_input",
+"widget_class": "w3-section"
+}
+},
+"upload": {
+"SubmitUploadFile1": {
+"error_class": "w3-panel w3-red",
+"filebutton_class": "w3-button w3-theme-d4",
+"fileinputdiv_class": "w3-section",
+"submitbutton_class": "w3-button w3-theme-d4",
+"submitinputdiv_class": "w3-section",
+"widget_class": "w3-section"
+},
+"UploadFile1": {
+"error_class": "w3-panel w3-red",
+"filebutton_class": "w3-button w3-theme-d4",
+"label_class": "ski_left_label",
+"widget_class": "w3-section"
+}
+}
+}
+}

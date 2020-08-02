@@ -1,0 +1,1040 @@
+{
+"url": "/",
+"default_language": "en",
+"brief": "General indiredis website",
+"version": "0.0.1",
+"skipole": "4.0.5",
+"specialpages": {
+"favicon": 3002,
+"general_json": 2002,
+"getdevices": 2,
+"getproperties": 4,
+"home": 1,
+"jquery_core": "skis,jquery_core",
+"no_javascript": "skis,no_javascript",
+"properties": 3,
+"redirector": "skis,redirector",
+"server_error": "skis,server_error",
+"ski_basic": "skis,ski_basic",
+"ski_checkbox": "skis,ski_checkbox",
+"ski_confirm": "skis,ski_confirm",
+"ski_debug_tools": "skis,ski_debug_tools",
+"ski_dropdown": "skis,ski_dropdown",
+"ski_error_messages": "skis,ski_error_messages",
+"ski_footers": "skis,ski_footers",
+"ski_headers": "skis,ski_headers",
+"ski_info": "skis,ski_info",
+"ski_inputforms": "skis,ski_inputforms",
+"ski_inputtables": "skis,ski_inputtables",
+"ski_inputtext": "skis,ski_inputtext",
+"ski_links": "skis,ski_links",
+"ski_lists": "skis,ski_lists",
+"ski_logins": "skis,ski_logins",
+"ski_paras": "skis,ski_paras",
+"ski_paths": "skis,ski_paths",
+"ski_radio": "skis,ski_radio",
+"ski_svgbasics": "skis,ski_svgbasics",
+"ski_svggraphs": "skis,ski_svggraphs",
+"ski_svgmeters": "skis,ski_svgmeters",
+"ski_tables": "skis,ski_tables",
+"ski_textarea": "skis,ski_textarea",
+"ski_upload": "skis,ski_upload",
+"skipole_js": "skis,skipole_js",
+"url_not_found": "skis,url_not_found",
+"validate_error": "skis,validate_error",
+"w3_css": "skis,w3_css",
+"w3_theme_ski_css": 1008
+},
+"sections": {
+"device": [
+"Section",
+{
+"tag_name": "div",
+"brief": "Displays a device",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "h3",
+"brief": "Contains device link",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "devicename",
+"brief": "Link to the device",
+"fields": {
+"button_text": "",
+"clear_error": false,
+"error_class": "",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "3",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Horizontal rule",
+"show": true
+}
+]
+]
+}
+],
+"header": [
+"Section",
+{
+"tag_name": "div",
+"brief": "site header",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "Site description",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"INDI Client demonstrator"
+]
+]
+}
+]
+]
+}
+],
+"property": [
+"Section",
+{
+"tag_name": "div",
+"brief": "Displays a property",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "headers.HeaderText3",
+"name": "propertyname",
+"brief": "Shows the propert name",
+"fields": {
+"clear_error": false,
+"error_class": "",
+"h_class": "",
+"h_style": "",
+"large_text": "",
+"p_class": "",
+"p_style": "",
+"show": true,
+"show_error": "",
+"small_text": "",
+"widget_class": "",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "paras.TagBlock",
+"name": "textvector",
+"brief": "Contains a TextVector property",
+"fields": {
+"drag": "",
+"drop": "",
+"dropident": "",
+"hide": false,
+"show": false,
+"tag": "div",
+"widget_class": "",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of TextVector attributes",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "tvproperties",
+"brief": "Text Vector properties",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of Text Elements",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "tvelements",
+"brief": "Text Vector elements",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "paras.TagBlock",
+"name": "numbervector",
+"brief": "Contains a NumberVector property",
+"fields": {
+"drag": "",
+"drop": "",
+"dropident": "",
+"hide": false,
+"show": false,
+"tag": "div",
+"widget_class": "",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of NumberVector attributes",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "nvproperties",
+"brief": "Number Vector properties",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of Number Elements",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "nvelements",
+"brief": "Number Vector elements",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Horizontal rule between properties",
+"show": true
+}
+]
+]
+}
+]
+},
+"RootFolder": {
+"brief": "Site root",
+"default_page_name": "index",
+"restricted": false,
+"folders": {
+"css": {
+"ident": 1000,
+"brief": "Holds CSS pages",
+"default_page_name": "index",
+"restricted": false,
+"folders": {},
+"pages": {
+"w3-theme-ski.css": {
+"ident": 1008,
+"brief": "Links to .../static/css/w3-theme-ski.css",
+"FilePage": {
+"filepath": "webdemo/static/css/w3-theme-ski.css",
+"enable_cache": true,
+"mimetype": "text/css"
+}
+}
+}
+},
+"images": {
+"ident": 3000,
+"brief": "Holds images",
+"default_page_name": "index",
+"restricted": false,
+"folders": {},
+"pages": {
+"logo.svg": {
+"ident": 3001,
+"brief": "skipole logo",
+"FilePage": {
+"filepath": "webdemo/static/images/logo.svg",
+"enable_cache": true,
+"mimetype": "image/svg+xml"
+}
+},
+"logo_icon16.svg": {
+"ident": 3002,
+"brief": "skipole icon",
+"FilePage": {
+"filepath": "webdemo/static/images/logo_icon16.svg",
+"enable_cache": true,
+"mimetype": "image/svg+xml"
+}
+}
+}
+},
+"restricted": {
+"ident": 2000,
+"brief": "Holds pages not accessable directly via URL",
+"default_page_name": "index",
+"restricted": true,
+"folders": {},
+"pages": {
+"devices": {
+"ident": 2001,
+"brief": "Lists devices",
+"TemplatePage": {
+"show_backcol": false,
+"last_scroll": true,
+"interval": 0,
+"interval_target": null,
+"catch_to_html": null,
+"lang": "en",
+"backcol": "#ffffff",
+"default_error_widget": [
+"",
+"top_error"
+]
+},
+"head": [
+"Part",
+{
+"tag_name": "head",
+"brief": "The head section of the page",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The charset meta declaration",
+"show": true,
+"attribs": {
+"charset": "utf-8"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The viewport meta declaration",
+"show": true,
+"attribs": {
+"content": "width=device-width, initial-scale=1",
+"name": "viewport"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "title",
+"brief": "The page title element",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Index"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "link to favicon",
+"show": true,
+"attribs": {
+"href": "{favicon}",
+"rel": "icon",
+"type": "image/svg+xml"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_css",
+"show": true,
+"attribs": {
+"href": "{w3_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_theme_ski.css",
+"show": true,
+"attribs": {
+"href": "{w3_theme_ski_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to jquery_core",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{jquery_core}"
+},
+"parts": []
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to skipole_js",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{skipole_js}"
+},
+"parts": []
+}
+]
+]
+}
+],
+"body": [
+"Part",
+{
+"tag_name": "body",
+"brief": "The body section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-theme"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "containing div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container"
+},
+"parts": [
+[
+"SectionPlaceHolder",
+{
+"brief": "Shows site header",
+"section_name": "header",
+"placename": "header",
+"multiplier": 0,
+"mtag": "div"
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "getdevices",
+"brief": "Calls getproperties to request devices/properties update",
+"fields": {
+"button_text": "Refresh Devices",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "getdevices",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4 w3-right",
+"widget_style": "width:20em;"
+}
+}
+],
+[
+"Widget",
+{
+"class": "error_messages.ErrorPara",
+"name": "top_error",
+"brief": "Default error widget for the page",
+"fields": {
+"clear_error": false,
+"hide": true,
+"show": true,
+"show_error": "An unknown error has occurred.",
+"widget_class": "w3-red",
+"widget_style": ""
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "Devices title",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Devices:"
+],
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Horizontal rule",
+"show": true
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Holds buttons",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "links.ListLinks",
+"name": "devicelinks",
+"brief": "Links to devices",
+"fields": {
+"force_ident": false,
+"li_class": "",
+"link_class": "",
+"links": [],
+"show": true,
+"target": "",
+"widget_class": "",
+"widget_style": ""
+}
+}
+],
+[
+"SectionPlaceHolder",
+{
+"brief": "section holding device",
+"section_name": "device",
+"placename": "device",
+"multiplier": 0,
+"mtag": "div"
+}
+]
+]
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"general_json": {
+"ident": 2002,
+"brief": "Empty JSON file for general use",
+"JSON": {
+"enable_cache": false,
+"content": {}
+}
+},
+"properties": {
+"ident": 2003,
+"brief": "Listing Properties of a device",
+"TemplatePage": {
+"show_backcol": false,
+"last_scroll": true,
+"interval": 0,
+"interval_target": null,
+"catch_to_html": null,
+"lang": "en",
+"backcol": "#ffffff",
+"default_error_widget": [
+"",
+"top_error"
+]
+},
+"head": [
+"Part",
+{
+"tag_name": "head",
+"brief": "The head section of the page",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The charset meta declaration",
+"show": true,
+"attribs": {
+"charset": "utf-8"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The viewport meta declaration",
+"show": true,
+"attribs": {
+"content": "width=device-width, initial-scale=1",
+"name": "viewport"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "title",
+"brief": "The page title element",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Index"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "link to favicon",
+"show": true,
+"attribs": {
+"href": "{favicon}",
+"rel": "icon",
+"type": "image/svg+xml"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_css",
+"show": true,
+"attribs": {
+"href": "{w3_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_theme_ski.css",
+"show": true,
+"attribs": {
+"href": "{w3_theme_ski_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to jquery_core",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{jquery_core}"
+},
+"parts": []
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to skipole_js",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{skipole_js}"
+},
+"parts": []
+}
+]
+]
+}
+],
+"body": [
+"Part",
+{
+"tag_name": "body",
+"brief": "The body section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-theme"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "containing div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Home link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-button w3-block w3-theme-d4 w3-right",
+"href": "{home}",
+"style": "width:20em; margin-top:10px;"
+},
+"parts": [
+[
+"Text",
+"Devices"
+]
+]
+}
+],
+[
+"SectionPlaceHolder",
+{
+"brief": "Shows site header",
+"section_name": "header",
+"placename": "header",
+"multiplier": 0,
+"mtag": "div"
+}
+],
+[
+"Widget",
+{
+"class": "error_messages.ErrorPara",
+"name": "top_error",
+"brief": "Default error widget for the page",
+"fields": {
+"clear_error": false,
+"hide": true,
+"show": true,
+"show_error": "An unknown error has occurred.",
+"widget_class": "w3-red",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "getprops",
+"brief": "Calls getproperties",
+"fields": {
+"button_text": "Refresh Properties",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "getproperties",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4 w3-right",
+"widget_style": "width:20em;"
+}
+}
+],
+[
+"Widget",
+{
+"class": "headers.HeaderText2",
+"name": "devicename",
+"brief": "Displays the device name",
+"fields": {
+"clear_error": false,
+"error_class": "w3-panel w3-red",
+"h_class": "",
+"h_style": "",
+"large_text": "",
+"p_class": "",
+"p_style": "",
+"show": true,
+"show_error": "",
+"small_text": "",
+"widget_class": "",
+"widget_style": ""
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "properties header",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Properties:"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Horizontal rule",
+"show": true
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Holds property sections",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"SectionPlaceHolder",
+{
+"brief": "Shows a device property",
+"section_name": "property",
+"placename": "property",
+"multiplier": 0,
+"mtag": "div"
+}
+]
+]
+}
+]
+]
+}
+]
+]
+}
+]
+}
+}
+}
+},
+"pages": {
+"getdevices": {
+"ident": 2,
+"brief": "Responder to get devices/properties update",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [],
+"fail_ident": "home",
+"submit_list": [
+"webcode",
+"devices",
+"getProperties"
+],
+"target_ident": "home"
+},
+"original_fields": {}
+}
+},
+"getproperties": {
+"ident": 4,
+"brief": "Refreshes properties for a device",
+"RespondPage": {
+"class": "AllowStoreKeyed",
+"original_args": {
+"allowed_callers": [
+2003
+],
+"alternate_ident": "home",
+"fail_ident": "properties",
+"submit_list": [
+"webcode",
+"devices",
+"getDeviceProperties"
+],
+"submit_option": true,
+"target_ident": 2003,
+"validate_fail_ident": null,
+"validate_option": false
+},
+"original_fields": {
+"getprops:get_field1": "devicename"
+}
+}
+},
+"index": {
+"ident": 1,
+"brief": "Gets list of devices, fills the index page",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [],
+"fail_ident": 2001,
+"submit_list": [
+"webcode",
+"devices",
+"devicelist"
+],
+"target_ident": 2001
+},
+"original_fields": {}
+}
+},
+"properties": {
+"ident": 3,
+"brief": "Responder to get device properties for page",
+"RespondPage": {
+"class": "FieldStoreSubmit",
+"original_args": {
+"fail_ident": "home",
+"submit_list": [
+"webcode",
+"devices",
+"propertylist"
+],
+"target_ident": 2003
+},
+"original_fields": {
+"get_field1": ""
+}
+}
+}
+}
+}
+}
