@@ -13,12 +13,13 @@ def devicelist(skicall):
     "Gets a list of devices"
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    devices = tools.device_list(rconn, redisserver)
+    devices = tools.devices(rconn, redisserver)
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
     for index,devicename in enumerate(devices):
         skicall.page_data['device_'+str(index),'devicename', 'button_text'] = devicename
         skicall.page_data['device_'+str(index),'devicename','get_field1'] = devicename
+
 
 def propertylist(skicall):
     "Gets a list of properties for the given device"
@@ -68,7 +69,7 @@ def _findproperties(skicall, devicename):
     skicall.page_data['getprops','get_field1'] = devicename
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    properties = tools.property_list(rconn, redisserver, devicename)
+    properties = tools.properties(rconn, redisserver, devicename)
     if not properties:
         raise FailPage("No properties for the device have been found")
     # properties is a list of properties for the given device
@@ -153,7 +154,7 @@ def _show_numbervector(skicall, index, ad):
         label = eld.get('label')
         if label is None:
             eld['label'] = element
-        contents.append(eld['label'] + " : " + eld['value'])
+        contents.append(eld['label'] + " : " + eld['formatted_number'])
     skicall.page_data['property_'+str(index),'nvelements', 'contents'] = contents
 
 

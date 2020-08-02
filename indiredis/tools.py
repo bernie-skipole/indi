@@ -1,5 +1,27 @@
 
 
+############################## tools.py ######################################################
+#
+# This is a set of Python functions which read, and publish to your redis server
+# You may find them useful when creating a client gui, if your gui is Python based.
+#
+# These open a redis connection, and return lists of devices, properties, elements etc.,
+#
+# Typically your script would start with:
+#
+###############################################################################################
+# from indiredis import redis_server, tools
+#
+# redisserver = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
+#                          to_indi_channel='to_indi', from_indi_channel='from_indi')
+#
+# rconn = tools.open_redis(redisserver)
+###############################################################################################
+#
+# and then using rconn and redisserver you could call upon the functions provided here
+
+
+
 import xml.etree.ElementTree as ET
 
 import redis
@@ -26,24 +48,6 @@ def open_redis(redisserver):
     return rconn
 
 
-def device_list(rconn, redisserver):
-    "Returns a list of devices, uses redis smembers on key devices"
-    devicekey = _key(redisserver, "devices")
-    devices = rconn.smembers(devicekey)
-    if not devices:
-        return []
-    return list(d.decode("utf-8") for d in devices)
-
-
-def property_list(rconn, redisserver, device):
-    "Returns a list of properties, uses redis smembers on key properties:device"
-    propertykey = _key(redisserver, "properties", device)
-    properties = rconn.smembers(propertykey)
-    if not properties:
-        return []
-    return list(p.decode("utf-8") for p in properties)
-
-
 def getProperties(rconn, redisserver, device="", name=""):
     """Sends getProperties request, returns the xml bytes string sent
 
@@ -60,28 +64,46 @@ def getProperties(rconn, redisserver, device="", name=""):
     return etstring
 
 
+def devices(rconn, redisserver):
+    "Returns a list of devices, uses redis smembers on key devices"
+    devicekey = _key(redisserver, "devices")
+    devicelist = rconn.smembers(devicekey)
+    if not devicelist:
+        return []
+    return list(d.decode("utf-8") for d in devicelist)
+
+
+def properties(rconn, redisserver, device):
+    "Returns a list of properties, uses redis smembers on key properties:device"
+    propertykey = _key(redisserver, "properties", device)
+    propertylist = rconn.smembers(propertykey)
+    if not propertylist:
+        return []
+    return list(p.decode("utf-8") for p in propertylist)
+
+
+def elements(rconn, redisserver, device, name):
+    "Returns a list of elements for the property"
+    elementkey = _key(redisserver, "elements", name, device)
+    elementlist = rconn.smembers(elementkey)
+    if not elementlist:
+        return []
+    return list(e.decode("utf-8") for e in elementlist)
+
+
 def attributes_dict(rconn, redisserver, device, name):
     "Returns a dictionary of attributes for the property"
-    key = _key(redisserver, "attributes", name, device)
-    attdict = rconn.hgetall(key)
+    attkey = _key(redisserver, "attributes", name, device)
+    attdict = rconn.hgetall(attkey)
     if not attdict:
         return {}
     return {k.decode("utf-8"):v.decode("utf-8") for k,v in attdict.items()}
 
 
-def elements(rconn, redisserver, device, name):
-    "Returns a list of elements for the property"
-    key = _key(redisserver, "elements", name, device)
-    els = rconn.smembers(key)
-    if not els:
-        return []
-    return list(e.decode("utf-8") for e in els)
-
-
 def elements_dict(rconn, redisserver, device, name, elementname):
     "Returns a dictionary of element attributes"
-    key = _key(redisserver, "elementattributes", elementname, name, device)
-    eldict = rconn.hgetall(key)
+    elkey = _key(redisserver, "elementattributes", elementname, name, device)
+    eldict = rconn.hgetall(elkey)
     if not eldict:
         return {}
     return {k.decode("utf-8"):v.decode("utf-8") for k,v in eldict.items()}
