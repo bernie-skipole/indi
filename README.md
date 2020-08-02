@@ -18,7 +18,8 @@ An INDI client with the capability to read device properties from indiserver (po
 other direction; can read data published to redis and send it in INDI XML format to indiserver.
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis
-key value storage. The gui or web framework is not specified.
+key value storage. The gui or web framework is not specified. As the code for this project is developed, the redis
+keys will be defined and documented in the github wiki.
 
 Two options are provided :
 
@@ -28,14 +29,6 @@ or
 
 The data can be transferred between indiserver and redis via an MQTT server.
 
-In the first case, the web/gui, redis server, indiserver could be running on one machine. The indiredis
-package would be imported into a script which will provide the indiserver - redis conversion. The MQTT facility will
-not be enabled.  Note: indiserver could run on a remote machine, by port forwarding over SSH for example.
-
-In the second case the web/gui, redis server and MQTT server are typically running on one machine (the web server) 
-and indiserver is running on a remote machine at the observatory.  A script running indiredis will be running
-at both sites, and will provide the indiserver-MQTT conversion at the observatory, and MQTT-redis at the web/gui server.
- 
 Python dependencies from pypi: "pip install redis" and, if the MQTT option is required, "pip install paho-mqtt".
 
 (All python3 versions)
@@ -97,7 +90,7 @@ Intended to be run on the server with the gui or web service which can read/writ
 
 Receives XML data from MQTT and converts to redis key-value storage.
 
-Reads data published to redis, and converts to indi XML and sends by MQTT.
+Reads data published to redis, and sends by MQTT.
 
 Example Python script running at the web server:
 ```
@@ -115,14 +108,21 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 mqtttoredis(mqtt_host, redis_host)
 
 ```
-Substitute your own MQTT server ip address for 10.34.167.1 in the above example. 
+Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
+
+### indiredis.tools
+
+The tools module is a set of Python functions, which your gui may use if convenient. These read the
+indi devices and properties from redis, returning Python lists and dictionaries, and provides
+functions to transmit indi commands by publishing to redis.
 
 ### The web service
 
-The web service or gui is not specified, typically a web framework would be used to write code that can read
-and write to a local redis service.
+Typically your own web framework would be used to write code that can read and write to a redis service.
 
-As the code for this project is developed, the redis keys will be defined and documented in the github wiki.
+A demonstration web service is provided, webdemo.py, together with support code and files beneath directories
+webcode and webdata. This requires the 'skipole' web framework to be installed; "pip install skipole".
+The webdemo.py file and the web directories are not needed if you are just using the indiredis package.
 
 ### mqtt and redis - why?
 
@@ -135,7 +135,7 @@ data is received, indiredis stores it, and publishes a notification on the from_
 alert a subscribing GUI application that a value has changed.
 
 When the gui wishes to send data, it can publish it on the to_indi_channel, where it will be picked up by
-this indiredis service, and compiled to XML which is then sent to indiserver.
+this indiredis service, and sent to indiserver.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
