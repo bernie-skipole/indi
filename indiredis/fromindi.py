@@ -186,8 +186,16 @@ class ParentProperty():
         # Required properties
         self.device = attribs.get("device")    # name of Device
         self.name = attribs.get("name")        # name of Property
-        self.state = attribs.get("state")      # current state of Property; Idle, OK, Busy or Alert
-
+        # state case may be incorrect (some confusion in white paper over the case of 'Ok')
+        state = attribs.get("state").lower()      # current state of Property should be one of Idle, Ok, Busy or Alert
+        if state == "idle":
+            self.state = "Idle"
+        elif state == "ok":
+            self.state = "Ok"
+        elif state == "busy":
+            self.state = "Busy"
+        else:
+            self.state = "Alert"
         # implied properties
         self.label = attribs.get("label", self.name)                             # GUI label, use name by default
         self.group = attribs.get("group", "")                                    # Property group membership, blank by default

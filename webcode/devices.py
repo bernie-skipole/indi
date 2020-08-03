@@ -94,9 +94,33 @@ def _findproperties(skicall, devicename):
             _show_textvector(skicall, index, ad)
         elif ad['vector'] == "NumberVector":
             _show_numbervector(skicall, index, ad)
+        elif ad['vector'] == "SwitchVector":
+            _show_switchvector(skicall, index, ad)
+        elif ad['vector'] == "LightVector":
+            _show_lightvector(skicall, index, ad)
+        elif ad['vector'] == "BlobVector":
+            _show_blobvector(skicall, index, ad)
         else:
             skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
             skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+
+
+
+def _set_state(skicall, index, ad):
+    "Set the state, one of Idle, OK, Busy and Alert, with colours gray, green, yellow and red"
+    state = ad['state']
+    if state == "Idle":
+        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-grey"
+    elif state == "Ok":
+        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-green"
+    elif state == "Busy":
+        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-yellow"
+    else:
+        # as default, state is Alert
+        state = "Alert"
+        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-red"
+    skicall.page_data['property_'+str(index),'state', 'para_text'] = state
+
 
 
 def _show_textvector(skicall, index, ad):
@@ -107,10 +131,12 @@ def _show_textvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'textvector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
     skicall.page_data['property_'+str(index),'tvproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "State: " + ad['state'],
                                                                              "Perm: " + ad['perm'],
                                                                              "Timeout: " + ad['timeout'],
                                                                              "Timestamp: " + ad['timestamp'] ]
+    # set the state, one of Idle, OK, Busy and Alert
+    _set_state(skicall, index, ad)
+
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
@@ -120,10 +146,6 @@ def _show_textvector(skicall, index, ad):
     contents = []
     for element in element_list:
         eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        # Ensure the label is set
-        label = eld.get('label')
-        if label is None:
-            eld['label'] = element
         contents.append(eld['label'] + " : " + eld['value'])
     skicall.page_data['property_'+str(index),'tvelements', 'contents'] = contents
 
@@ -137,10 +159,12 @@ def _show_numbervector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'numbervector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
     skicall.page_data['property_'+str(index),'nvproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "State: " + ad['state'],
                                                                              "Perm: " + ad['perm'],
                                                                              "Timeout: " + ad['timeout'],
                                                                              "Timestamp: " + ad['timestamp'] ]
+    # set the state, one of Idle, OK, Busy and Alert
+    _set_state(skicall, index, ad)
+
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
@@ -150,13 +174,88 @@ def _show_numbervector(skicall, index, ad):
     contents = []
     for element in element_list:
         eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        # Ensure the label is set
-        label = eld.get('label')
-        if label is None:
-            eld['label'] = element
         contents.append(eld['label'] + " : " + eld['formatted_number'])
     skicall.page_data['property_'+str(index),'nvelements', 'contents'] = contents
 
 
+
+def _show_switchvector(skicall, index, ad):
+    """ad is the attribute directory of the property
+       index is the section index on the web page"""
+    skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
+    skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+    skicall.page_data['property_'+str(index),'switchvector', 'show'] = True
+    # list the attributes, group, state, perm, timeout, timestamp
+    skicall.page_data['property_'+str(index),'svproperties', 'contents'] = [ "Group: " + ad['group'],
+                                                                             "Perm: " + ad['perm'],
+                                                                             "Timeout: " + ad['timeout'],
+                                                                             "Timestamp: " + ad['timestamp'] ]
+    # set the state, one of Idle, OK, Busy and Alert
+    _set_state(skicall, index, ad)
+
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    if not element_list:
+        return
+    # list the elements
+    contents = []
+    for element in element_list:
+        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        contents.append(eld['label'] + " : " + eld['value'])
+    skicall.page_data['property_'+str(index),'svelements', 'contents'] = contents
+
+
+
+def _show_lightvector(skicall, index, ad):
+    """ad is the attribute directory of the property
+       index is the section index on the web page"""
+    skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
+    skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+    skicall.page_data['property_'+str(index),'lightvector', 'show'] = True
+    # list the attributes, group, state, perm, timeout, timestamp
+    skicall.page_data['property_'+str(index),'lvproperties', 'contents'] = [ "Group: " + ad['group'],
+                                                                             "Timestamp: " + ad['timestamp'] ]
+    # set the state, one of Idle, OK, Busy and Alert
+    _set_state(skicall, index, ad)
+
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    if not element_list:
+        return
+    # list the elements
+    contents = []
+    for element in element_list:
+        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        contents.append(eld['label'] + " : " + eld['value'])
+    skicall.page_data['property_'+str(index),'lvelements', 'contents'] = contents
+
+
+def _show_blobvector(skicall, index, ad):
+    """ad is the attribute directory of the property
+       index is the section index on the web page"""
+    skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
+    skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+    skicall.page_data['property_'+str(index),'blobvector', 'show'] = True
+    # list the attributes, group, state, perm, timeout, timestamp
+    skicall.page_data['property_'+str(index),'bvproperties', 'contents'] = [ "Group: " + ad['group'],
+                                                                             "Perm: " + ad['perm'],
+                                                                             "Timeout: " + ad['timeout'],
+                                                                             "Timestamp: " + ad['timestamp'] ]
+    # set the state, one of Idle, OK, Busy and Alert
+    _set_state(skicall, index, ad)
+
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    if not element_list:
+        return
+    # list the elements
+    contents = []
+    for element in element_list:
+        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        contents.append(eld['label'] + " : " + eld['value'])
+    skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
 
 

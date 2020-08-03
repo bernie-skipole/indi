@@ -136,11 +136,38 @@
 "hide_if_empty": false,
 "parts": [
 [
+"Part",
+{
+"tag_name": "div",
+"brief": "Holds property name and state",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "state",
+"brief": "Shows the property state with colour",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "w3-center",
+"para_text": "Busy",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-right w3-yellow",
+"widget_style": "width:10em;"
+}
+}
+],
+[
 "Widget",
 {
 "class": "headers.HeaderText3",
 "name": "propertyname",
-"brief": "Shows the propert name",
+"brief": "Shows the property name",
 "fields": {
 "clear_error": false,
 "error_class": "",
@@ -155,6 +182,9 @@
 "widget_class": "",
 "widget_style": ""
 }
+}
+]
+]
 }
 ],
 [
@@ -289,6 +319,228 @@
 "class": "lists.UList1",
 "name": "nvelements",
 "brief": "Number Vector elements",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "paras.TagBlock",
+"name": "switchvector",
+"brief": "Contains a SwitchVector property",
+"fields": {
+"drag": "",
+"drop": "",
+"dropident": "",
+"hide": false,
+"show": false,
+"tag": "div",
+"widget_class": "",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of SwitchVector attributes",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "svproperties",
+"brief": "Switch Vector properties",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of Switch Elements",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "svelements",
+"brief": "Switch Vector elements",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "paras.TagBlock",
+"name": "lightvector",
+"brief": "Contains a LightVector property",
+"fields": {
+"drag": "",
+"drop": "",
+"dropident": "",
+"hide": false,
+"show": false,
+"tag": "div",
+"widget_class": "",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of LightVector attributes",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "lvproperties",
+"brief": "Light Vector properties",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of Light Elements",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "lvelements",
+"brief": "Light Vector elements",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "paras.TagBlock",
+"name": "blobvector",
+"brief": "Contains a BlobVector property",
+"fields": {
+"drag": "",
+"drop": "",
+"dropident": "",
+"hide": false,
+"show": false,
+"tag": "div",
+"widget_class": "",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of BlobVector attributes",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "bvproperties",
+"brief": "Blob Vector properties",
+"fields": {
+"contents": [],
+"even_class": "",
+"odd_class": "",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Container of Blob Elements",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "lists.UList1",
+"name": "bvelements",
+"brief": "Blob Vector elements",
 "fields": {
 "contents": [],
 "even_class": "",
