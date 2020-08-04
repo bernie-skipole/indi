@@ -130,10 +130,9 @@ def _show_textvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'textvector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'tvproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "Perm: " + ad['perm'],
-                                                                             "Timeout: " + ad['timeout'],
-                                                                             "Timestamp: " + ad['timestamp'] ]
+    skicall.page_data['property_'+str(index),'tvtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'tvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+
     # set the state, one of Idle, OK, Busy and Alert
     _set_state(skicall, index, ad)
 
@@ -142,12 +141,24 @@ def _show_textvector(skicall, index, ad):
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-    # list the elements
-    contents = []
-    for element in element_list:
-        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        contents.append(eld['label'] + " : " + eld['value'])
-    skicall.page_data['property_'+str(index),'tvelements', 'contents'] = contents
+
+    # permission is one of ro, wo, rw
+    if ad['perm'] == "xx":   # wo
+        pass                               ########## still to do
+    elif ad['perm'] == "yy":  # rw
+        pass                               ########## still to do
+    else:
+        # permission is ro
+        # display label : value in a table
+        col1 = []
+        col2 = []
+        for element in element_list:
+            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            col1.append(eld['label'] + ":")
+            col2.append(eld['value'])
+        skicall.page_data['property_'+str(index),'tvelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'tvelements', 'col2'] = col2
+
 
 
 
@@ -158,10 +169,10 @@ def _show_numbervector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'numbervector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'nvproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "Perm: " + ad['perm'],
-                                                                             "Timeout: " + ad['timeout'],
-                                                                             "Timestamp: " + ad['timestamp'] ]
+    skicall.page_data['property_'+str(index),'nvtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+
+
     # set the state, one of Idle, OK, Busy and Alert
     _set_state(skicall, index, ad)
 
@@ -170,12 +181,25 @@ def _show_numbervector(skicall, index, ad):
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-    # list the elements
-    contents = []
-    for element in element_list:
-        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        contents.append(eld['label'] + " : " + eld['formatted_number'])
-    skicall.page_data['property_'+str(index),'nvelements', 'contents'] = contents
+
+    # permission is one of ro, wo, rw
+    if ad['perm'] == "xx":   #wo
+        pass                               ########## still to do
+    elif ad['perm'] == "yy": #rw
+        pass                               ########## still to do
+    else:
+        # permission is ro
+        # display label : value in a table
+        col1 = []
+        col2 = []
+        for element in element_list:
+            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            col1.append(eld['label'] + ":")
+            col2.append(eld['formatted_number'])
+        skicall.page_data['property_'+str(index),'nvelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
+
+
 
 
 
@@ -186,10 +210,9 @@ def _show_switchvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'switchvector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'svproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "Perm: " + ad['perm'],
-                                                                             "Timeout: " + ad['timeout'],
-                                                                             "Timestamp: " + ad['timestamp'] ]
+    skicall.page_data['property_'+str(index),'svtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'svtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+
     # set the state, one of Idle, OK, Busy and Alert
     _set_state(skicall, index, ad)
 
@@ -198,12 +221,23 @@ def _show_switchvector(skicall, index, ad):
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-    # list the elements
-    contents = []
-    for element in element_list:
-        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        contents.append(eld['label'] + " : " + eld['value'])
-    skicall.page_data['property_'+str(index),'svelements', 'contents'] = contents
+
+    # permission is one of ro, wo, rw
+    if ad['perm'] == "xx":   #wo
+        pass                               ########## still to do
+    elif ad['perm'] == "yy": #rw
+        pass                               ########## still to do
+    else:
+        # permission is ro
+        # display label : value in a table
+        col1 = []
+        col2 = []
+        for element in element_list:
+            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            col1.append(eld['label'] + ":")
+            col2.append(eld['value'])
+        skicall.page_data['property_'+str(index),'svelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'svelements', 'col2'] = col2
 
 
 
@@ -213,9 +247,12 @@ def _show_lightvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'lightvector', 'show'] = True
-    # list the attributes, group, state, perm, timeout, timestamp
+    # list the attributes, group, timestamp
     skicall.page_data['property_'+str(index),'lvproperties', 'contents'] = [ "Group: " + ad['group'],
                                                                              "Timestamp: " + ad['timestamp'] ]
+    skicall.page_data['property_'+str(index),'lvtable', 'col1'] = [ "Group:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'lvtable', 'col2'] = [ ad['group'], ad['timestamp']]
+
     # set the state, one of Idle, OK, Busy and Alert
     _set_state(skicall, index, ad)
 
@@ -224,12 +261,24 @@ def _show_lightvector(skicall, index, ad):
     element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-    # list the elements
-    contents = []
-    for element in element_list:
-        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-        contents.append(eld['label'] + " : " + eld['value'])
-    skicall.page_data['property_'+str(index),'lvelements', 'contents'] = contents
+
+    # permission is one of ro, wo, rw
+    if ad['perm'] == "xx":   #wo
+        pass                               ########## still to do
+    elif ad['perm'] == "yy": #rw
+        pass                               ########## still to do
+    else:
+        # permission is ro
+        # display label : value in a table
+        col1 = []
+        col2 = []
+        for element in element_list:
+            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            col1.append(eld['label'] + ":")
+            col2.append(eld['value'])
+        skicall.page_data['property_'+str(index),'lvelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'lvelements', 'col2'] = col2
+
 
 
 def _show_blobvector(skicall, index, ad):

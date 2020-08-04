@@ -208,22 +208,41 @@
 "Part",
 {
 "tag_name": "div",
+"brief": "holds content as row",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-cell-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
 "brief": "Container of TextVector attributes",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-blue w3-cell w3-mobile",
+"style": "width:30%"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
-"name": "tvproperties",
-"brief": "Text Vector properties",
+"class": "tables.TwoColTable1",
+"name": "tvtable",
+"brief": "Table of text vector attributes",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
 }
@@ -238,21 +257,31 @@
 "brief": "Container of Text Elements",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
+"class": "tables.TwoColTable1",
 "name": "tvelements",
-"brief": "Text Vector elements",
+"brief": "Table of text vector elements",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
+}
+]
+]
 }
 ]
 ]
@@ -282,22 +311,41 @@
 "Part",
 {
 "tag_name": "div",
+"brief": "holds content as row",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-cell-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
 "brief": "Container of NumberVector attributes",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-blue w3-cell w3-mobile",
+"style": "width:30%"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
-"name": "nvproperties",
-"brief": "Number Vector properties",
+"class": "tables.TwoColTable1",
+"name": "nvtable",
+"brief": "Table of number vector attributes",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
 }
@@ -312,21 +360,31 @@
 "brief": "Container of Number Elements",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
+"class": "tables.TwoColTable1",
 "name": "nvelements",
-"brief": "Number Vector elements",
+"brief": "Table of number vector elements",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
+}
+]
+]
 }
 ]
 ]
@@ -356,22 +414,41 @@
 "Part",
 {
 "tag_name": "div",
+"brief": "holds content as row",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-cell-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
 "brief": "Container of SwitchVector attributes",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-blue w3-cell w3-mobile",
+"style": "width:30%"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
-"name": "svproperties",
-"brief": "Switch Vector properties",
+"class": "tables.TwoColTable1",
+"name": "svtable",
+"brief": "Table of switch vector attributes",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
 }
@@ -386,21 +463,31 @@
 "brief": "Container of Switch Elements",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
+"class": "tables.TwoColTable1",
 "name": "svelements",
-"brief": "Switch Vector elements",
+"brief": "Table of switch vector elements",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
+}
+]
+]
 }
 ]
 ]
@@ -430,22 +517,41 @@
 "Part",
 {
 "tag_name": "div",
+"brief": "holds content as row",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-cell-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
 "brief": "Container of LightVector attributes",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-blue w3-cell w3-mobile",
+"style": "width:30%"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
-"name": "lvproperties",
-"brief": "Light Vector properties",
+"class": "tables.TwoColTable1",
+"name": "lvtable",
+"brief": "Table of light vector attributes",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
 }
@@ -460,21 +566,31 @@
 "brief": "Container of Light Elements",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
+"class": "tables.TwoColTable1",
 "name": "lvelements",
-"brief": "Light Vector elements",
+"brief": "Table of light vector elements",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
+}
+]
+]
 }
 ]
 ]
@@ -1047,6 +1163,16 @@
 "class": "w3-theme"
 },
 "parts": [
+[
+"TextBlock",
+{
+"textref": "table_style",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+],
 [
 "Part",
 {
