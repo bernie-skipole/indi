@@ -34,74 +34,88 @@ def receive_from_indiserver(data, rconn):
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
-    # notification is published on redis using the from_indi_channel
-    channel = get_from_indi_channel()
     for child in root:
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
-            rconn.publish(channel, f"defTextVector:{text_vector.name}:{text_vector.device}")   # publishes an alert that property:device has changed
+            log_received(rconn, f"defTextVector:{text_vector.name}:{text_vector.device}")   # logs, and publishes an alert that property:device has changed
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
-            rconn.publish(channel, f"defNumberVector:{number_vector.name}:{number_vector.device}")
+            log_received(rconn, f"defNumberVector:{number_vector.name}:{number_vector.device}")
         elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
-            rconn.publish(channel, f"defSwitchVector:{switch_vector.name}:{switch_vector.device}")
+            log_received(rconn, f"defSwitchVector:{switch_vector.name}:{switch_vector.device}")
         elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
-            rconn.publish(channel, f"defLightVector:{light_vector.name}:{text_vector.device}")
+            log_received(rconn, f"defLightVector:{light_vector.name}:{text_vector.device}")
         elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
-            rconn.publish(channel, f"defBLOBVector:{blob_vector.name}:{blob_vector.device}")
+            log_received(rconn, f"defBLOBVector:{blob_vector.name}:{blob_vector.device}")
         elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
             if message.device:
-                rconn.publish(channel, f"message:{message.device}")
+                log_received(rconn, f"message:{message.device}")
             else:
-                rconn.publish(channel, "message")
+                log_received(rconn, "message")
         elif child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
             if delprop.name:
-                rconn.publish(channel, f"delProperty:{delprop.name}:{delprop.device}")
+                log_received(rconn, f"delProperty:{delprop.name}:{delprop.device}")
             else:
-                rconn.publish(channel, f"delDevice:{delprop.device}")
+                log_received(rconn, f"delDevice:{delprop.device}")
         elif child.tag == "setTextVector":
             result = setVector(rconn, child)
             if result is None:
                 continue
             name,device = result
-            rconn.publish(channel, f"setTextVector:{name}:{device}")
+            log_received(rconn, f"setTextVector:{name}:{device}")
         elif child.tag == "setNumberVector":
             result = setVector(rconn, child)
             if result is None:
                 continue
             name,device = result
-            rconn.publish(channel, f"setNumberVector:{name}:{device}")
+            log_received(rconn, f"setNumberVector:{name}:{device}")
         elif child.tag == "setSwitchVector":
             result = setVector(rconn, child)
             if result is None:
                 continue
             name,device = result
-            rconn.publish(channel, f"setSwitchVector:{name}:{device}")
+            log_received(rconn, f"setSwitchVector:{name}:{device}")
         elif child.tag == "setLightVector":
             result = setVector(rconn, child)
             if result is None:
                 continue
             name,device = result
-            rconn.publish(channel, f"setLightVector:{name}:{device}")
+            log_received(rconn, f"setLightVector:{name}:{device}")
         elif child.tag == "setBLOBVector":
             result = setVector(rconn, child)
             if result is None:
                 continue
             name,device = result
-            rconn.publish(channel, f"setBLOBVector:{name}:{device}")
+            log_received(rconn, f"setBLOBVector:{name}:{device}")
 
+
+def log_received(rconn, logdata):
+    """Add a recieved string to a list which contains the 100 last logs
+       key is prefix + "logdata"    ("logdata" is literal string, not the argument value)
+       and each value logged is timestamp space logdata, where timestamp is the time at which the value is logged
+       Also publishes the logdata on redis _FROM_INDI_CHANNEL for any service that cares to listen"""
+    global _FROM_INDI_CHANNEL
+    if not logdata:
+        return
+    timestamp = datetime.utcnow().isoformat()
+    time_and_data = datetime.utcnow().isoformat() + " " + logdata
+    rconn.lpush(key('logdata'), time_and_data)
+    # and limit number of logs to 100
+    rconn.ltrim(key('logdata'), 0, 99)
+    # and publishes an alert
+    rconn.publish(_FROM_INDI_CHANNEL, logdata)
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
@@ -169,6 +183,10 @@ def key(*keys):
 #                                                                    <propertyname> is an actual property name
 #                                                                    <devicename> is an actual device name)
 
+
+
+#  one key : list
+# 'logdata' list of "Timestamp space logged data"
 
 
 
