@@ -243,7 +243,9 @@ class ParentProperty():
         mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
         # save list of element names
-        for elementname in self.elements:
+        # get list of elements sorted by label
+        elementlist = sorted(self.elements, key=lambda x: x.label)
+        for elementname in elementlist:
             rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
 
 

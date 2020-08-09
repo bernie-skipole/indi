@@ -57,6 +57,10 @@
 "CheckBox2": {
 "checkbox_class": "w3-check"
 },
+"CheckBoxTable1": {
+"header_class": "w3-theme-d3",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
 "CheckInputs": {
 "checkbox_class": "w3-check",
 "error_class": "w3-panel w3-red"
@@ -414,6 +418,10 @@
 "RadioButton1": {
 "error_class": "w3-panel w3-red",
 "widget_class": "w3-section"
+},
+"RadioTable2": {
+"header_class": "w3-theme-d3",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
 },
 "TwoRadioOptions": {
 "widget_class": "w3-section"

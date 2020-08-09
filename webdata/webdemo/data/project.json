@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "4.0.5",
+"skipole": "4.0.6",
 "specialpages": {
 "favicon": 3002,
 "general_json": 2002,
@@ -462,7 +462,7 @@
 "tag_name": "div",
 "brief": "Container of Switch Elements",
 "show": true,
-"hide_if_empty": false,
+"hide_if_empty": true,
 "attribs": {
 "class": "w3-container w3-pale-yellow w3-cell w3-mobile"
 },
@@ -479,9 +479,45 @@
 "even_class": "",
 "header_class": "w3-theme-d2",
 "odd_class": "",
-"show": true,
+"show": false,
 "title1": "",
 "title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Contains radio buttons",
+"show": true,
+"hide_if_empty": true,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "radio.RadioTable2",
+"name": "svradio",
+"brief": "Shows Radio Buttons for a switch vector",
+"fields": {
+"col1": [],
+"col2": [],
+"header_class": "w3-theme-d2",
+"radio_checked": "",
+"radiocol": [],
+"row_classes": [],
+"show": false,
+"title1": "",
+"title2": "",
+"title3": "",
 "widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }

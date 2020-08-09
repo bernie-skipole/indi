@@ -209,9 +209,14 @@ def _show_switchvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'switchvector', 'show'] = True
-    # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'svtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
-    skicall.page_data['property_'+str(index),'svtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+    # list the attributes, group, rule, perm, timeout, timestamp
+    skicall.page_data['property_'+str(index),'svtable', 'col1'] = [ "Group:", "Rule", "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'svtable', 'col2'] = [ ad['group'], ad['rule'], ad['perm'], ad['timeout'], ad['timestamp']]
+
+    # switchRule  is OneOfMany|AtMostOne|AnyOfMany
+
+    # AtMostOne means zero or one  - so must add a 'none of the above button'
+    # whereas OneOfMany means one must always be chosen
 
     # set the state, one of Idle, OK, Busy and Alert
     _set_state(skicall, index, ad)
@@ -225,11 +230,75 @@ def _show_switchvector(skicall, index, ad):
     # permission is one of ro, wo, rw
     if ad['perm'] == "xx":   #wo
         pass                               ########## still to do
-    elif ad['perm'] == "yy": #rw
-        pass                               ########## still to do
+    elif ad['perm'] == "rw":
+        if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
+            # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element_list[0])
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = [eld['label'] + ":"]
+            skicall.page_data['property_'+str(index),'svradio', 'col2'] = ["On", "Off"]
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = [eld['name'] + "_on", eld['name'] + "_off"]
+            if eld['value'] == "On":
+                skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = eld['name'] + "_on"
+                skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = ['w3-yellow', '']
+            else:
+                skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = eld['name'] + "_off"
+                skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = ['', 'w3-yellow']
+        elif ad['rule'] == "OneOfMany":
+            # show radiobox, at least one should be pressed
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            col1 = []
+            col2 = []
+            radiocol = []
+            row_classes = []
+            checked = None
+            for element in element_list:
+                eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+                col1.append(eld['label'] + ":")
+                col2.append(eld['value'])
+                radiocol.append(eld['name'])
+                if eld['value'] == "On":
+                    checked = eld['name']
+                    row_classes.append('w3-yellow')
+                else:
+                    row_classes.append('')
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = col1
+            #skicall.page_data['property_'+str(index),'svradio', 'col2'] = col2
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
+            skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
+            if checked:
+                skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked
+        elif ad['rule'] == "AnyOfMany":
+            # show checkbox
+            pass
+        elif ad['rule'] == "AtMostOne":
+            # show radiobox, can have none pressed
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            col1 = []
+            col2 = []
+            radiocol = []
+            row_classes = []
+            checked = None
+            for element in element_list:
+                eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+                col1.append(eld['label'] + ":")
+                col2.append(eld['value'])
+                radiocol.append(eld['name'])
+                if eld['value'] == "On":
+                    checked = eld['name']
+                    row_classes.append('w3-yellow')
+                else:
+                    row_classes.append('')
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = col1
+            #skicall.page_data['property_'+str(index),'svradio', 'col2'] = col2
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
+            skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
+            if checked:
+                skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked    #### need to implement the None button
     else:
         # permission is ro
         # display label : value in a table
+        skicall.page_data['property_'+str(index),'svelements', 'show'] = True
         col1 = []
         col2 = []
         for element in element_list:
