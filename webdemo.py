@@ -1,6 +1,13 @@
 
 import os, sys
 
+############ these lines for development mode ###########
+skipole_package_location = "/home/bernard/git/skipole"
+
+if skipole_package_location not in sys.path:
+    sys.path.insert(0,skipole_package_location)
+#########################################################
+
 from skipole import WSGIApplication, FailPage, GoTo, ValidateError, ServerError, use_submit_list
 
 from skipole import skis
