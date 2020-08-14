@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "skiadmin - The Skipole Admin project",
-"version": "4.0.7",
-"skipole": "4.0.7",
+"version": "4.0.8",
+"skipole": "4.0.8",
 "specialpages": {
 "about_code": 70001,
 "about_skis": 510,
@@ -4974,6 +4974,45 @@ false
 "widget_class": "w3-button w3-block w3-theme-d4 w3-section",
 "widget_style": ""
 }
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "About the skis sub project",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Further information"
+],
+[
+"HTMLSymbol",
+{
+"text": "&nbsp;"
+}
+],
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "link to about the skis project",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"href": "{about_skis}"
+},
+"parts": [
+[
+"Text",
+"about the skis sub project can be found here."
+]
+]
 }
 ]
 ]
@@ -35641,47 +35680,8 @@ false
 "hide_if_empty": false,
 "parts": [
 [
-"TextBlock",
-{
-"textref": "index_sub_projects",
-"failmessage": "failed to read textblocks database with ref index_sub_projects",
-"show": true,
-"escape": true,
-"linebreaks": true
-}
-]
-]
-}
-],
-[
-"Part",
-{
-"tag_name": "div",
-"brief": "Table of sub projects",
-"show": true,
-"hide_if_empty": false,
-"parts": [
-[
-"Widget",
-{
-"class": "tables.ThreeColTable1",
-"name": "subs",
-"brief": "Table of sub projects",
-"fields": {
-"col1": [],
-"col2": [],
-"col3": [],
-"even_class": "",
-"header_class": "w3-theme-d3",
-"odd_class": "w3-theme-d2",
-"show": true,
-"title1": "Project",
-"title2": "URL",
-"title3": "Brief",
-"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered",
-"widget_style": ""
-}
-}
+"Text",
+"When you create an application, you can add sub projects using application.add_project(sub-application, url).\r\n\r\nThis project being edited is the main application - or 'root' project with the top level URL. Normally you would also have the 'skis' project which contains javascript files used by all other projects."
 ]
 ]
 }
@@ -35720,6 +35720,54 @@ false
 "about the skis sub project can be found here."
 ]
 ]
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Further info about the sub projects table",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"The 'skiadmin' sub-project will be present, needed to serve these admin pages. This sub project should be removed for your final deployment.\r\n\r\nThe following lists the projects currently served:"
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Table of sub projects",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "tables.ThreeColTable1",
+"name": "subs",
+"brief": "Table of sub projects",
+"fields": {
+"col1": [],
+"col2": [],
+"col3": [],
+"even_class": "",
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"show": true,
+"title1": "Project",
+"title2": "URL",
+"title3": "Brief",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered",
+"widget_style": ""
+}
 }
 ]
 ]
@@ -38537,8 +38585,14 @@ false
 "hide_if_empty": false,
 "parts": [
 [
-"Text",
-"The skis sub project is a part of the skipole framework and should always be added to your project.\r\nIt includes a number of pages - particularly javascript files used by widgets, and special pages such as the 'URL Not found' page.\r\nFor  example, your project will contain the special label 'url_not_found' which will point to 'skis,url_not_found'.\r\nWhen your project returns a URL Not found message to a client, it calls this label which pulls in the page from the skis sub-project.\r\nSimilarly, when widgets are used in a page, and when the page is dynamically created, special javascript files will be inserted into the page head. Again these come from the skis sub project and are defined by their labels (which can be seen under the left navigation 'Page Labels' button)."
+"TextBlock",
+{
+"textref": "about_skis",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": true,
+"linebreaks": true
+}
 ]
 ]
 }
@@ -38547,13 +38601,262 @@ false
 "Part",
 {
 "tag_name": "h3",
-"brief": "About TextBlocks",
+"brief": "About Templates",
 "show": true,
 "hide_if_empty": false,
 "parts": [
 [
 "Text",
-"skis TextBlocks"
+"skis Templates"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "About templates",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"In general you will create your own Template pages within your project, however this skis project holds a number of useful templates you may prefer to use, in which case you would provide a label in your own project linking to 'skis,label', or to 'skis,identnumber'.\r\nThe list below shows the label, and a brief description of each template page."
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "table",
+"brief": "templates table",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "tr",
+"brief": "Row",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "width:15em;"
+},
+"parts": [
+[
+"Text",
+"url_not_found"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page showing the URL not found message"
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "tr",
+"brief": "Row",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"validate_error"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page showing a Validation error"
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "tr",
+"brief": "Row",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"server_error"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page showing a Server error"
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "tr",
+"brief": "Row",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"redirector"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page containing a redirector widget."
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "tr",
+"brief": "Row",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"no_javascript"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "cell",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page showing a Javascript failed message"
+]
+]
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "h3",
+"brief": "About Icons",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"skis Icons"
 ]
 ]
 }
@@ -38568,7 +38871,7 @@ false
 "parts": [
 [
 "Text",
-"The skis sub-project also includes a number of convenient TextBlocks.  These contain snippits of SVG code, which could be included within your own svg elements - such as within an svgbasics.TextBlockGroup widget to provide an icon.\r\nPlease note: To provide the full icon image the TextBlock needs to appear within an <svg> element, and also possibly a <g> tag with a transform attribute to scale the item. \r\n\r\nThese icon TextBlocks are listed below:"
+"The skis sub-project also includes a number of convenient Icons.  These are svg pages, each containing a TextBlock snippit of SVG code. You could link to the icon images (their idents are given), or you could include the TextBlock within your own svg elements.\r\n\r\nThe TextBlocks define objects with width 100 height 100, and to create the SVG page, these are set into a group <g> tag with transform attribute \"scale(0.5,0.5)\", to create a 50x50 icon. The table below shows icon, TextBlock reference, and the image ident number. So to link to an item, you would typically create a label pointing to ident 'skis,identnumber'."
 ]
 ]
 }
@@ -38659,7 +38962,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.alarm\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.alarm"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2010"
 ]
 ]
 }
@@ -38742,7 +39063,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.cross\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.cross"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2020"
 ]
 ]
 }
@@ -38825,7 +39164,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.home\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.home"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2030"
 ]
 ]
 }
@@ -38908,7 +39265,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.left\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.left"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2040"
 ]
 ]
 }
@@ -38991,7 +39366,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.logo\r\nWidth 256 height 128, this example is set into a group\r\nwith transform attribute \"scale(0.25,0.25)\"."
+"Reference: svgicon.logo"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2050"
 ]
 ]
 }
@@ -39074,7 +39467,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.right\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.right"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2060"
 ]
 ]
 }
@@ -39157,7 +39568,25 @@ false
 "parts": [
 [
 "Text",
-"Reference: svgicon.tick\r\nWidth 100 height 100, this example is set into a group\r\nwith transform attribute \"scale(0.5,0.5)\"."
+"Reference: svgicon.tick"
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "td",
+"brief": "Table cell",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "padding:20px;"
+},
+"parts": [
+[
+"Text",
+"Ident: 2070"
 ]
 ]
 }

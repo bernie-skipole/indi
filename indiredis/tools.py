@@ -21,10 +21,13 @@
 # and then using rconn and redisserver you could call upon the functions provided here
 
 
-
 import xml.etree.ElementTree as ET
 
+import re
+
 import redis
+
+
 
 
 def _key(redisserver, *keys):
@@ -107,6 +110,35 @@ def elements_dict(rconn, redisserver, device, name, elementname):
     if not eldict:
         return {}
     return {k.decode("utf-8"):v.decode("utf-8") for k,v in eldict.items()}
+
+
+# Two functions to help sort elements by the element label
+# regardless of label being in text or numeric form
+
+def _int_or_string(part):
+    "Return integer or string"
+    return int(part) if part.isdigit() else part
+
+def _split_element_labels(element):
+    "Splits the element label into text and integer parts"
+    return [ _int_or_string(part) for part in re.split(r'(\d+)', element["label"]) ]
+
+## use the above with
+## newlist = sorted(oldlist, key=_split_element_labels)
+## where the lists are lists of element dictionaries
+
+
+def property_elements(rconn, redisserver, device, name):
+    """Returns a list of dictionaries of element attributes
+       for the given device and property name
+       each dictionary will be set in the list in order of label"""
+    element_name_list = elements(rconn, redisserver, device, name)
+    if not element_name_list:
+        return []
+    element_dictionary_list = list( elements_dict(rconn, redisserver, device, name, elementname) for elementname in element_name_list )
+    # sort element_dictionary_list by label
+    element_dictionary_list.sort(key=_split_element_labels)
+    return element_dictionary_list
     
 
 

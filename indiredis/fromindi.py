@@ -25,7 +25,6 @@ _TO_INDI_CHANNEL = ""
 _FROM_INDI_CHANNEL = ""
 
 
-
 def receive_from_indiserver(data, rconn):
     "receives xml data, parses it and stores in redis. Publishes an alert that data is received"
     if rconn is None:

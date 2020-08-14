@@ -3,46 +3,47 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "4.0.7",
+"skipole": "4.0.8",
 "specialpages": {
 "favicon": 3002,
 "general_json": 2070,
 "getdevices": 2,
 "getproperties": 4,
 "home": 1,
-"jquery_core": "https://cdn.jsdelivr.net/gh/jquery/jquery@3/dist/jquery.min.js",
+"jquery_core": "skis,jquery_core",
 "no_javascript": 10,
 "properties": 3,
 "redirector": 2030,
 "server_error": 2020,
-"ski_basic": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/basic.min.js",
-"ski_checkbox": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/checkbox.min.js",
-"ski_confirm": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/confirm.min.js",
-"ski_debug_tools": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/debug_tools.min.js",
-"ski_dropdown": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/dropdown.min.js",
-"ski_error_messages": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/error_messages.min.js",
-"ski_footers": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/footers.min.js",
-"ski_headers": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/headers.min.js",
-"ski_info": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/info.min.js",
-"ski_inputforms": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/inputforms.min.js",
-"ski_inputtables": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/inputtables.min.js",
-"ski_inputtext": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/inputtext.min.js",
-"ski_links": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/links.min.js",
-"ski_lists": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/lists.min.js",
-"ski_logins": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/logins.min.js",
-"ski_paras": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/paras.min.js",
-"ski_paths": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/paths.min.js",
-"ski_radio": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/radio.min.js",
-"ski_svgbasics": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/svgbasics.min.js",
-"ski_svggraphs": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/svggraphs.min.js",
-"ski_svgmeters": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/svgmeters.min.js",
-"ski_tables": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/tables.min.js",
-"ski_textarea": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/textarea.min.js",
-"ski_upload": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/upload.min.js",
-"skipole_js": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@4/skipole/templates/skis/static/js/skipole.min.js",
+"set_textvector": 5010,
+"ski_basic": "skis,ski_basic",
+"ski_checkbox": "skis,ski_checkbox",
+"ski_confirm": "skis,ski_confirm",
+"ski_debug_tools": "skis,ski_debug_tools",
+"ski_dropdown": "skis,ski_dropdown",
+"ski_error_messages": "skis,ski_error_messages",
+"ski_footers": "skis,ski_footers",
+"ski_headers": "skis,ski_headers",
+"ski_info": "skis,ski_info",
+"ski_inputforms": "skis,ski_inputforms",
+"ski_inputtables": "skis,ski_inputtables",
+"ski_inputtext": "skis,ski_inputtext",
+"ski_links": "skis,ski_links",
+"ski_lists": "skis,ski_lists",
+"ski_logins": "skis,ski_logins",
+"ski_paras": "skis,ski_paras",
+"ski_paths": "skis,ski_paths",
+"ski_radio": "skis,ski_radio",
+"ski_svgbasics": "skis,ski_svgbasics",
+"ski_svggraphs": "skis,ski_svggraphs",
+"ski_svgmeters": "skis,ski_svgmeters",
+"ski_tables": "skis,ski_tables",
+"ski_textarea": "skis,ski_textarea",
+"ski_upload": "skis,ski_upload",
+"skipole_js": "skis,skipole_js",
 "url_not_found": 2080,
 "validate_error": 2010,
-"w3_css": "https://www.w3schools.com/w3css/4/w3.css",
+"w3_css": "skis,w3_css",
 "w3_theme_ski_css": 1008
 },
 "sections": {
@@ -256,7 +257,7 @@
 "tag_name": "div",
 "brief": "Container of Text Elements",
 "show": true,
-"hide_if_empty": false,
+"hide_if_empty": true,
 "attribs": {
 "class": "w3-container w3-pale-yellow w3-cell w3-mobile"
 },
@@ -273,7 +274,7 @@
 "even_class": "",
 "header_class": "w3-theme-d2",
 "odd_class": "",
-"show": true,
+"show": false,
 "title1": "",
 "title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
@@ -282,6 +283,70 @@
 }
 ]
 ]
+}
+],
+[
+"Widget",
+{
+"class": "inputforms.SubmitForm1",
+"name": "settext",
+"brief": "Container form for text input",
+"fields": {
+"action": "no_javascript",
+"action_json": "set_textvector",
+"button_class": "w3-button w3-theme-d4 w3-right",
+"button_text": "Submit",
+"button_wait_text": "",
+"clear_error": false,
+"container_class": "w3-section",
+"div_class": "",
+"enctype": "",
+"error_class": "w3-panel w3-red",
+"hidden_field1": "",
+"hidden_field2": "",
+"hidden_field3": "",
+"hidden_field4": "",
+"left_class": "",
+"left_label": "",
+"left_style": "",
+"right_class": "",
+"right_label": "",
+"right_style": "",
+"show": false,
+"show_error": "",
+"widget_class": "w3-container w3-pale-yellow w3-cell w3-mobile",
+"widget_style": "padding-bottom:20px;"
+},
+"container_0": [
+[
+"Widget",
+{
+"class": "inputtables.InputTable1",
+"name": "tvtexttable",
+"brief": "Table of input fields",
+"fields": {
+"col1": [],
+"col2": [],
+"header_class": "w3-theme-d2",
+"inputdict": {},
+"maxlength": "",
+"row_classes": [],
+"show": true,
+"size": "",
+"title1": "",
+"title2": "",
+"title3": "",
+"widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+]
+],
+"set_names": {
+"hidden_field1": "devicename",
+"hidden_field2": "propertyname",
+"hidden_field3": "sectionindex"
+}
 }
 ]
 ]
@@ -491,16 +556,38 @@
 }
 ],
 [
-"Part",
+"Widget",
 {
-"tag_name": "div",
-"brief": "Contains radio buttons",
-"show": true,
-"hide_if_empty": true,
-"attribs": {
-"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+"class": "inputforms.SubmitForm1",
+"name": "setswitch",
+"brief": "Container form for radio and checkboxes",
+"fields": {
+"action": "home",
+"action_json": "",
+"button_class": "w3-button w3-theme-d4 w3-right",
+"button_text": "Submit",
+"button_wait_text": "",
+"clear_error": false,
+"container_class": "w3-section",
+"div_class": "",
+"enctype": "",
+"error_class": "w3-panel w3-red",
+"hidden_field1": "",
+"hidden_field2": "",
+"hidden_field3": "",
+"hidden_field4": "",
+"left_class": "",
+"left_label": "",
+"left_style": "",
+"right_class": "",
+"right_label": "",
+"right_style": "",
+"show": false,
+"show_error": "",
+"widget_class": "w3-container w3-pale-yellow w3-cell w3-mobile",
+"widget_style": "padding-bottom:20px;"
 },
-"parts": [
+"container_0": [
 [
 "Widget",
 {
@@ -513,6 +600,28 @@
 "header_class": "w3-theme-d2",
 "radio_checked": "",
 "radiocol": [],
+"row_classes": [],
+"show": false,
+"title1": "",
+"title2": "",
+"title3": "",
+"widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "checkbox.CheckBoxTable1",
+"name": "svcheckbox",
+"brief": "Shows checkbox options for a switch vector",
+"fields": {
+"checkbox_dict": {},
+"checked": [],
+"col1": [],
+"col2": [],
+"header_class": "w3-theme-d2",
 "row_classes": [],
 "show": false,
 "title1": "",
@@ -767,6 +876,36 @@
 "filepath": "webdemo/static/images/logo_icon16.svg",
 "enable_cache": true,
 "mimetype": "image/svg+xml"
+}
+}
+}
+},
+"set": {
+"ident": 5000,
+"brief": "Contains responders for setting elements",
+"default_page_name": "index",
+"restricted": false,
+"folders": {},
+"pages": {
+"textvector": {
+"ident": 5010,
+"brief": "Set a textvector",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"set_text"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
 }
 }
 }

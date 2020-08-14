@@ -138,22 +138,49 @@ def _show_textvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-
     # permission is one of ro, wo, rw
     if ad['perm'] == "xx":   # wo
         pass                               ########## still to do
-    elif ad['perm'] == "yy":  # rw
-        pass                               ########## still to do
+    elif ad['perm'] == "rw":
+        # permission is rw
+        # display label : value : text input field followed by a submit button
+        skicall.page_data['property_'+str(index),'settext', 'show'] = True
+        skicall.page_data['property_'+str(index),'tvtexttable', 'show'] = True
+        col1 = []
+        col2 = []
+        inputdict = {}
+        maxsize = 0
+        for eld in element_list:
+            col1.append(eld['label'] + ":")
+            col2.append(eld['value'])
+            inputdict[eld['name']] = eld['value']
+        if len(eld['value']) > maxsize:
+            maxsize = len(eld['value'])
+        skicall.page_data['property_'+str(index),'tvtexttable', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'tvtexttable', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'tvtexttable', 'inputdict'] = inputdict
+        # make the size of the input field match the values set in it
+        if maxsize > 30:
+            maxsize = 30
+        elif maxsize < 15:
+            maxsize = 15
+        else:
+            maxsize += 1
+        skicall.page_data['property_'+str(index),'tvtexttable', 'size'] = maxsize
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'settext', 'devicename'] = ad['device']
+        skicall.page_data['property_'+str(index),'settext', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'settext', 'sectionindex'] = index
     else:
         # permission is ro
         # display label : value in a table
+        skicall.page_data['property_'+str(index),'tvelements', 'show'] = True
         col1 = []
         col2 = []
-        for element in element_list:
-            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append(eld['value'])
         skicall.page_data['property_'+str(index),'tvelements', 'col1'] = col1
@@ -178,10 +205,9 @@ def _show_numbervector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-
     # permission is one of ro, wo, rw
     if ad['perm'] == "xx":   #wo
         pass                               ########## still to do
@@ -192,14 +218,11 @@ def _show_numbervector(skicall, index, ad):
         # display label : value in a table
         col1 = []
         col2 = []
-        for element in element_list:
-            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvelements', 'col1'] = col1
         skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
-
-
 
 
 
@@ -223,18 +246,18 @@ def _show_switchvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-
     # permission is one of ro, wo, rw
     if ad['perm'] == "xx":   #wo
         pass                               ########## still to do
     elif ad['perm'] == "rw":
         if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
             # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
             skicall.page_data['property_'+str(index),'svradio', 'show'] = True
-            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element_list[0])
+            eld = element_list[0]
             skicall.page_data['property_'+str(index),'svradio', 'col1'] = [eld['label'] + ":"]
             skicall.page_data['property_'+str(index),'svradio', 'col2'] = ["On", "Off"]
             skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = [eld['name'] + "_on", eld['name'] + "_off"]
@@ -246,14 +269,14 @@ def _show_switchvector(skicall, index, ad):
                 skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = ['', 'w3-yellow']
         elif ad['rule'] == "OneOfMany":
             # show radiobox, at least one should be pressed
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
             skicall.page_data['property_'+str(index),'svradio', 'show'] = True
             col1 = []
             col2 = []
             radiocol = []
             row_classes = []
             checked = None
-            for element in element_list:
-                eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            for eld in element_list:
                 col1.append(eld['label'] + ":")
                 col2.append(eld['value'])
                 radiocol.append(eld['name'])
@@ -269,18 +292,38 @@ def _show_switchvector(skicall, index, ad):
             if checked:
                 skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked
         elif ad['rule'] == "AnyOfMany":
-            # show checkbox
-            pass
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
+            skicall.page_data['property_'+str(index),'svcheckbox', 'show'] = True
+            col1 = []
+            col2 = []
+            checkbox_dict = {}
+            row_classes = []
+            checked = []
+            for eld in element_list:
+                col1.append(eld['label'] + ":")
+                col2.append(eld['value'])
+                checkbox_dict[eld['name']] = "On"
+                if eld['value'] == "On":
+                    checked.append(eld['name'])
+                    row_classes.append('w3-yellow')
+                else:
+                    row_classes.append('')
+            skicall.page_data['property_'+str(index),'svcheckbox', 'col1'] = col1
+            #skicall.page_data['property_'+str(index),'svcheckbox', 'col2'] = col2
+            skicall.page_data['property_'+str(index),'svcheckbox', 'checkbox_dict'] = checkbox_dict
+            skicall.page_data['property_'+str(index),'svcheckbox', 'row_classes'] = row_classes
+            if checked:
+                skicall.page_data['property_'+str(index),'svcheckbox', 'checked'] = checked
         elif ad['rule'] == "AtMostOne":
             # show radiobox, can have none pressed
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
             skicall.page_data['property_'+str(index),'svradio', 'show'] = True
             col1 = []
             col2 = []
             radiocol = []
             row_classes = []
             checked = None
-            for element in element_list:
-                eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+            for eld in element_list:
                 col1.append(eld['label'] + ":")
                 col2.append(eld['value'])
                 radiocol.append(eld['name'])
@@ -289,20 +332,28 @@ def _show_switchvector(skicall, index, ad):
                     row_classes.append('w3-yellow')
                 else:
                     row_classes.append('')
+            # append a 'None of the above' button
+            col1.append("None of the above:")
+            radiocol.append("noneoftheabove")
+            if checked is None:
+                col2.append("On")
+                checked = "noneoftheabove"
+                row_classes.append('w3-yellow')
+            else:
+                col2.append("Off")
+                row_classes.append('')
             skicall.page_data['property_'+str(index),'svradio', 'col1'] = col1
             #skicall.page_data['property_'+str(index),'svradio', 'col2'] = col2
             skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
             skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
-            if checked:
-                skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked    #### need to implement the None button
+            skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked
     else:
         # permission is ro
         # display label : value in a table
         skicall.page_data['property_'+str(index),'svelements', 'show'] = True
         col1 = []
         col2 = []
-        for element in element_list:
-            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+        for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append(eld['value'])
         skicall.page_data['property_'+str(index),'svelements', 'col1'] = col1
@@ -327,26 +378,18 @@ def _show_lightvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
-
-    # permission is one of ro, wo, rw
-    if ad['perm'] == "xx":   #wo
-        pass                               ########## still to do
-    elif ad['perm'] == "yy": #rw
-        pass                               ########## still to do
-    else:
-        # permission is ro
-        # display label : value in a table
-        col1 = []
-        col2 = []
-        for element in element_list:
-            eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
-            col1.append(eld['label'] + ":")
-            col2.append(eld['value'])
-        skicall.page_data['property_'+str(index),'lvelements', 'col1'] = col1
-        skicall.page_data['property_'+str(index),'lvelements', 'col2'] = col2
+    # No permission value for lightvectors
+    # display label : value in a table
+    col1 = []
+    col2 = []
+    for eld in element_list:
+        col1.append(eld['label'] + ":")
+        col2.append(eld['value'])
+    skicall.page_data['property_'+str(index),'lvelements', 'col1'] = col1
+    skicall.page_data['property_'+str(index),'lvelements', 'col2'] = col2
 
 
 
@@ -366,14 +409,15 @@ def _show_blobvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
     if not element_list:
         return
     # list the elements
     contents = []
-    for element in element_list:
-        eld = tools.elements_dict(rconn, redisserver, ad['device'], ad['name'], element)
+    for eld in element_list:
         contents.append(eld['label'] + " : " + eld['value'])
     skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
+
+
 
 

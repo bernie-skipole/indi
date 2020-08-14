@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "Library project of static files",
-"version": "4.0.7",
-"skipole": "4.0.7",
+"version": "4.0.8",
+"skipole": "4.0.8",
 "specialpages": {
 "general_json": 870,
 "jquery_core": 20,
@@ -101,6 +101,371 @@
 "enable_cache": true,
 "mimetype": "text/css"
 }
+}
+}
+},
+"icons": {
+"ident": 2000,
+"brief": "Folder holding SVG icon pages",
+"restricted": false,
+"folders": {},
+"pages": {
+"alarm.svg": {
+"ident": 2010,
+"brief": "Red triangle with exclamation",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.alarm",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"cross.svg": {
+"ident": 2020,
+"brief": "Red cross - X alligned",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.cross",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"home.svg": {
+"ident": 2030,
+"brief": "Green House",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.home",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"left.svg": {
+"ident": 2040,
+"brief": "Black < shape",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.left",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"logo.svg": {
+"ident": 2050,
+"brief": "Skipole logo",
+"SVG": {
+"enable_cache": true,
+"width": "64",
+"height": "32"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "32",
+"version": "1.1",
+"width": "64",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.25,0.25)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.25,0.25)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.logo",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"right.svg": {
+"ident": 2060,
+"brief": "Black > shape",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.right",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"tick.svg": {
+"ident": 2070,
+"brief": "Green tick symbol",
+"SVG": {
+"enable_cache": true,
+"width": "50",
+"height": "50"
+},
+"svg": [
+"Part",
+{
+"tag_name": "svg",
+"brief": "The svg section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"baseProfile": "full",
+"height": "50",
+"version": "1.1",
+"width": "50",
+"xmlns": "http://www.w3.org/2000/svg"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "g",
+"brief": "transform with scale(0.5,0.5)",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"transform": "scale(0.5,0.5)"
+},
+"parts": [
+[
+"TextBlock",
+{
+"textref": "svgicon.tick",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": false,
+"linebreaks": false
+}
+]
+]
+}
+]
+]
+}
+]
 }
 }
 },

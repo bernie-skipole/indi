@@ -58,12 +58,14 @@ SKIPOLE.radio.RadioTable2.prototype.setvalues = function (fieldlist, result) {
         else {
             // for each row
             // set its class
-            $(this).attr("class", row_classes[index]);
+            if (row_classes && row_classes.length) {
+                $(this).attr("class", row_classes[index]);
+                }
             var cells = $(this).children();
-            if (col1) {
+            if (col1 && col1.length) {
                 $(cells[0]).text(col1[index]);
                  }
-            if (col2) {
+            if (col2 && col2.length) {
                 $(cells[1]).text(col2[index]);
                  }
             if (itemchecked) {

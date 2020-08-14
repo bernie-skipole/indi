@@ -3,6 +3,65 @@
 SKIPOLE.inputtables = {};
 
 
+SKIPOLE.inputtables.InputTable1 = function (widg_id, error_message, fieldmap) {
+    SKIPOLE.BaseWidget.call(this, widg_id, error_message, fieldmap);
+    };
+SKIPOLE.inputtables.InputTable1.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
+SKIPOLE.inputtables.InputTable1.prototype.constructor = SKIPOLE.inputtables.InputTable1;
+SKIPOLE.inputtables.InputTable1.prototype.setvalues = function (fieldlist, result) {
+    if (!this.widg_id) {
+        return;
+        }
+    var the_widg = this.widg;
+    // columns
+    var col1 = this.fieldarg_in_result('col1', result, fieldlist);
+    var col2 = this.fieldarg_in_result('col2', result, fieldlist);
+    var row_classes = this.fieldarg_in_result('row_classes', result, fieldlist);
+    var keysvals = this.fieldarg_in_result('inputdict', result, fieldlist);
+    if (keysvals && Object.keys(keysvals).length) {
+        var keysonly = Object.keys(keysvals);
+        }
+    var self = this;
+    var index = 0;
+    var header = false;
+    if (the_widg.find('th').length) {
+        header = true;
+        }
+    the_widg.find('tr').each(function() {
+        if (header) {
+            // the header line
+            header = false;
+            }
+        else {
+            // for each row
+            // set its class
+            if (row_classes && row_classes.length) {
+                $(this).attr("class", row_classes[index]);
+                }
+            var cells = $(this).children();
+            if (col1 && col1.length) {
+                $(cells[0]).text(col1[index]);
+                 }
+            if (col2 && col2.length) {
+                $(cells[1]).text(col2[index]);
+                 }
+            if (keysonly && keysonly.length) {
+                let rowkey = keysonly[index];
+                if (rowkey) {
+                    // set name attribute and val attribute for each input field
+                    let inputtag = $(cells[2]).find('input');
+                    inputtag.prop('name', self.formname('inputdict') + "-" + rowkey);
+                    inputtag.val(keysvals[rowkey]);
+                    }
+                 }
+             index=index+1;
+             
+            }
+        })
+    };
+
+
+
 SKIPOLE.inputtables.InputTable5 = function (widg_id, error_message, fieldmap) {
     SKIPOLE.BaseWidget.call(this, widg_id, error_message, fieldmap);
     this.display_errors = false;
