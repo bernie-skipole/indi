@@ -5,6 +5,7 @@
 "version": "0.0.1",
 "skipole": "4.0.8",
 "specialpages": {
+"checkupdates": 5,
 "favicon": 3002,
 "general_json": 2070,
 "getdevices": 2,
@@ -2175,8 +2176,8 @@
 "TemplatePage": {
 "show_backcol": false,
 "last_scroll": true,
-"interval": 0,
-"interval_target": null,
+"interval": 10,
+"interval_target": "checkupdates",
 "catch_to_html": null,
 "lang": "en",
 "backcol": "#ffffff",
@@ -2509,6 +2510,26 @@
 }
 },
 "pages": {
+"checkupdates": {
+"ident": 5,
+"brief": "If any updates, refreshes the page",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"devices",
+"check_for_device_change"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
 "getdevices": {
 "ident": 2,
 "brief": "Responder to get devices/properties update",

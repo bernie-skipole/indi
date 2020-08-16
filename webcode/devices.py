@@ -2,6 +2,7 @@
 
 import xml.etree.ElementTree as ET
 
+from datetime import datetime
 from time import sleep
 
 from indiredis import tools
@@ -72,7 +73,9 @@ def getDeviceProperties(skicall):
 def _findproperties(skicall, devicename):
     "Gets the properties for the device"
     skicall.page_data['devicename', 'large_text'] = devicename
+    # set device and timestamp into ident_data so it will be available
     skicall.call_data["device"] = devicename
+    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     properties = tools.properties(rconn, redisserver, devicename)
@@ -91,8 +94,8 @@ def _findproperties(skicall, devicename):
         if label is None:
             att_dict['label'] = propertyname
         att_list.append(att_dict)
-    # now sort it by group
-    att_list.sort(key = lambda ad : ad.get('group'))
+    # now sort it by group and then by label
+    att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
     for index, ad in enumerate(att_list):
         # loops through each property, where ad is the attribute directory of the property
         # and index is the section index on the web page
@@ -408,5 +411,42 @@ def _show_blobvector(skicall, index, ad):
 
 def check_for_device_change(skicall):
     "Checks to see if a device has changed, in which case the page should have a html refresh"
-
+    if ('device' in skicall.call_data) and ('timestamp' in skicall.call_data):
+        devicename = skicall.call_data['device']
+        timestamp = skicall.call_data['timestamp']
+    else:
+        # device / timestamp not available, better refresh anyway
+        skicall.page_data['JSONtoHTML'] = 'getproperties'
+        return
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    # check if last log has an older timestamp than this page
+    logentry = tools.last_log(rconn, redisserver)
+    if logentry is None:
+        #skicall.call_data["status"] = "No logs found"                 ############################### testing
+        skicall.page_data['JSONtoHTML'] = 'getproperties'
+        return
+    logtime, logdata = logentry
+    if timestamp > logtime:
+        # page timestamp is later than last log entry, no need to update the page
+        skicall.call_data["status"] = "Page up to data"
+        return
+    if logdata.endswith(devicename):
+        # logged data is for this device, and logged timestamp is later than the
+        # current page timestamp, so better renew the page
+        skicall.page_data['JSONtoHTML'] = 'getproperties'
+        return
+    # so last logged timestamp is later than the current page timestamp
+    # but is for a different device, get the last twenty logs
+    loglist = tools.get_logs(rconn, redisserver, 20)
+    for logtime,logdata in loglist:
+        if timestamp > logtime:
+            # page timestamp is later than log entry, no need to update the page
+            skicall.call_data["status"] = "Page up to data"
+            return
+        if logdata.endswith(devicename):
+            # logged data is for this device, and logged timestamp is later than the
+            # current page timestamp, so better renew the page
+            skicall.page_data['JSONtoHTML'] = 'getproperties'
+            return
 

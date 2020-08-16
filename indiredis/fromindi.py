@@ -108,8 +108,7 @@ def log_received(rconn, logdata):
     global _FROM_INDI_CHANNEL
     if not logdata:
         return
-    timestamp = datetime.utcnow().isoformat()
-    time_and_data = datetime.utcnow().isoformat() + " " + logdata
+    time_and_data = datetime.utcnow().isoformat(sep='T') + " " + logdata
     rconn.lpush(key('logdata'), time_and_data)
     # and limit number of logs to 100
     rconn.ltrim(key('logdata'), 0, 99)

@@ -141,7 +141,24 @@ def property_elements(rconn, redisserver, device, name):
     return element_dictionary_list
     
 
+def last_log(rconn, redisserver):
+    "Return the last log as (timestamp,data) or None if not available"
+    logkey = _key(redisserver, "logdata")
+    logentry = rconn.lindex(logkey, 0)
+    if logentry is None:
+        return
+    return logentry.decode("utf-8").split(" ", maxsplit=1)
 
 
+def get_logs(rconn, redisserver, number):
+    "Return the number of logs as [(timestamp,data),..] or None if not available"
+    logkey = _key(redisserver, "logdata")
+    loglist = rconn.lrange(logkey, 0, number)
+    if not loglist:
+        return
+    return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
+
+        
+    
 
 

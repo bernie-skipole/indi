@@ -2,11 +2,13 @@
 import os, sys
 
 ############ these lines for development mode ###########
-skipole_package_location = "/home/bernard/git/skipole"
-
-if skipole_package_location not in sys.path:
-    sys.path.insert(0,skipole_package_location)
+#skipole_package_location = "/home/bernard/git/skipole"
+#
+#if skipole_package_location not in sys.path:
+#    sys.path.insert(0,skipole_package_location)
 #########################################################
+
+from datetime import datetime
 
 from skipole import WSGIApplication, FailPage, GoTo, ValidateError, ServerError, use_submit_list
 
@@ -35,8 +37,11 @@ PROJECT = 'webdemo'
 def start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if skicall.ident_data:
-        # if ident_data exists, it should be the device name, set into skicall.call_data["device"]
-        skicall.call_data["device"] = skicall.ident_data
+        # if ident_data exists, it should be a timestamp and the device name
+        # set these into skicall.call_data["device"] and skicall.call_data["timestamp"]
+        timestamp, device = skicall.ident_data.split(" ", maxsplit=1)
+        skicall.call_data["timestamp"] = timestamp
+        skicall.call_data["device"] = device
     return called_ident
 
 @use_submit_list
@@ -53,8 +58,12 @@ def end_call(page_ident, page_type, skicall):
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
         skicall.page_data["status", "hide"] = False
     if "device" in skicall.call_data:
+        if "timestamp" in skicall.call_data:
+            timestamp = skicall.call_data["timestamp"]
+        else:
+            timestamp = datetime.utcnow().isoformat(sep='T')
         # set to ident_data
-        skicall.page_data['ident_data'] = skicall.call_data["device"]
+        skicall.page_data['ident_data'] = timestamp + " " + skicall.call_data["device"]
     return
 
 
