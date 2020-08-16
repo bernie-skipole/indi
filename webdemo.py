@@ -34,6 +34,9 @@ PROJECT = 'webdemo'
 
 def start_call(called_ident, skicall):
     "When a call is initially received this function is called."
+    if skicall.ident_data:
+        # if ident_data exists, it should be the device name, set into skicall.call_data["device"]
+        skicall.call_data["device"] = skicall.ident_data
     return called_ident
 
 @use_submit_list
@@ -45,6 +48,13 @@ def submit_data(skicall):
 def end_call(page_ident, page_type, skicall):
     """This function is called at the end of a call prior to filling the returned page with skicall.page_data,
        it can also return an optional session cookie string."""
+    if "status" in skicall.call_data:
+        # display a modal status message
+        skicall.page_data["status", "para_text"] = skicall.call_data["status"]
+        skicall.page_data["status", "hide"] = False
+    if "device" in skicall.call_data:
+        # set to ident_data
+        skicall.page_data['ident_data'] = skicall.call_data["device"]
     return
 
 

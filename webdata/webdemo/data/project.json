@@ -343,7 +343,6 @@
 ]
 ],
 "set_names": {
-"hidden_field1": "devicename",
 "hidden_field2": "propertyname",
 "hidden_field3": "sectionindex"
 }
@@ -2388,7 +2387,7 @@
 "button_text": "Refresh Properties",
 "clear_error": false,
 "error_class": "w3-button w3-block w3-theme-action",
-"force_ident": false,
+"force_ident": true,
 "get_field1": "",
 "get_field2": "",
 "get_field3": "",
@@ -2421,6 +2420,36 @@
 "show_error": "",
 "small_text": "",
 "widget_class": "",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "confirm.AlertClear1",
+"name": "status",
+"brief": "Shows modal status box when submission made",
+"fields": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d4",
+"boxdiv_style": "",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"buttondiv_style": "",
+"clear_error": false,
+"error_class": "w3-panel w3-red",
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"hide": true,
+"inner_class": "w3-panel w3-theme-d4",
+"inner_style": "",
+"link_ident": "no_javascript",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-modal",
 "widget_style": ""
 }
 }
@@ -2502,26 +2531,20 @@
 "ident": 4,
 "brief": "Refreshes properties for a device",
 "RespondPage": {
-"class": "AllowStoreKeyed",
+"class": "SubmitData",
 "original_args": {
 "allowed_callers": [
 4003
 ],
-"alternate_ident": "home",
-"fail_ident": "properties",
+"fail_ident": "home",
 "submit_list": [
 "webcode",
 "devices",
 "getDeviceProperties"
 ],
-"submit_option": true,
-"target_ident": 4003,
-"validate_fail_ident": null,
-"validate_option": false
+"target_ident": 4003
 },
-"original_fields": {
-"getprops:get_field1": "devicename"
-}
+"original_fields": {}
 }
 },
 "index": {

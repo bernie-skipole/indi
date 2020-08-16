@@ -8,6 +8,8 @@ from indiredis import tools
 
 from skipole import FailPage
 
+from .setvalues import set_state
+
 
 def devicelist(skicall):
     "Gets a list of devices"
@@ -23,6 +25,7 @@ def devicelist(skicall):
 
 def propertylist(skicall):
     "Gets a list of properties for the given device"
+    # Called from the links on the index list of devices page
     # Find the given device, given by responder
     # get data in skicall.submit_dict under key 'received'
     # with value being a dictionary with keys being the widgfield tuples of the submitting widgets
@@ -38,6 +41,7 @@ def propertylist(skicall):
     _findproperties(skicall, devicename)
 
 
+
 def getProperties(skicall):
     "Sends getProperties request"
     rconn = skicall.proj_data["rconn"]
@@ -47,9 +51,11 @@ def getProperties(skicall):
     print(textsent)
 
 
+
 def getDeviceProperties(skicall):
     "Sends getProperties request for a given device"
-    devicename = skicall.call_data.get("devicename","")
+    # gets device from page_data, which is set into skicall.call_data["device"] 
+    devicename = skicall.call_data.get("device","")
     if not devicename:
         raise FailPage("Device not recognised")
     rconn = skicall.proj_data["rconn"]
@@ -66,7 +72,7 @@ def getDeviceProperties(skicall):
 def _findproperties(skicall, devicename):
     "Gets the properties for the device"
     skicall.page_data['devicename', 'large_text'] = devicename
-    skicall.page_data['getprops','get_field1'] = devicename
+    skicall.call_data["device"] = devicename
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     properties = tools.properties(rconn, redisserver, devicename)
@@ -105,24 +111,6 @@ def _findproperties(skicall, devicename):
             skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
 
 
-
-def _set_state(skicall, index, ad):
-    "Set the state, one of Idle, OK, Busy and Alert, with colours gray, green, yellow and red"
-    state = ad['state']
-    if state == "Idle":
-        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-grey"
-    elif state == "Ok":
-        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-green"
-    elif state == "Busy":
-        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-yellow"
-    else:
-        # as default, state is Alert
-        state = "Alert"
-        skicall.page_data['property_'+str(index),'state', 'widget_class'] = "w3-right w3-red"
-    skicall.page_data['property_'+str(index),'state', 'para_text'] = state
-
-
-
 def _show_textvector(skicall, index, ad):
     """ad is the attribute directory of the property
        index is the section index on the web page"""
@@ -134,7 +122,7 @@ def _show_textvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'tvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
 
     # set the state, one of Idle, OK, Busy and Alert
-    _set_state(skicall, index, ad)
+    set_state(skicall, index, ad)
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -171,7 +159,6 @@ def _show_textvector(skicall, index, ad):
             maxsize += 1
         skicall.page_data['property_'+str(index),'tvtexttable', 'size'] = maxsize
         # set hidden fields on the form
-        skicall.page_data['property_'+str(index),'settext', 'devicename'] = ad['device']
         skicall.page_data['property_'+str(index),'settext', 'propertyname'] = ad['name']
         skicall.page_data['property_'+str(index),'settext', 'sectionindex'] = index
     else:
@@ -201,7 +188,7 @@ def _show_numbervector(skicall, index, ad):
 
 
     # set the state, one of Idle, OK, Busy and Alert
-    _set_state(skicall, index, ad)
+    set_state(skicall, index, ad)
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -242,7 +229,7 @@ def _show_switchvector(skicall, index, ad):
     # whereas OneOfMany means one must always be chosen
 
     # set the state, one of Idle, OK, Busy and Alert
-    _set_state(skicall, index, ad)
+    set_state(skicall, index, ad)
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -374,7 +361,7 @@ def _show_lightvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'lvtable', 'col2'] = [ ad['group'], ad['timestamp']]
 
     # set the state, one of Idle, OK, Busy and Alert
-    _set_state(skicall, index, ad)
+    set_state(skicall, index, ad)
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -405,7 +392,7 @@ def _show_blobvector(skicall, index, ad):
                                                                              "Timeout: " + ad['timeout'],
                                                                              "Timestamp: " + ad['timestamp'] ]
     # set the state, one of Idle, OK, Busy and Alert
-    _set_state(skicall, index, ad)
+    set_state(skicall, index, ad)
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -419,5 +406,7 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
 
 
+def check_for_device_change(skicall):
+    "Checks to see if a device has changed, in which case the page should have a html refresh"
 
 

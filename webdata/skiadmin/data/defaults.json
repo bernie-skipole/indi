@@ -206,6 +206,10 @@
 }
 },
 "inputtables": {
+"InputTable1": {
+"header_class": "w3-theme-d3",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
 "InputTable5": {
 "button1_class": "w3-button w3-padding-small w3-small w3-theme-dark",
 "button2_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-margin-left",
