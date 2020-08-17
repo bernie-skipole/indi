@@ -423,13 +423,12 @@ def check_for_device_change(skicall):
     # check if last log has an older timestamp than this page
     logentry = tools.last_log(rconn, redisserver)
     if logentry is None:
-        #skicall.call_data["status"] = "No logs found"                 ############################### testing
         skicall.page_data['JSONtoHTML'] = 'getproperties'
         return
     logtime, logdata = logentry
     if timestamp > logtime:
         # page timestamp is later than last log entry, no need to update the page
-        skicall.call_data["status"] = "Page up to data"
+        # could update something like a time widget on the page
         return
     if logdata.endswith(devicename):
         # logged data is for this device, and logged timestamp is later than the
@@ -442,11 +441,13 @@ def check_for_device_change(skicall):
     for logtime,logdata in loglist:
         if timestamp > logtime:
             # page timestamp is later than log entry, no need to update the page
-            skicall.call_data["status"] = "Page up to data"
+            # could update something like a time widget on the page
             return
         if logdata.endswith(devicename):
             # logged data is for this device, and logged timestamp is later than the
             # current page timestamp, so better renew the page
             skicall.page_data['JSONtoHTML'] = 'getproperties'
             return
+    # no logs found referring to this device in the last twenty, don't bother updating
+    # could update something like a time widget on the page
 

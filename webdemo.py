@@ -24,7 +24,8 @@ redisserver = redis_server(host='localhost', port=6379, db=0, password='', keypr
 
 rconn = tools.open_redis(redisserver)
 
-####### indiserver -v indi_simulator_telescope
+####### indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
+
 
 
 proj_data = {'rconn':rconn,
@@ -87,10 +88,10 @@ if __name__ == "__main__":
 
     from skipole import skiadmin, skilift, set_debug
 
-    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
-    application.add_project(skiadmin_application, url='/skiadmin')
+    #skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+    #application.add_project(skiadmin_application, url='/skiadmin')
 
-    set_debug(True)
+    #set_debug(True)
 
     # serve the application with the development server from skilift
 
