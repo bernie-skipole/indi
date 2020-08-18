@@ -40,9 +40,13 @@ def start_call(called_ident, skicall):
     if skicall.ident_data:
         # if ident_data exists, it should be a timestamp and the device name
         # set these into skicall.call_data["device"] and skicall.call_data["timestamp"]
-        timestamp, device = skicall.ident_data.split(" ", maxsplit=1)
-        skicall.call_data["timestamp"] = timestamp
-        skicall.call_data["device"] = device
+        splitdata = skicall.ident_data.split(" ", maxsplit=1)
+        if len(splitdata) == 1:
+            skicall.call_data["timestamp"] = splitdata[0]
+        elif len(splitdata) == 2:
+            timestamp, device = skicall.ident_data.split(" ", maxsplit=1)
+            skicall.call_data["timestamp"] = timestamp
+            skicall.call_data["device"] = device
     return called_ident
 
 @use_submit_list
@@ -58,14 +62,15 @@ def end_call(page_ident, page_type, skicall):
         # display a modal status message
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
         skicall.page_data["status", "hide"] = False
+    # set timestamp and device to ident_data
+    if "timestamp" in skicall.call_data:
+        timestamp = skicall.call_data["timestamp"]
+    else:
+        timestamp = datetime.utcnow().isoformat(sep='T')
     if "device" in skicall.call_data:
-        if "timestamp" in skicall.call_data:
-            timestamp = skicall.call_data["timestamp"]
-        else:
-            timestamp = datetime.utcnow().isoformat(sep='T')
-        # set to ident_data
         skicall.page_data['ident_data'] = timestamp + " " + skicall.call_data["device"]
-    return
+    else:
+        skicall.page_data['ident_data'] = timestamp
 
 
 # create the wsgi application
@@ -88,10 +93,10 @@ if __name__ == "__main__":
 
     from skipole import skiadmin, skilift, set_debug
 
-    #skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
-    #application.add_project(skiadmin_application, url='/skiadmin')
+    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+    application.add_project(skiadmin_application, url='/skiadmin')
 
-    #set_debug(True)
+    set_debug(True)
 
     # serve the application with the development server from skilift
 

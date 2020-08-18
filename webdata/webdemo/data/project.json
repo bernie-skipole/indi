@@ -11,7 +11,9 @@
 "getdevices": 2,
 "getproperties": 4,
 "home": 1,
+"homeonanyupdate": 6,
 "jquery_core": "skis,jquery_core",
+"json_failed": 11,
 "no_javascript": 10,
 "properties": 3,
 "redirector": 2030,
@@ -1904,9 +1906,9 @@
 "TemplatePage": {
 "show_backcol": false,
 "last_scroll": true,
-"interval": 0,
-"interval_target": null,
-"catch_to_html": null,
+"interval": 10,
+"interval_target": "homeonanyupdate",
+"catch_to_html": "json_failed",
 "lang": "en",
 "backcol": "#ffffff",
 "default_error_widget": [
@@ -2178,7 +2180,7 @@
 "last_scroll": true,
 "interval": 10,
 "interval_target": "checkupdates",
-"catch_to_html": null,
+"catch_to_html": "json_failed",
 "lang": "en",
 "backcol": "#ffffff",
 "default_error_widget": [
@@ -2568,6 +2570,26 @@
 "original_fields": {}
 }
 },
+"homeonanyupdate": {
+"ident": 6,
+"brief": "Checks on any update, if any diverts to home page",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [
+4001
+],
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"devices",
+"check_for_update"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
 "index": {
 "ident": 1,
 "brief": "Gets list of devices, fills the index page",
@@ -2584,6 +2606,19 @@
 "target_ident": 4001
 },
 "original_fields": {}
+}
+},
+"json_failed": {
+"ident": 11,
+"brief": "An error has occurred in JSON file returned",
+"RespondPage": {
+"class": "PageData",
+"original_args": {
+"target_ident": "server_error"
+},
+"original_fields": {
+"show_error": "Failure when calling a JSON file"
+}
 }
 },
 "no_javascript": {

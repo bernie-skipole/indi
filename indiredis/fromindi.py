@@ -101,7 +101,7 @@ def receive_from_indiserver(data, rconn):
 
 
 def log_received(rconn, logdata):
-    """Add a recieved string to a list which contains the 100 last logs
+    """Add a received string to a list which contains the 100 last logs
        key is prefix + "logdata"    ("logdata" is literal string, not the argument value)
        and each value logged is timestamp space logdata, where timestamp is the time at which the value is logged
        Also publishes the logdata on redis _FROM_INDI_CHANNEL for any service that cares to listen"""

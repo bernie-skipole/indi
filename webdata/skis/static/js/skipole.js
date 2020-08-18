@@ -26,9 +26,19 @@ SKIPOLE.restorepagepos = function() {
 
 SKIPOLE.refreshjson = function( target ) {
      /* called by setInterval when a page needs regular updating */
-     $.getJSON(target, "ident=" + SKIPOLE.identdata).done(function(result){
-     SKIPOLE.setfields(result);
-      })
+     $.getJSON(target, "ident=" + SKIPOLE.identdata)
+         .done(function(result){
+                SKIPOLE.setfields(result);
+               })
+         .fail(function(){
+                 if (SKIPOLE.CatchToHTML) {
+                     // Calls the URL given by "CatchToHTML"
+                     window.location.href = SKIPOLE.CatchToHTML + "?ident=" + SKIPOLE.identdata;
+                     }
+                 else {
+                     alert(err.message);
+                     }
+               })
     };
 
 

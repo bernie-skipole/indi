@@ -1,7 +1,5 @@
 
 
-import xml.etree.ElementTree as ET
-
 from datetime import datetime
 from time import sleep
 
@@ -13,7 +11,10 @@ from .setvalues import set_state
 
 
 def devicelist(skicall):
-    "Gets a list of devices"
+    "Gets a list of devices and fill index devices page"
+    # remove any device from call_data, since this page does not refer to a single device
+    if "device" in skicall.call_data:
+        del skicall.call_data["device"]
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     devices = tools.devices(rconn, redisserver)
@@ -450,4 +451,25 @@ def check_for_device_change(skicall):
             return
     # no logs found referring to this device in the last twenty, don't bother updating
     # could update something like a time widget on the page
+
+
+def check_for_update(skicall):
+    "When updating the devices page by json, update entire page if any change has occurred"
+    if 'timestamp' in skicall.call_data:
+        timestamp = skicall.call_data['timestamp']
+    else:
+        # device / timestamp not available, better refresh anyway
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    # check if last log has an older timestamp than this page
+    logentry = tools.last_log(rconn, redisserver)
+    if logentry is None:
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
+    logtime, logdata = logentry
+    if timestamp < logtime:
+        # page timestamp is earlier than last log entry, so update the page
+        skicall.page_data['JSONtoHTML'] = 'home'
 

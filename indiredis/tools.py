@@ -23,6 +23,8 @@
 
 import xml.etree.ElementTree as ET
 
+from datetime import datetime
+
 import re
 
 import redis
@@ -157,6 +159,73 @@ def get_logs(rconn, redisserver, number):
     if not loglist:
         return
     return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
+
+
+
+def getProperties(rconn, redisserver, device="", name=""):
+    """Sends getProperties request, returns the xml string sent, or None on failure
+
+        device, if given, is the device name, set as the device attribute of the xml element
+        name, if given, is the property name, set as the name attribute of the xml element"""
+    gP = ET.Element('getProperties')
+    gP.set("version", "1.7")
+    if device:
+        gP.set("device", device)
+        if name:
+            gP.set("name", name)
+    etstring = ET.tostring(gP)
+    try:
+        rconn.publish(redisserver.to_indi_channel, etstring)
+    except:
+        etstring = None
+    return etstring
+
+
+def newswitchvector(rconn, redisserver, device, name, values):
+    """Sends a newSwichVector request, returns the xml string sent, or None on failure
+       values is a dictionary of name:state where name is the switch element name, state is On or Off"""
+    nsv = ET.Element('newSwitchVector')
+    nsv.set("device", device)
+    nsv.set("name", name")
+    nsv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    # set the switch elements 
+    for ename, state in values.items():
+        if (state != "On") and (state != "Off"):
+            # invalid state
+            return
+        os = ET.Element('oneSwitch')
+        os.set("name", ename)
+        os.text(state)
+        nsv.append(os)
+    nsvstring = ET.tostring(nsv)
+    try:
+        rconn.publish(redisserver.to_indi_channel, nsvstring)
+    except:
+        nsvstring = None
+    return nsvstring
+
+
+
+def newtextvector(rconn, redisserver, device, name, values):
+    """Sends a newTextVector request, returns the xml string sent, or None on failure
+       values is a dictionary of text names : values"""
+    ntv = ET.Element('newTextVector')
+    ntv.set("device", device)
+    ntv.set("name", name)
+    ntv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    # set the text elements 
+    for ename, text in values.items():
+        ot = ET.Element('oneText')
+        ot.set("name", ename)
+        ot.text(text)
+        ntv.append(ot)
+    ntvstring = ET.tostring(ntv)
+    try:
+        rconn.publish(redisserver.to_indi_channel, ntvstring)
+    except:
+        ntvstring = None
+    return ntvstring
+
 
         
     

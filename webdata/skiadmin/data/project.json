@@ -105,6 +105,7 @@
 "insert_in_section": 7105,
 "jquery_core": "skis,jquery_core",
 "json_cache": 3710,
+"json_failed": 12,
 "list_validators": 46311,
 "list_widget_modules": 44501,
 "list_widgets": 44511,
@@ -39833,6 +39834,19 @@ false
 "target_ident": 20001
 },
 "original_fields": {}
+}
+},
+"json_failed": {
+"ident": 12,
+"brief": "Called if a javascript error occurs when handling a JSON file",
+"RespondPage": {
+"class": "PageData",
+"original_args": {
+"target_ident": "server_error"
+},
+"original_fields": {
+"show_error": "An error has occurred when calling a JSON file"
+}
 }
 },
 "project_brief": {
