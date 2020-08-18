@@ -1,7 +1,4 @@
-#!/home/indi/indienv/bin/python3
 
-
-# Alter the above shebang to point to your own Python location
 
 """Example script to run inditoredis"""
 

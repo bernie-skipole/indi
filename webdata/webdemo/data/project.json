@@ -18,6 +18,7 @@
 "properties": 3,
 "redirector": 2030,
 "server_error": 2020,
+"set_switchvector": 5020,
 "set_textvector": 5010,
 "ski_basic": "skis,ski_basic",
 "ski_checkbox": "skis,ski_checkbox",
@@ -564,8 +565,8 @@
 "name": "setswitch",
 "brief": "Container form for radio and checkboxes",
 "fields": {
-"action": "home",
-"action_json": "",
+"action": "no_javascript",
+"action_json": "set_switchvector",
 "button_class": "w3-button w3-theme-d4 w3-right",
 "button_text": "Submit",
 "button_wait_text": "",
@@ -889,6 +890,27 @@
 "restricted": false,
 "folders": {},
 "pages": {
+"switchvector": {
+"ident": 5020,
+"brief": "Set a switchvector",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"set_switch"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
 "textvector": {
 "ident": 5010,
 "brief": "Set a textvector",

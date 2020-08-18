@@ -88,12 +88,12 @@ def properties(rconn, redisserver, device):
 
 
 def elements(rconn, redisserver, device, name):
-    "Returns a list of elements for the property"
+    "Returns a set of elements for the property"
     elementkey = _key(redisserver, "elements", name, device)
-    elementlist = rconn.smembers(elementkey)
-    if not elementlist:
+    elementset = rconn.smembers(elementkey)
+    if not elementset:
         return []
-    return list(e.decode("utf-8") for e in elementlist)
+    return list(e.decode("utf-8") for e in elementset)
 
 
 def attributes_dict(rconn, redisserver, device, name):
@@ -186,7 +186,7 @@ def newswitchvector(rconn, redisserver, device, name, values):
        values is a dictionary of name:state where name is the switch element name, state is On or Off"""
     nsv = ET.Element('newSwitchVector')
     nsv.set("device", device)
-    nsv.set("name", name")
+    nsv.set("name", name)
     nsv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
     # set the switch elements 
     for ename, state in values.items():
@@ -195,7 +195,7 @@ def newswitchvector(rconn, redisserver, device, name, values):
             return
         os = ET.Element('oneSwitch')
         os.set("name", ename)
-        os.text(state)
+        os.text = state
         nsv.append(os)
     nsvstring = ET.tostring(nsv)
     try:
@@ -217,7 +217,7 @@ def newtextvector(rconn, redisserver, device, name, values):
     for ename, text in values.items():
         ot = ET.Element('oneText')
         ot.set("name", ename)
-        ot.text(text)
+        ot.text = text
         ntv.append(ot)
     ntvstring = ET.tostring(ntv)
     try:

@@ -6,7 +6,13 @@ import os, sys
 #
 #if skipole_package_location not in sys.path:
 #    sys.path.insert(0,skipole_package_location)
-#########################################################
+
+
+indiredis_package_location = "/home/bernard/git/indi"
+if indiredis_package_location not in sys.path:
+    sys.path.insert(0,indiredis_package_location)
+
+##########################################################
 
 from datetime import datetime
 
