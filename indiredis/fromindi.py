@@ -339,10 +339,10 @@ class TextVector(ParentProperty):
         attribs = vector.attrib
         self.timeout = attribs.get("timeout", 0)
         for child in vector:
-            element = self.elements[child.name]
+            element = self.elements[child.get("name")]
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().update(rconn)
+        super().update(rconn, vector)
 
 
 class TextElement(ParentElement):
@@ -398,7 +398,7 @@ class NumberVector(ParentProperty):
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
-        super().update(rconn)
+        super().update(rconn, vector)
 
 
 
@@ -571,7 +571,7 @@ class SwitchVector(ParentProperty):
             element = self.elements[child.name]
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().update(rconn)
+        super().update(rconn, vector)
 
 
 
@@ -625,7 +625,7 @@ class LightVector(ParentProperty):
             element = self.elements[child.name]
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().update(rconn)
+        super().update(rconn, vector)
 
 
     def write(self, rconn):
@@ -680,7 +680,7 @@ class BLOBVector(ParentProperty):
             element.format = attribs.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().update(rconn)
+        super().update(rconn, vector)
 
 
     def write(self, rconn):
