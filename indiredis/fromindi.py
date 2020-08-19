@@ -25,6 +25,48 @@ _TO_INDI_CHANNEL = ""
 _FROM_INDI_CHANNEL = ""
 
 
+#   redis keys and data
+#
+#   one key : set
+#   'devices' - set of device names   ('devices' is a literal string)
+
+#   multiple keys : sets
+#   'properties:<devicename>' - set of property names for the device ('properties' is a literal string
+#                                                                     <devicename> is an actual device name)
+
+#   multiple keys : hash tables ( python dictionaries )
+#   'attributes:<propertyname>:<devicename>' - dictionary of attributes for the property ('attributes' is a literal string
+#                                                                                         <propertyname> is an actual property name
+#                                                                                         <devicename> is an actual device name
+
+#   one key : list
+#   'messages' - list of "Timestamp space message"
+
+#   multiple keys : lists
+#   'devicemessages:<devicename>' - list of "Timestamp space message"
+
+
+#   multiple keys : sets
+#   'elements:<propertyname>:<devicename>' - set of element names for the device property
+#                                             ('elements' is a literal string
+#                                              <propertyname> is an actual property name
+#                                              <devicename> is an actual device name)
+
+
+#   multiple keys : hash tables ( python dictionaries )
+#   'elementattributes:<elementname>:<propertyname>:<devicename>' - dictionary of attributes for the element
+#                                                                   ('elementattributes' is a literal string
+#                                                                    <elementname> is an actual element name
+#                                                                    <propertyname> is an actual property name
+#                                                                    <devicename> is an actual device name)
+
+
+
+#  one key : list
+# 'logdata' list of "Timestamp space logged data"
+
+
+
 def receive_from_indiserver(data, rconn):
     "receives xml data, parses it and stores in redis. Publishes an alert that data is received"
     if rconn is None:
@@ -146,46 +188,6 @@ def key(*keys):
     # 'keyprefixdevice:property'
     return _KEYPREFIX + ":".join(keys)
 
-#   redis keys and data
-#
-#   one key : set
-#   'devices' - set of device names   ('devices' is a literal string)
-
-#   multiple keys : sets
-#   'properties:<devicename>' - set of property names for the device ('properties' is a literal string
-#                                                                     <devicename> is an actual device name)
-
-#   multiple keys : hash tables ( python dictionaries )
-#   'attributes:<propertyname>:<devicename>' - dictionary of attributes for the property ('attributes' is a literal string
-#                                                                                         <propertyname> is an actual property name
-#                                                                                         <devicename> is an actual device name
-
-#   one key : list
-#   'messages' - list of "Timestamp space message"
-
-#   multiple keys : lists
-#   'devicemessages:<devicename>' - list of "Timestamp space message"
-
-
-#   multiple keys : sets
-#   'elements:<propertyname>:<devicename>' - set of element names for the device property
-#                                             ('elements' is a literal string
-#                                              <propertyname> is an actual property name
-#                                              <devicename> is an actual device name)
-
-
-#   multiple keys : hash tables ( python dictionaries )
-#   'elementattributes:<elementname>:<propertyname>:<devicename>' - dictionary of attributes for the element
-#                                                                   ('elementattributes' is a literal string
-#                                                                    <elementname> is an actual element name
-#                                                                    <propertyname> is an actual property name
-#                                                                    <devicename> is an actual device name)
-
-
-
-#  one key : list
-# 'logdata' list of "Timestamp space logged data"
-
 
 
 ############# Define properties
@@ -198,12 +200,11 @@ class ParentProperty():
 
     def __init__(self, vector):
         "Parent Item"
-        attribs = vector.attrib
         # Required properties
-        self.device = attribs.get("device")    # name of Device
-        self.name = attribs.get("name")        # name of Property
+        self.device = vector.get("device")    # name of Device
+        self.name = vector.get("name")        # name of Property
         # state case may be incorrect (some confusion in white paper over the case of 'Ok')
-        state = attribs.get("state").lower()      # current state of Property should be one of Idle, Ok, Busy or Alert
+        state = vector.get("state").lower()      # current state of Property should be one of Idle, Ok, Busy or Alert
         if state == "idle":
             self.state = "Idle"
         elif state == "ok":
@@ -213,10 +214,10 @@ class ParentProperty():
         else:
             self.state = "Alert"
         # implied properties
-        self.label = attribs.get("label", self.name)                             # GUI label, use name by default
-        self.group = attribs.get("group", "")                                    # Property group membership, blank by default
-        self.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
-        self.message = attribs.get("message", "")
+        self.label = vector.get("label", default = self.name)                             # GUI label, use name by default
+        self.group = vector.get("group", default = "")                                    # Property group membership, blank by default
+        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = vector.get("message", default = "")
 
         # add the class name so it is saved with attributes to redis, so the type of vector can be read
         self.vector = self.__class__.__name__
@@ -250,13 +251,12 @@ class ParentProperty():
 
     def update(self, rconn, vector):
         "Update the object attributes to redis"
-        attribs = vector.attrib
         # alter self according to the values to be set
-        state = attribs.get("state", None)     # set state of Property; Idle, OK, Busy or Alert, no change if absent
+        state = vector.get("state")     # set state of Property; Idle, OK, Busy or Alert, no change if absent
         if state:
             self.state = state
-        self.timestamp = attribs.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
-        self.message = attribs.get("message", "")
+        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = vector.get("message", default = "")
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
@@ -305,8 +305,8 @@ class ParentElement():
     "Parent to Text, Number, Switch, Lights, Blob elements"
 
     def __init__(self, child):
-        self.name = child.attrib["name"]                   # name of the element, required value
-        self.label = child.attrib.get("label", self.name)  # GUI label, use name by default
+        self.name = child.get("name")                       # name of the element, required value
+        self.label = child.get("label", default=self.name)  # GUI label, use name by default
 
 
 
@@ -318,10 +318,9 @@ class TextVector(ParentProperty):
     def __init__(self, vector):
         "The vector is the xml defTextVector"
         super().__init__(vector)
-        attribs = vector.attrib
-        perm = attribs.pop("perm")
+        perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
-        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = TextElement(child)
             self.elements[element.name] = element
@@ -336,8 +335,7 @@ class TextVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        attribs = vector.attrib
-        self.timeout = attribs.get("timeout", 0)
+        self.timeout = vector.get("timeout", default = 0)
         for child in vector:
             element = self.elements[child.get("name")]
             element.set_value(child)   # change its value to that given by the xml child
@@ -371,10 +369,9 @@ class NumberVector(ParentProperty):
     def __init__(self, vector):
         "The vector is the defNumberVector"
         super().__init__(vector)
-        attribs = vector.attrib
-        perm = attribs.pop("perm")
+        perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
-        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = NumberElement(child)
             self.elements[element.name] = element
@@ -390,10 +387,9 @@ class NumberVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        attribs = vector.attrib
-        self.timeout = attribs.get("timeout", 0)
+        self.timeout = vector.get("timeout", default = 0)
         for child in vector:
-            element = self.elements[child.name]
+            element = self.elements[child.get("name")]
             element.set_value(child)   # change its value to that given by the xml child
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
@@ -407,10 +403,10 @@ class NumberElement(ParentElement):
 
     def __init__(self, child):
         # required number attributes
-        self.format = child.attrib["format"]    # printf-style format for GUI display
-        self.min = child.attrib["min"]       # minimal value
-        self.max = child.attrib["max"]       # maximum value, ignore if min == max
-        self.step = child.attrib["step"]      # allowed increments, ignore if 0
+        self.format = child.get("format")    # printf-style format for GUI display
+        self.min = child.get("min")          # minimal value
+        self.max = child.get"max")           # maximum value, ignore if min == max
+        self.step = child.get("step")        # allowed increments, ignore if 0
         # get the raw self.value
         self.set_value(child)
         super().__init__(child)
@@ -546,11 +542,10 @@ class SwitchVector(ParentProperty):
     def __init__(self, vector):
         "The vector is the xml defSwitchVector, containing child defSwich elements"
         super().__init__(vector)
-        attribs = vector.attrib
-        perm = attribs.pop("perm")
-        self._set_permission(perm)                 # ostensible Client controlability
-        self.rule = attribs.pop("rule")            # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
-        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        perm = vector.get("perm")
+        self._set_permission(perm)                          # ostensible Client controlability
+        self.rule = vector.get("rule")                      # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
+        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = SwitchElement(child)
             self.elements[element.name] = element
@@ -565,10 +560,9 @@ class SwitchVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        attribs = vector.attrib
-        self.timeout = attribs.get("timeout", 0)
+        self.timeout = vector.get("timeout", default = 0)
         for child in vector:
-            element = self.elements[child.name]
+            element = self.elements[child.get("name")]
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
@@ -620,9 +614,8 @@ class LightVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        attribs = vector.attrib
         for child in vector:
-            element = self.elements[child.name]
+            element = self.elements[child.get("name")]
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
@@ -661,10 +654,9 @@ class BLOBVector(ParentProperty):
     def __init__(self, vector):
         "The vector is the defBLOBVector"
         super().__init__(vector)
-        attribs = vector.attrib
-        perm = attribs.pop("perm")
-        self._set_permission(perm)                 # ostensible Client controlability
-        self.timeout = attribs.pop("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
+        perm = vector.get("perm")
+        self._set_permission(perm)                          # ostensible Client controlability
+        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = BLOBElement(child)
             self.elements[element.name] = element
@@ -672,12 +664,11 @@ class BLOBVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        attribs = vector.attrib
-        self.timeout = attribs.get("timeout", 0)
+        self.timeout = vector.get("timeout", default = 0)
         for child in vector:
-            element = self.elements[child.name]
-            element.size = attribs.get("size")     # number of bytes in decoded and uncompressed BLOB
-            element.format = attribs.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
+            element = self.elements[child.get("name")]
+            element.size = child.get("size")     # number of bytes in decoded and uncompressed BLOB
+            element.format = child.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
             element.set_value(child)   # change its value to that given by the xml child
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
@@ -705,8 +696,8 @@ class BLOBElement(ParentElement):
 
     def __init__(self, child):
         "value is a binary value"
-        self.size =  child.attrib.get("size", "")     # number of bytes in decoded and uncompressed BLOB
-        self.format =  child.attrib.get("format", "") # format as a file suffix, eg: .z, .fits, .fits.z
+        self.size =  child.get("size", default = "")     # number of bytes in decoded and uncompressed BLOB
+        self.format =  child.get("format", default = "") # format as a file suffix, eg: .z, .fits, .fits.z
         self.set_value(child)
         super().__init__(child)
 
@@ -729,9 +720,9 @@ class Message():
     "a message associated with a device or entire system"
 
     def __init__(self, child):
-        self.device = child.attrib.get("device", "")                                  # considered to be site-wide if absent
-        self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
-        self.message = child.attrib.get("message", "")                                # Received message
+        self.device = child.get("device", default = "")                                  # considered to be site-wide if absent
+        self.timestamp = child.get("timestamp", default = datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.get("message", default = "")                                # Received message
 
 
     def write(self, rconn):
@@ -763,10 +754,10 @@ class delProperty():
 
     def __init__(self, child):
         "Delete the given property, or device if property name is None"
-        self.device = child.attrib.get("device")
-        self.name = child.attrib.get("name", "")
-        self.timestamp = child.attrib.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
-        self.message = child.attrib.get("message", "")                                # Received message
+        self.device = child.get("device")
+        self.name = child.get("name", default = "")
+        self.timestamp = child.get("timestamp", default = datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.get("message", default = "")                                # Received message
 
 
     def write(self, rconn):
@@ -829,8 +820,8 @@ class _Vector():
 
     """Normally the vector used to create a property such as a TextVector
        is an xml element object. However this class will be used to provide
-       an object with the equivalent attrib dictionary attribute, and will be iterable
-       with child elements.
+       an object with the equivalent attrib dictionary attribute, and get method
+       and will be iterable with child elements.
        It will be used to create the property vector object"""
 
     def __init__(self, rconn, device, name):
@@ -859,6 +850,10 @@ class _Vector():
             child_list.append( _Child(text, attributes) )
         self.elements = child_list
 
+    def get(self, attribute, default=None):
+        "This method obtains a specific attribute, equivalent to the xml element get method"
+        return self.attrib.get(attribute, default)
+
     def __iter__(self):
         "Iterating over the vector gives the elements"
         for element in self.elements:
@@ -866,12 +861,16 @@ class _Vector():
 
 
 class _Child():
-    """Set as elements within _Vector, each with attrib and text attributes"""
+    """Set as elements within _Vector, each with attrib and text attributes and get method"""
 
     def __init__(self, text, attributes):
         "Provides an object with attrib and text attributes"
         self.attrib = {key.decode("utf-8"):value.decode("utf-8") for key,value in attributes.items()}
         self.text = text
+
+    def get(self, attribute, default=None):
+        "This method obtains a specific attribute, equivalent to the xml element get method"
+        return self.attrib.get(attribute, default)
 
 
 def readvector(rconn, device, name):
@@ -883,7 +882,7 @@ def readvector(rconn, device, name):
     # If the vector is not recognised as a property of the device, return None
     if not rconn.sismember(key('properties', device), name):
         return
-    # create an object with attrib and a sequence
+    # create a _Vector object to simulate an XML object
     vector = _Vector(rconn, device, name)
     # The vector_type gives the class
     vector_type = vector.vector_type
@@ -903,9 +902,8 @@ def readvector(rconn, device, name):
 
 def setVector(rconn, vector):
     "set values for a vector property, return (name,device) on success, None if device not known"
-    attribs = vector.attrib
-    device = attribs.get("device")         # device name
-    name = attribs.get("name")             # name of property
+    device = vector.get("device")         # device name
+    name = vector.get("name")             # name of property
     # read the current Vector property from redis
     oldvector = readvector(rconn, device, name)
     if oldvector is None:
