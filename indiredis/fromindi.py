@@ -405,7 +405,7 @@ class NumberElement(ParentElement):
         # required number attributes
         self.format = child.get("format")    # printf-style format for GUI display
         self.min = child.get("min")          # minimal value
-        self.max = child.get"max")           # maximum value, ignore if min == max
+        self.max = child.get("max")           # maximum value, ignore if min == max
         self.step = child.get("step")        # allowed increments, ignore if 0
         # get the raw self.value
         self.set_value(child)

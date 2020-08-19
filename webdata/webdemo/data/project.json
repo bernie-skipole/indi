@@ -635,7 +635,11 @@
 }
 }
 ]
-]
+],
+"set_names": {
+"hidden_field1": "propertyname",
+"hidden_field2": "sectionindex"
+}
 }
 ]
 ]
@@ -2207,7 +2211,7 @@
 "backcol": "#ffffff",
 "default_error_widget": [
 "",
-"top_error"
+"status"
 ]
 },
 "head": [
@@ -2384,22 +2388,6 @@
 "placename": "header",
 "multiplier": 0,
 "mtag": "div"
-}
-],
-[
-"Widget",
-{
-"class": "error_messages.ErrorPara",
-"name": "top_error",
-"brief": "Default error widget for the page",
-"fields": {
-"clear_error": false,
-"hide": true,
-"show": true,
-"show_error": "An unknown error has occurred.",
-"widget_class": "w3-red",
-"widget_style": ""
-}
 }
 ],
 [

@@ -72,19 +72,23 @@ def getProperties(rconn, redisserver, device="", name=""):
 def devices(rconn, redisserver):
     "Returns a list of devices, uses redis smembers on key devices"
     devicekey = _key(redisserver, "devices")
-    devicelist = rconn.smembers(devicekey)
-    if not devicelist:
+    deviceset = rconn.smembers(devicekey)
+    if not deviceset:
         return []
-    return list(d.decode("utf-8") for d in devicelist)
+    devicelist = list(d.decode("utf-8") for d in deviceset)
+    devicelist.sort()
+    return devicelist
 
 
 def properties(rconn, redisserver, device):
     "Returns a list of properties, uses redis smembers on key properties:device"
     propertykey = _key(redisserver, "properties", device)
-    propertylist = rconn.smembers(propertykey)
-    if not propertylist:
+    propertyset = rconn.smembers(propertykey)
+    if not propertyset:
         return []
-    return list(p.decode("utf-8") for p in propertylist)
+    propertylist = list(p.decode("utf-8") for p in propertyset)
+    propertylist.sort()
+    return propertylist
 
 
 def elements(rconn, redisserver, device, name):
@@ -93,7 +97,9 @@ def elements(rconn, redisserver, device, name):
     elementset = rconn.smembers(elementkey)
     if not elementset:
         return []
-    return list(e.decode("utf-8") for e in elementset)
+    elementlist = list(e.decode("utf-8") for e in elementset)
+    elementlist.sort()
+    return elementlist
 
 
 def attributes_dict(rconn, redisserver, device, name):

@@ -338,6 +338,11 @@ def _show_switchvector(skicall, index, ad):
             skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
             skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
             skicall.page_data['property_'+str(index),'svradio', 'radio_checked'] = checked
+
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'setswitch', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'setswitch', 'sectionindex'] = index
+
     else:
         # permission is ro
         # display label : value in a table
