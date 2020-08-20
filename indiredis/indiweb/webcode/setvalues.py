@@ -31,7 +31,7 @@ def set_state(skicall, index, state):
 
 
 def _check_received_data(skicall, setstring):
-    """setstring should be one of 'settext', 'setswitch', 
+    """setstring should be one of 'settext', 'setswitch', 'setnumber'
        Returns devicename, propertyindex, sectionindex, propertyname
        where devicename is the device
              propertyindex is, for example, 'property_4'
@@ -161,6 +161,37 @@ def set_text(skicall):
             else:
                 raise FailPage("Error parsing data")
         data_sent = tools.newtextvector(rconn, redisserver, devicename, propertyname, valuedict)
+        print(data_sent)
+        if not data_sent:
+            raise FailPage("Error sending data")
+    else:
+        skicall.call_data["status"] = "Unable to parse received data"
+        return
+    set_state(skicall, sectionindex, "Busy")
+    skicall.call_data["status"] = f"Change to property {propertyname} has been submitted"
+
+
+
+def set_number(skicall):
+    "Responds to a submission to set a number vector"
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    devicename, propertyindex, sectionindex, propertyname = _check_received_data(skicall, 'setnumber')
+    # get set of element names for this property
+    names = tools.elements(rconn, redisserver, devicename, propertyname)
+    if not names:
+        raise FailPage("Error parsing data")
+    # initially set all element number values to be empty
+    valuedict = {nm:'' for nm in names}
+    received_data = skicall.submit_dict['received_data']
+    if (propertyindex, 'nvinputtable', 'inputdict') in received_data:
+        value = received_data[propertyindex, 'nvinputtable', 'inputdict'] # dictionary of names:values submitted
+        for nm, vl in value.items():
+            if nm in valuedict:
+                valuedict[nm] = vl
+            else:
+                raise FailPage("Error parsing data")
+        data_sent = tools.newnumbervector(rconn, redisserver, devicename, propertyname, valuedict)
         print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")

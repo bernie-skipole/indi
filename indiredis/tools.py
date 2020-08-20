@@ -233,6 +233,25 @@ def newtextvector(rconn, redisserver, device, name, values):
     return ntvstring
 
 
+def newnumbervector(rconn, redisserver, device, name, values):
+    """Sends a newNumberVector request, returns the xml string sent, or None on failure
+       values is a dictionary of names : values"""
+    nnv = ET.Element('newNumberVector')
+    nnv.set("device", device)
+    nnv.set("name", name)
+    nnv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    # set the number elements 
+    for ename, number in values.items():
+        ot = ET.Element('oneNumber')
+        ot.set("name", ename)
+        ot.text = number
+        nnv.append(ot)
+    nnvstring = ET.tostring(nnv)
+    try:
+        rconn.publish(redisserver.to_indi_channel, nnvstring)
+    except:
+        nnvstring = None
+    return nnvstring
         
     
 

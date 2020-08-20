@@ -18,6 +18,7 @@
 "properties": 3,
 "redirector": 2030,
 "server_error": 2020,
+"set_numbervector": 5030,
 "set_switchvector": 5020,
 "set_textvector": 5010,
 "ski_basic": "skis,ski_basic",
@@ -453,6 +454,69 @@
 }
 ]
 ]
+}
+],
+[
+"Widget",
+{
+"class": "inputforms.SubmitForm1",
+"name": "setnumber",
+"brief": "Container form for number input",
+"fields": {
+"action": "no_javascript",
+"action_json": "set_numbervector",
+"button_class": "w3-button w3-theme-d4 w3-right",
+"button_text": "Submit",
+"button_wait_text": "",
+"clear_error": false,
+"container_class": "w3-section",
+"div_class": "",
+"enctype": "",
+"error_class": "w3-panel w3-red",
+"hidden_field1": "",
+"hidden_field2": "",
+"hidden_field3": "",
+"hidden_field4": "",
+"left_class": "",
+"left_label": "",
+"left_style": "",
+"right_class": "",
+"right_label": "",
+"right_style": "",
+"show": false,
+"show_error": "",
+"widget_class": "w3-container w3-pale-yellow w3-cell w3-mobile",
+"widget_style": "padding-bottom:20px;"
+},
+"container_0": [
+[
+"Widget",
+{
+"class": "inputtables.InputTable1",
+"name": "nvinputtable",
+"brief": "Table of input fields",
+"fields": {
+"col1": [],
+"col2": [],
+"header_class": "w3-theme-d2",
+"inputdict": {},
+"maxlength": "",
+"row_classes": [],
+"show": true,
+"size": "",
+"title1": "",
+"title2": "",
+"title3": "",
+"widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+]
+],
+"set_names": {
+"hidden_field2": "propertyname",
+"hidden_field3": "sectionindex"
+}
 }
 ]
 ]
@@ -894,6 +958,27 @@
 "restricted": false,
 "folders": {},
 "pages": {
+"numbervector": {
+"ident": 5030,
+"brief": "Set a numbervector",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"set_number"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
 "switchvector": {
 "ident": 5020,
 "brief": "Set a switchvector",

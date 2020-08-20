@@ -7,10 +7,10 @@ import threading, os, sys
 
 
 ############ these lines for development mode ###########
-#skipole_package_location = "/home/bernard/git/skipole"
-#
-#if skipole_package_location not in sys.path:
-#    sys.path.insert(0,skipole_package_location)
+skipole_package_location = "/home/bernard/git/skipole"
+
+if skipole_package_location not in sys.path:
+    sys.path.insert(0,skipole_package_location)
 ##########################################################
 
 ####### indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
@@ -42,6 +42,9 @@ run_inditoredis.start()
 rconn = tools.open_redis(redis_host)
 # create a wsgi application, requires named arguments, rconn and redisserver
 application = indiweb.make_wsgi_app(rconn=rconn, redisserver=redis_host)
+
+# add skiadmin during development
+#application = indiweb.add_skiadmin(application)
 
 # serve the application with the python waitress web server
 serve(application, host='127.0.0.1', port=8000)

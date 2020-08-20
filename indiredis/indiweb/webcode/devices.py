@@ -202,8 +202,35 @@ def _show_numbervector(skicall, index, ad):
     # permission is one of ro, wo, rw
     if ad['perm'] == "xx":   #wo
         pass                               ########## still to do
-    elif ad['perm'] == "yy": #rw
-        pass                               ########## still to do
+    elif ad['perm'] == "rw":
+        # permission is rw
+        # display label : value : numberinput field followed by a submit button
+        skicall.page_data['property_'+str(index),'setnumber', 'show'] = True
+        skicall.page_data['property_'+str(index),'nvinputtable', 'show'] = True
+        col1 = []
+        col2 = []
+        inputdict = {}
+        maxsize = 0
+        for eld in element_list:
+            col1.append(eld['label'] + ":")
+            col2.append(eld['value'])
+            inputdict[eld['name']] = eld['value']
+        if len(eld['value']) > maxsize:
+            maxsize = len(eld['value'])
+        skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+        # make the size of the input field match the values set in it
+        if maxsize > 30:
+            maxsize = 30
+        elif maxsize < 15:
+            maxsize = 15
+        else:
+            maxsize += 1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'size'] = maxsize
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'setnumber', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'setnumber', 'sectionindex'] = index
     else:
         # permission is ro
         # display label : value in a table
