@@ -18,7 +18,7 @@ An INDI client with the capability to read device properties from indiserver (po
 other direction; can read data published to redis and send it in INDI XML format to indiserver.
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis
-key value storage. The gui or web framework is not specified. As the code for this project is developed, the redis
+key value storage. An example web service is provided. As the code for this project is developed, the redis
 keys will be defined and documented in the github wiki.
 
 Two options are provided :
@@ -30,6 +30,12 @@ or
 The data can be transferred between indiserver and redis via an MQTT server.
 
 Python dependencies from pypi: "pip install redis" and, if the MQTT option is required, "pip install paho-mqtt".
+
+If the example web service is to be run, skipole (web framework) and waitress (web server) are needed:
+
+pip install skipole
+
+pip install waitress
 
 (All python3 versions)
 
@@ -116,13 +122,48 @@ The tools module is a set of Python functions, which your gui may use if conveni
 indi devices and properties from redis, returning Python lists and dictionaries, and provides
 functions to transmit indi commands by publishing to redis.
 
-### The web service
+### indiredis.indiweb
 
-Typically your own web framework would be used to write code that can read and write to a redis service.
+Your own web framework could be used to write code that can read and write to a redis service. However the
+package indiredis.indiweb is provided which creates a Python WSGI application that can provide a demonstration
+web service.
 
-A demonstration web service is provided, webdemo.py, together with support code and files beneath directories
-webcode and webdata. This requires the 'skipole' web framework to be installed; "pip install skipole".
-The webdemo.py file and the web directories are not needed if you are just using the indiredis package.
+It requires the 'skipole' package, available from Pypi, and a wsgi web server, such as 'waitress' also available
+from Pypi.
+
+Example Python script running the web service:
+```
+import threading, os, sys
+
+from indiredis import inditoredis, indi_server, redis_server, tools, indiweb
+
+# any wsgi web server can serve the wsgi application produced by
+# indiweb.make_wsgi_app, in this example the web server 'waitress' is used
+
+from waitress import serve
+
+# define the hosts/ports where servers are listenning, these functions return named tuples
+# which are required as arguments to inditoredis() and to indiweb.make_wsgi_app()
+
+indi_host = indi_server(host='localhost', port=7624)
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
+                          to_indi_channel='to_indi', from_indi_channel='from_indi')
+
+
+# call inditoredis - which is blocking, so run in its own thread
+run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
+# and start it
+run_inditoredis.start()
+
+# The web service needs a redis connection, available in tools
+rconn = tools.open_redis(redis_host)
+# create a wsgi application, requires named arguments, rconn and redisserver
+application = indiweb.make_wsgi_app(rconn=rconn, redisserver=redis_host)
+
+# serve the application with the python waitress web server
+serve(application, host='127.0.0.1', port=8000)
+
+```
 
 ### mqtt and redis - why?
 
