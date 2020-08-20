@@ -1,0 +1,49 @@
+
+
+"""Example script to run inditoredis and the indiweb web service"""
+
+import threading, os, sys
+
+
+
+############ these lines for development mode ###########
+#skipole_package_location = "/home/bernard/git/skipole"
+#
+#if skipole_package_location not in sys.path:
+#    sys.path.insert(0,skipole_package_location)
+##########################################################
+
+####### indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
+
+
+from indiredis import inditoredis, indi_server, redis_server, tools, indiweb
+
+from skipole import skilift
+
+
+# define the hosts/ports where servers are listenning, these functions return named tuples
+# which are required as arguments to inditoredis() and to indiweb.make_wsgi_app()
+
+indi_host = indi_server(host='localhost', port=7624)
+redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
+                          to_indi_channel='to_indi', from_indi_channel='from_indi')
+
+
+# call inditoredis - which is blocking, so run in its own thread
+run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
+# and start it
+run_inditoredis.start()
+
+
+# The web service needs a redis connection, available in tools
+rconn = tools.open_redis(redis_host)
+# create a wsgi application, requires named arguments
+application = indiweb.make_wsgi_app(rconn=rconn, redisserver=redis_host)
+# serve the application with the development server from skilift
+
+host = "127.0.0.1"
+port = 8000
+print("Serving on port %s." % (port, ))
+skilift.development_server(host, port, application)
+
+

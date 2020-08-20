@@ -13,6 +13,8 @@ ready for reading by the web server."""
 
 import xml.etree.ElementTree as ET
 
+import math
+
 from datetime import datetime
 
 from base64 import standard_b64decode, standard_b64encode

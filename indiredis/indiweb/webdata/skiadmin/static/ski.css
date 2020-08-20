@@ -1,0 +1,178 @@
+
+.ski_input {
+padding:8px;
+border:none;
+border-bottom:1px solid #ccc;
+}
+
+.ski_no_bullets {
+list-style-type : none;}
+
+.ski_mid_button {
+margin-bottom : 10px;
+margin-left : 35%;
+margin-right : auto;
+margin-top : 10px;
+width : 30%;}
+
+.ski_top_marg10px {
+margin-top : 10px;}
+
+.ski_wide_80 {
+margin-left : auto;
+margin-right : auto;
+width : 80%;}
+
+.ski_left_label {
+display : inline-block;
+font-weight : bold;
+margin-right : 1%;
+padding-bottom : 3px;
+padding-top : 3px;
+text-align : right;
+width : 34%;}
+
+.ski_right_label {
+display : inline-block;
+font-weight : bold;
+margin-left : 1%;
+padding-bottom : 3px;
+padding-top : 3px;
+text-align : left;}
+
+.ski_left_40_20_10 {
+margin-left : 40%;}
+
+.ski_left_40_10 {
+margin-left : 40%;}
+
+.ski_left_marg_30_percent {
+margin-left : 30%;}
+
+.ski_left_marg_35_percent {
+margin-left : 35%;}
+
+.ski_top_bot_marg_10px {
+margin-bottom : 10px;
+margin-top : 10px;}
+
+.ski_input_accepted {
+box-shadow : 0 0 0 2px green;}
+
+.ski_input_errored {
+box-shadow : 0 0 0 2px red;}
+
+.ski_confirm {
+background-color : #b1b1b1;
+border : solid 2px #000000;
+left : 30%;
+padding : 10px;
+position : fixed;
+top : 15%;
+width : 40%;
+z-index : 2000;}
+
+.ski_confirm_butt1 {
+-moz-border-radius : 8;
+-webkit-border-radius : 8;
+background : #a2a2a2;
+border : solid #000000 2px;
+border-radius : 8px;
+color : #000000;
+display : block;
+padding : 4px 6px 6px 4px;
+text-align : center;
+text-decoration : none;
+width : 30%;}
+
+.ski_confirm_butt1:hover {
+background : #959595;
+border : solid #000000 2px;
+color : #000000;}
+
+.ski_confirm_butt2 {
+-moz-border-radius : 8;
+-webkit-border-radius : 8;
+background : #a2a2a2;
+border : solid #000000 2px;
+border-radius : 8px;
+color : #000000;
+display : block;
+padding : 4px 6px 6px 4px;
+position : absolute;
+right : 0px;
+text-align : center;
+text-decoration : none;
+top : 0px;
+width : 30%;}
+
+.ski_confirm_butt2:hover {
+background : #959595;
+border : solid #000000 2px;
+color : #000000;}
+
+.ski_confirm_buttondiv {
+position : relative;
+width : 100%;}
+
+.ski_confirm_para {
+margin-bottom : 10px;
+text-align : center;}
+
+.ski_nowrap {
+white-space: nowrap;}
+
+
+@media (max-width:992px) {
+
+.ski_left_40_20_10 {
+margin-left : 20%;}
+
+.ski_left_40_10 {
+margin-left : 10%;}
+
+.ski_left_label {
+text-align : left;
+width : 100%;}
+
+.ski_mid_button {
+margin-bottom : 10px;
+margin-left : 30%;
+margin-right : auto;
+margin-top : 10px;
+width : 40%;}
+
+ h1 {font-size:30px;}
+ h2 {font-size:26px;}
+ h3 {font-size:24px;}
+ h4 {font-size:20px;}
+ h5 {font-size:18px;}
+ h6 {font-size:15px;}
+
+}
+
+
+@media (max-width:768px){
+
+.ski_nowrap {
+white-space: normal;}
+
+.ski_left_40_20_10 {
+margin-left : 10%;}
+
+.ski_mid_button {
+margin-bottom : 10px;
+margin-left : 20%;
+margin-right : auto;
+margin-top : 10px;
+width : 60%;}
+
+ h1 {font-size:24px;}
+ h2 {font-size:20px;}
+ h3 {font-size:18px;}
+ h4 {font-size:16px;}
+ h5 {font-size:15px;}
+ h6 {font-size:15px;}
+
+}
+
