@@ -1,8 +1,0 @@
-<svg version="1.1" height="16" width="16" baseProfile="full" xmlns="http://www.w3.org/2000/svg">
-  <rect height="16" width="16" style="fill:black"/>
-  <line y1="8" y2="8" x1="1" style="stroke:yellow;stroke-width:2" x2="9"/>
-  <line y1="4" y2="12" x1="5" style="stroke:yellow;stroke-width:2" x2="5"/>
-  <line y1="4" y2="8" x1="9" style="stroke:yellow;stroke-width:2" x2="14"/>
-  <line y1="12" y2="8" x1="9" style="stroke:yellow;stroke-width:2" x2="14"/>
-  <circle cy="8" r="1" style="fill:yellow" cx="14"/>
-</svg>
