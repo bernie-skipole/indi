@@ -8,6 +8,8 @@ from skipole import WSGIApplication, use_submit_list
 
 from skipole import skis
 
+from .. import tools
+
 
 
 PROJECTFILES = os.path.join(os.path.dirname(os.path.realpath(__file__)), "webdata")
@@ -52,8 +54,11 @@ def end_call(page_ident, page_type, skicall):
         skicall.page_data['ident_data'] = timestamp
 
 
-def make_wsgi_app(**proj_data):
+def make_wsgi_app(redis_host):
     """create the wsgi application"""
+    # The web service needs a redis connection, available in tools
+    rconn = tools.open_redis(redis_host)
+    proj_data = {"rconn":rconn, "redisserver":redis_host}
     application = WSGIApplication(project=PROJECT,
                                   projectfiles=PROJECTFILES,
                                   proj_data=proj_data,

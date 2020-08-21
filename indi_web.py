@@ -16,7 +16,7 @@ if skipole_package_location not in sys.path:
 ####### indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
 
 
-from indiredis import inditoredis, indi_server, redis_server, tools, indiweb
+from indiredis import inditoredis, indi_server, redis_server, indiweb
 
 # any wsgi web server can serve the wsgi application produced by
 # indiweb.make_wsgi_app, in this example the web server 'waitress' is used
@@ -33,15 +33,12 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 
 # call inditoredis - which is blocking, so run in its own thread
-run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
+#run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
 # and start it
-run_inditoredis.start()
+#run_inditoredis.start()
 
-
-# The web service needs a redis connection, available in tools
-rconn = tools.open_redis(redis_host)
-# create a wsgi application, requires named arguments, rconn and redisserver
-application = indiweb.make_wsgi_app(rconn=rconn, redisserver=redis_host)
+# create a wsgi application, which requires the redis_host tuple
+application = indiweb.make_wsgi_app(redis_host)
 
 # add skiadmin during development
 #application = indiweb.add_skiadmin(application)

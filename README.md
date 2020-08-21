@@ -128,14 +128,18 @@ Your own web framework could be used to write code that can read and write to a 
 package indiredis.indiweb is provided which creates a Python WSGI application that can provide a demonstration
 web service.
 
-It requires the 'skipole' package, available from Pypi, and a wsgi web server, such as 'waitress' also available
-from Pypi.
+It requires the 'skipole' Python framework, available from Pypi, and a wsgi web server, such as 'waitress' also
+available from Pypi.
+
+indiredis.indiweb provides web pages which discover devices and properties, and allows the user to set
+properties according to the Indi specification. It has no prior knowledge of the devices connected, and
+is very 'general purpose'.
 
 Example Python script running the web service:
 ```
 import threading, os, sys
 
-from indiredis import inditoredis, indi_server, redis_server, tools, indiweb
+from indiredis import inditoredis, indi_server, redis_server, indiweb
 
 # any wsgi web server can serve the wsgi application produced by
 # indiweb.make_wsgi_app, in this example the web server 'waitress' is used
@@ -155,10 +159,8 @@ run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_ho
 # and start it
 run_inditoredis.start()
 
-# The web service needs a redis connection, available in tools
-rconn = tools.open_redis(redis_host)
-# create a wsgi application, requires named arguments, rconn and redisserver
-application = indiweb.make_wsgi_app(rconn=rconn, redisserver=redis_host)
+# create a wsgi application, which requires the redis_host tuple
+application = indiweb.make_wsgi_app(redis_host)
 
 # serve the application with the python waitress web server
 serve(application, host='127.0.0.1', port=8000)
@@ -180,8 +182,9 @@ this indiredis service, and sent to indiserver.
 
 Redis key/value storage and publication is extremely easy, most web frameworks already use it.
 
-MQTT is used since it makes out-of-band communications easy, for example, if other none-INDI communications
-are needed between devices, then merely subscribing and publishing with another topic is possible.
+MQTT is an option provided here since it makes out-of-band communications easy, for example, if other
+none-INDI communications are needed between devices, then merely subscribing and publishing with another
+topic is possible.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different
 machine entirely. This makes it possible to choose the direction of the initial connection - which may be
@@ -200,5 +203,8 @@ used. This makes a possible logging service easy to implement.
 Only open communications is defined in this package, security and authentication is not considered.
 Transmission between servers could pass over an encrypted VPN or SSH tunnel. Any such implementation
 is not described here.
+
+The web service does not provide any authentication, and is only suitable for an Intranet, not for an
+open Internet connection.
 
 
