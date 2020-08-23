@@ -213,10 +213,10 @@ def _show_numbervector(skicall, index, ad):
         maxsize = 0
         for eld in element_list:
             col1.append(eld['label'] + ":")
-            col2.append(eld['value'])
-            inputdict[eld['name']] = eld['value']
-        if len(eld['value']) > maxsize:
-            maxsize = len(eld['value'])
+            col2.append(eld['formatted_number'])
+            inputdict[eld['name']] = eld['formatted_number']
+        if len(eld['formatted_number']) > maxsize:
+            maxsize = len(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
         skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
         skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict

@@ -67,6 +67,10 @@ _FROM_INDI_CHANNEL = ""
 #  one key : list
 # 'logdata' list of "Timestamp space logged data"
 
+#
+#  multiple keys : lists
+# 'logdata:<devicename>' - list of "Timestamp space logged data"
+
 
 
 def receive_from_indiserver(data, rconn):
@@ -81,27 +85,33 @@ def receive_from_indiserver(data, rconn):
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
+            log_received_per_device(rconn, text_vector.device, f"defTextVector:{text_vector.name}")
             log_received(rconn, f"defTextVector:{text_vector.name}:{text_vector.device}")   # logs, and publishes an alert that property:device has changed
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
+            log_received_per_device(rconn, number_vector.device, f"defNumberVector:{number_vector.name}")
             log_received(rconn, f"defNumberVector:{number_vector.name}:{number_vector.device}")
         elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
+            log_received_per_device(rconn, switch_vector.device, f"defSwitchVector:{switch_vector.name}")
             log_received(rconn, f"defSwitchVector:{switch_vector.name}:{switch_vector.device}")
         elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
-            log_received(rconn, f"defLightVector:{light_vector.name}:{text_vector.device}")
+            log_received_per_device(rconn, light_vector.device, f"defLightVector:{light_vector.name}")
+            log_received(rconn, f"defLightVector:{light_vector.name}:{light_vector.device}")
         elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
+            log_received_per_device(rconn, blob_vector.device, f"defBlobVector:{blob_vector.name}")
             log_received(rconn, f"defBLOBVector:{blob_vector.name}:{blob_vector.device}")
         elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
             if message.device:
+                log_received_per_device(rconn, message.device, "message")
                 log_received(rconn, f"message:{message.device}")
             else:
                 log_received(rconn, "message")
@@ -109,43 +119,36 @@ def receive_from_indiserver(data, rconn):
             delprop = delProperty(child)
             delprop.write(rconn)
             if delprop.name:
+                log_received_per_device(rconn, delprop.device, f"delProperty:{delprop.name}")
                 log_received(rconn, f"delProperty:{delprop.name}:{delprop.device}")
             else:
+                log_received_per_device(rconn, delprop.device, "delDevice")
                 log_received(rconn, f"delDevice:{delprop.device}")
         elif child.tag == "setTextVector":
-            result = setVector(rconn, child)
-            if result is None:
-                continue
-            name,device = result
-            log_received(rconn, f"setTextVector:{name}:{device}")
+            text_vector = TextVector.update_from_setvector(rconn, child)
+            log_setvector(rconn, text_vector, child)
         elif child.tag == "setNumberVector":
-            result = setVector(rconn, child)
-            if result is None:
-                continue
-            name,device = result
-            log_received(rconn, f"setNumberVector:{name}:{device}")
+            number_vector = NumberVector.update_from_setvector(rconn, child)
+            log_setvector(rconn, number_vector, child)
         elif child.tag == "setSwitchVector":
-            result = setVector(rconn, child)
-            if result is None:
-                continue
-            name,device = result
-            log_received(rconn, f"setSwitchVector:{name}:{device}")
+            switch_vector = SwitchVector.update_from_setvector(rconn, child)
+            log_setvector(rconn, switch_vector, child)
         elif child.tag == "setLightVector":
-            result = setVector(rconn, child)
-            if result is None:
-                continue
-            name,device = result
-            log_received(rconn, f"setLightVector:{name}:{device}")
+            light_vector = LightVector.update_from_setvector(rconn, child)
+            log_setvector(rconn, light_vector, child)
         elif child.tag == "setBLOBVector":
-            result = setVector(rconn, child)
-            if result is None:
-                continue
-            name,device = result
-            log_received(rconn, f"setBLOBVector:{name}:{device}")
+            blob_vector = BLOBVector.update_from_setvector(rconn, child)
+            log_setvector(rconn, blob_vector, child)
+
+
+def log_setvector(rconn, propertyvector, setvector):
+    "Logs data when a setVector arrives"
+    log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
+    log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}")
 
 
 def log_received(rconn, logdata):
-    """Add a received string to a list which contains the 100 last logs
+    """Add a logdata string to a list which contains the 100 last logs
        key is prefix + "logdata"    ("logdata" is literal string, not the argument value)
        and each value logged is timestamp space logdata, where timestamp is the time at which the value is logged
        Also publishes the logdata on redis _FROM_INDI_CHANNEL for any service that cares to listen"""
@@ -158,6 +161,17 @@ def log_received(rconn, logdata):
     rconn.ltrim(key('logdata'), 0, 99)
     # and publishes an alert
     rconn.publish(_FROM_INDI_CHANNEL, logdata)
+
+
+def log_received_per_device(rconn, device, logdata):
+    """Add a logdata string to a 'device' list - one is created for every device
+       key is prefix + "logdata:" + device"""
+    if not logdata:
+        return
+    time_and_data = datetime.utcnow().isoformat(sep='T') + " " + logdata
+    rconn.lpush(key('logdata',device), time_and_data)
+    # and limit number of logs to 100
+    rconn.ltrim(key('logdata'), 0, 99)
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
@@ -251,6 +265,21 @@ class ParentProperty():
             rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
 
 
+    @classmethod
+    def read(cls, rconn, device, name):
+        """Reads redis and returns an instance of this class"""
+        # If device is not in the 'devices' set, return None
+        if not rconn.sismember(key('devices'), device):
+            return
+        # If the property name is not recognised as a property of the device, return None
+        if not rconn.sismember(key('properties', device), name):
+            return
+        # create a _XMLVector object to simulate an XML element
+        xmlvector = _XMLVector(rconn, device, name)
+        # and use it to return an instance of this class
+        return cls(xmlvector)
+
+
     def update(self, rconn, vector):
         "Update the object attributes to redis"
         # alter self according to the values to be set
@@ -262,6 +291,27 @@ class ParentProperty():
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
+
+
+    @classmethod
+    def update_from_setvector(cls, rconn, setvector):
+        """Gets an instance of this class from redis, and updates it
+           according to the instructions from the setvector
+           Returns an updated instance of this class or None if unable to read the property"""
+        device = setvector.get("device")
+        if device is None:
+            return
+        name = setvector.get("name")
+        if name is None:
+            return
+        # Create an instance of the class, by reading the property from redis
+        currentvector = cls.read(rconn, device, name)
+        if currentvector is None:
+            # device or property is unknown
+            return
+        # call the update method of the property, this writes changes to redis
+        currentvector.update(rconn, setvector)
+        return currentvector
 
 
     def element_names(self):
@@ -318,7 +368,7 @@ class ParentElement():
 class TextVector(ParentProperty):
 
     def __init__(self, vector):
-        "The vector is the xml defTextVector"
+        "The vector is the xml defTextVector element or an _XMLVector instance"
         super().__init__(vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
@@ -369,7 +419,7 @@ class NumberVector(ParentProperty):
 
 
     def __init__(self, vector):
-        "The vector is the defNumberVector"
+        "The vector is the defNumberVector element or an _XMLVector instance"
         super().__init__(vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
@@ -542,7 +592,7 @@ class NumberElement(ParentElement):
 class SwitchVector(ParentProperty):
 
     def __init__(self, vector):
-        "The vector is the xml defSwitchVector, containing child defSwich elements"
+        "The vector is the xml defSwitchVector element or an _XMLVector instance"
         super().__init__(vector)
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
@@ -606,7 +656,7 @@ class LightVector(ParentProperty):
 
 
     def __init__(self, vector):
-        "The vector is the defLightVector"
+        "The vector is the defLightVector element or an _XMLVector instance"
         super().__init__(vector)
         self.perm = 'ro'                      # permission always Read-Only
         for child in vector:
@@ -654,7 +704,7 @@ class LightElement(ParentElement):
 class BLOBVector(ParentProperty):
 
     def __init__(self, vector):
-        "The vector is the defBLOBVector"
+        "The vector is the defBLOBVector element or an _XMLVector instance"
         super().__init__(vector)
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
@@ -818,10 +868,10 @@ class delProperty():
 ######## Read a vector from redis ################
 
 
-class _Vector():
+class _XMLVector():
 
     """Normally the vector used to create a property such as a TextVector
-       is an xml element object. However this class will be used to provide
+       is a received xml element object. However this class will be used to read redis and provide
        an object with the equivalent attrib dictionary attribute, and get method
        and will be iterable with child elements.
        It will be used to create the property vector object"""
@@ -841,7 +891,7 @@ class _Vector():
         child_list = []
         for element_name in elements:
             ename = element_name.decode("utf-8")
-            # for each element, read from redis and create a _Child object, and set into child_list
+            # for each element, read from redis and create a _XMLChild object, and set into child_list
             attributes = rconn.hgetall(key('elementattributes', ename, name, device))
             if self.vector_type == "BLOBVector":
                 text = attributes.pop(b'value')      # Blobs are binary values, encoded with base64
@@ -849,7 +899,7 @@ class _Vector():
                     text = standard_b64encode(text)
             else:
                 text = attributes.pop(b'value').decode("utf-8")
-            child_list.append( _Child(text, attributes) )
+            child_list.append( _XMLChild(text, attributes) )
         self.elements = child_list
 
     def get(self, attribute, default=None):
@@ -862,8 +912,8 @@ class _Vector():
             yield element
 
 
-class _Child():
-    """Set as elements within _Vector, each with attrib and text attributes and get method"""
+class _XMLChild():
+    """Set as elements within _XMLVector, each with attrib and text attributes and get method"""
 
     def __init__(self, text, attributes):
         "Provides an object with attrib and text attributes"
@@ -874,45 +924,5 @@ class _Child():
         "This method obtains a specific attribute, equivalent to the xml element get method"
         return self.attrib.get(attribute, default)
 
-
-def readvector(rconn, device, name):
-    """Where device is the device name, name is the vector name,
-       reads redis and returns an instance of a *Vector class"""
-    # If device is not in the 'devices' set, return None
-    if not rconn.sismember(key('devices'), device):
-        return
-    # If the vector is not recognised as a property of the device, return None
-    if not rconn.sismember(key('properties', device), name):
-        return
-    # create a _Vector object to simulate an XML object
-    vector = _Vector(rconn, device, name)
-    # The vector_type gives the class
-    vector_type = vector.vector_type
-    if vector_type is None:
-        return
-    if vector_type == "TextVector":
-        return TextVector(vector)
-    elif vector_type == "NumberVector":
-        return NumberVector(vector)
-    elif vector_type == "SwitchVector":
-        return SwitchVector(vector)
-    elif vector_type == "LightVector":
-        return LightVector(vector)
-    elif vector_type == "BLOBVector":
-        return BLOBVector(vector)
-
-
-def setVector(rconn, vector):
-    "set values for a vector property, return (name,device) on success, None if device not known"
-    device = vector.get("device")         # device name
-    name = vector.get("name")             # name of property
-    # read the current Vector property from redis
-    oldvector = readvector(rconn, device, name)
-    if oldvector is None:
-        # device or property name is unknown
-        return
-    # call the update method of the property
-    oldvector.update(rconn, vector)
-    return name,device
 
 

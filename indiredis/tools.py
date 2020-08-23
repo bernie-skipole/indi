@@ -187,13 +187,17 @@ def getProperties(rconn, redisserver, device="", name=""):
     return etstring
 
 
-def newswitchvector(rconn, redisserver, device, name, values):
+def newswitchvector(rconn, redisserver, device, name, values, timestamp=None):
     """Sends a newSwichVector request, returns the xml string sent, or None on failure
-       values is a dictionary of name:state where name is the switch element name, state is On or Off"""
+       values is a dictionary of name:state where name is the switch element name, state is On or Off
+       timestamp is a datetime object, if None the current utc datetime will be used"""
     nsv = ET.Element('newSwitchVector')
     nsv.set("device", device)
     nsv.set("name", name)
-    nsv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    if timestamp is None:
+        nsv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    else:
+        nsv.set("timestamp", timestamp.isoformat(sep='T'))
     # set the switch elements 
     for ename, state in values.items():
         if (state != "On") and (state != "Off"):
@@ -212,13 +216,17 @@ def newswitchvector(rconn, redisserver, device, name, values):
 
 
 
-def newtextvector(rconn, redisserver, device, name, values):
+def newtextvector(rconn, redisserver, device, name, values, timestamp=None):
     """Sends a newTextVector request, returns the xml string sent, or None on failure
-       values is a dictionary of text names : values"""
+       values is a dictionary of text names : values
+       timestamp is a datetime object, if None the current utc datetime will be used"""
     ntv = ET.Element('newTextVector')
     ntv.set("device", device)
     ntv.set("name", name)
-    ntv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    if timestamp is None:
+        ntv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    else:
+        ntv.set("timestamp", timestamp.isoformat(sep='T'))
     # set the text elements 
     for ename, text in values.items():
         ot = ET.Element('oneText')
@@ -233,13 +241,17 @@ def newtextvector(rconn, redisserver, device, name, values):
     return ntvstring
 
 
-def newnumbervector(rconn, redisserver, device, name, values):
+def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
     """Sends a newNumberVector request, returns the xml string sent, or None on failure
-       values is a dictionary of names : values"""
+       values is a dictionary of names : values
+       timestamp is a datetime object, if None the current utc datetime will be used"""
     nnv = ET.Element('newNumberVector')
     nnv.set("device", device)
     nnv.set("name", name)
-    nnv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    if timestamp is None:
+        nnv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    else:
+        nnv.set("timestamp", timestamp.isoformat(sep='T'))
     # set the number elements 
     for ename, number in values.items():
         ot = ET.Element('oneNumber')
