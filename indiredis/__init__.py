@@ -37,7 +37,7 @@ except:
     MQTT_AVAILABLE = False
 
 
-from . import toindi, fromindi
+from . import toindi, fromindi, tools
 
 
 
@@ -110,16 +110,19 @@ def inditoredis(indiserver, redisserver):
         print("Error - Unable to import the Python redis package")
         sys.exit(1)
 
-    # wait for five seconds before starting, to give servers
-    # time to start up
-    sleep(5)
-
     print("inditoredis started")
+
+    # wait two seconds before starting, to give servers
+    # time to start up
+    sleep(2)
 
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
     fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+
+    # on startup, clear all redis keys
+    tools.clearredis(rconn, redisserver)
 
     # Create a SenderLoop object, with the _TO_INDI dequeue and redis connection
     senderloop = toindi.SenderLoop(_TO_INDI, rconn, redisserver)
@@ -328,10 +331,6 @@ class _SenderToMQTT():
 def mqtttoredis(mqttserver, redisserver):
     "Blocking call that provides the mqtt - redis connection"
 
-    # wait for five seconds before starting, to give mqtt and other servers
-    # time to start up
-    sleep(5)
-
     if not MQTT_AVAILABLE:
         print("Error - Unable to import the Python paho.mqtt.client package")
         sys.exit(1)
@@ -342,10 +341,17 @@ def mqtttoredis(mqttserver, redisserver):
 
     print("mqtttoredis started")
 
+    # wait two seconds before starting, to give mqtt and other servers
+    # time to start up
+    sleep(2)
+
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
     fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+
+    # on startup, clear all redis keys
+    tools.clearredis(rconn, redisserver)
 
     # create an mqtt client and connection
     userdata={ "comms"           : False,        # an indication mqtt connection is working

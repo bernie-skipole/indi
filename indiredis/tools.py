@@ -149,13 +149,18 @@ def property_elements(rconn, redisserver, device, name):
     return element_dictionary_list
     
 
-def last_log(rconn, redisserver):
-    "Return the last log as (timestamp,data) or None if not available"
-    logkey = _key(redisserver, "logdata")
+def last_log(rconn, redisserver, device=""):
+    """Return the last log as (timestamp,data) or None if not available
+       If device given, the last log from this device is returned"""
+    if device:
+        logkey = _key(redisserver, "logdata", device)
+    else:
+        logkey = _key(redisserver, "logdata")
     logentry = rconn.lindex(logkey, 0)
     if logentry is None:
         return
     return logentry.decode("utf-8").split(" ", maxsplit=1)
+
 
 
 def get_logs(rconn, redisserver, number):
@@ -266,5 +271,25 @@ def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
     return nnvstring
         
     
+def clearredis(rconn, redisserver):
+    "Deletes the redis keys apart from logs"
+    device_list = devices(rconn, redisserver):
+    rconn.delete( _key(redisserver, "devices") )
+    rconn.delete( _key(redisserver, "messages") )
+    for device in device_list:
+        rconn.delete( _key(redisserver, "devicemessages", device) )
+        property_list = properties(rconn, redisserver, device):
+        rconn.delete( _key(redisserver, "properties", device) )
+        for name in property_list:
+            rconn.delete( _key(redisserver, "attributes", name, device) )
+            elements_list = elements(rconn, redisserver, device, name):
+            rconn.delete( _key(redisserver, "elements", name, device) )
+            for elementname in elements_list:
+                rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )
+
+
+
+
+
 
 

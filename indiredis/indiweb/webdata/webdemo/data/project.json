@@ -17,6 +17,7 @@
 "no_javascript": 10,
 "properties": 3,
 "redirector": 2030,
+"refreshproperties": 7,
 "server_error": 2020,
 "set_numbervector": 5030,
 "set_switchvector": 5020,
@@ -2609,7 +2610,7 @@
 "pages": {
 "checkupdates": {
 "ident": 5,
-"brief": "If any updates, refreshes the page",
+"brief": "If any property updates, refreshes the page",
 "RespondPage": {
 "class": "SubmitData",
 "original_args": {
@@ -2647,7 +2648,7 @@
 },
 "getproperties": {
 "ident": 4,
-"brief": "Refreshes properties for a device",
+"brief": "Calls getProperties for a device",
 "RespondPage": {
 "class": "SubmitData",
 "original_args": {
@@ -2744,6 +2745,26 @@
 "original_fields": {
 "get_field1": ""
 }
+}
+},
+"refreshproperties": {
+"ident": 7,
+"brief": "Reads redis and updates any properties",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"fail_ident": "home",
+"submit_list": [
+"webcode",
+"devices",
+"refreshproperties"
+],
+"target_ident": 4003
+},
+"original_fields": {}
 }
 }
 }

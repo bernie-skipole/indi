@@ -82,6 +82,7 @@ def receive_from_indiserver(data, rconn):
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
     for child in root:
+        print(child.tag)
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
@@ -143,6 +144,7 @@ def receive_from_indiserver(data, rconn):
 
 def log_setvector(rconn, propertyvector, setvector):
     "Logs data when a setVector arrives"
+    print(propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
     log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
     log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}")
 
@@ -170,8 +172,9 @@ def log_received_per_device(rconn, device, logdata):
         return
     time_and_data = datetime.utcnow().isoformat(sep='T') + " " + logdata
     rconn.lpush(key('logdata',device), time_and_data)
+    print(key('logdata',device), time_and_data)
     # and limit number of logs to 100
-    rconn.ltrim(key('logdata'), 0, 99)
+    rconn.ltrim(key('logdata',device), 0, 99)
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
