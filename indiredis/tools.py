@@ -273,16 +273,16 @@ def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
     
 def clearredis(rconn, redisserver):
     "Deletes the redis keys apart from logs"
-    device_list = devices(rconn, redisserver):
+    device_list = devices(rconn, redisserver)
     rconn.delete( _key(redisserver, "devices") )
     rconn.delete( _key(redisserver, "messages") )
     for device in device_list:
         rconn.delete( _key(redisserver, "devicemessages", device) )
-        property_list = properties(rconn, redisserver, device):
+        property_list = properties(rconn, redisserver, device)
         rconn.delete( _key(redisserver, "properties", device) )
         for name in property_list:
             rconn.delete( _key(redisserver, "attributes", name, device) )
-            elements_list = elements(rconn, redisserver, device, name):
+            elements_list = elements(rconn, redisserver, device, name)
             rconn.delete( _key(redisserver, "elements", name, device) )
             for elementname in elements_list:
                 rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )
