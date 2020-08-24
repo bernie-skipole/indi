@@ -18,11 +18,23 @@ def devicelist(skicall):
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     devices = tools.devices(rconn, redisserver)
+    if not devices:
+        skicall.page_data['device', 'hide'] = True
+        skicall.page_data['message', 'para_text'] = "Awaiting device information."
+        # publish getProperties
+        textsent = tools.getProperties(rconn, redisserver)
+        print(textsent)
+        return
+    # get last message
+    message = tools.last_message(rconn, redisserver)
+    if message:
+        skicall.page_data['message', 'para_text'] = message
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
     for index,devicename in enumerate(devices):
         skicall.page_data['device_'+str(index),'devicename', 'button_text'] = devicename
         skicall.page_data['device_'+str(index),'devicename','get_field1'] = devicename
+        # to add device messages here
 
 
 def propertylist(skicall):

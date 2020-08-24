@@ -2216,6 +2216,25 @@
 }
 ],
 [
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "message",
+"brief": "Shows system message",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+],
+[
 "Part",
 {
 "tag_name": "h2",
@@ -2246,24 +2265,6 @@
 "show": true,
 "hide_if_empty": false,
 "parts": [
-[
-"Widget",
-{
-"class": "links.ListLinks",
-"name": "devicelinks",
-"brief": "Links to devices",
-"fields": {
-"force_ident": false,
-"li_class": "",
-"link_class": "",
-"links": [],
-"show": true,
-"target": "",
-"widget_class": "",
-"widget_style": ""
-}
-}
-],
 [
 "SectionPlaceHolder",
 {

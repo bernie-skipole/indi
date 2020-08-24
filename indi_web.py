@@ -41,7 +41,7 @@ run_inditoredis.start()
 application = indiweb.make_wsgi_app(redis_host)
 
 # add skiadmin during development
-#application = indiweb.add_skiadmin(application)
+# application = indiweb.add_skiadmin(application)
 
 # serve the application with the python waitress web server
 serve(application, host='127.0.0.1', port=8000)

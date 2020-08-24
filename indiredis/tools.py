@@ -53,6 +53,19 @@ def open_redis(redisserver):
     return rconn
 
 
+def last_message(rconn, redisserver, device=""):
+    """Return the last message or None if not available
+       If device given, the last message from this device is returned"""
+    if device:
+        mkey = _key(redisserver, "devicemessages", device)
+    else:
+        mkey = _key(redisserver, "messages")
+    message = rconn.lindex(mkey, 0)
+    if message is None:
+        return
+    return message.decode("utf-8")
+
+
 def getProperties(rconn, redisserver, device="", name=""):
     """Sends getProperties request, returns the xml bytes string sent
 
