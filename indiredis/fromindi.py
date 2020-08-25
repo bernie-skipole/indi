@@ -13,7 +13,7 @@ ready for reading by the web server."""
 
 import xml.etree.ElementTree as ET
 
-import math
+import math, json
 
 from datetime import datetime
 
@@ -71,12 +71,21 @@ _FROM_INDI_CHANNEL = ""
 #  multiple keys : lists
 # 'logdata:<devicename>' - list of "Timestamp space logged data"
 
+#
+# multiple keys : lists. each list is 500 items to keep a history of number changes
+# 'logdata:<propertyname>:<devicename>' - list of "Timestamp space json string of set numbervector"
+
+
+_NUMBERS = {}
+
 
 
 def receive_from_indiserver(data, rconn):
     "receives xml data, parses it and stores in redis. Publishes an alert that data is received"
     if rconn is None:
         return
+    # this timestamp is the time at which the data is received
+    timestamp = datetime.utcnow().isoformat(sep='T')
     # data comes in block of xml elements, not inside a root, so create a root
     # element 'commsroot'
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
@@ -86,70 +95,119 @@ def receive_from_indiserver(data, rconn):
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
-            log_received_per_device(rconn, text_vector.device, f"defTextVector:{text_vector.name}")
-            log_received(rconn, f"defTextVector:{text_vector.name}:{text_vector.device}")   # logs, and publishes an alert that property:device has changed
+            log_received_per_device(rconn, text_vector.device, f"defTextVector:{text_vector.name}", timestamp)
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
-            log_received_per_device(rconn, number_vector.device, f"defNumberVector:{number_vector.name}")
-            log_received(rconn, f"defNumberVector:{number_vector.name}:{number_vector.device}")
+            log_received_per_device(rconn, number_vector.device, f"defNumberVector:{number_vector.name}", timestamp)
         elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
-            log_received_per_device(rconn, switch_vector.device, f"defSwitchVector:{switch_vector.name}")
-            log_received(rconn, f"defSwitchVector:{switch_vector.name}:{switch_vector.device}")
+            log_received_per_device(rconn, switch_vector.device, f"defSwitchVector:{switch_vector.name}", timestamp)
         elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
-            log_received_per_device(rconn, light_vector.device, f"defLightVector:{light_vector.name}")
-            log_received(rconn, f"defLightVector:{light_vector.name}:{light_vector.device}")
+            log_received_per_device(rconn, light_vector.device, f"defLightVector:{light_vector.name}", timestamp)
         elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
-            log_received_per_device(rconn, blob_vector.device, f"defBlobVector:{blob_vector.name}")
-            log_received(rconn, f"defBLOBVector:{blob_vector.name}:{blob_vector.device}")
+            log_received_per_device(rconn, blob_vector.device, f"defBlobVector:{blob_vector.name}", timestamp)
         elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
             if message.device:
-                log_received_per_device(rconn, message.device, "message")
-                log_received(rconn, f"message:{message.device}")
+                log_received_per_device(rconn, message.device, "message", timestamp)
             else:
-                log_received(rconn, "message")
+                log_received(rconn, "message", timestamp)
         elif child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
             if delprop.name:
-                log_received_per_device(rconn, delprop.device, f"delProperty:{delprop.name}")
-                log_received(rconn, f"delProperty:{delprop.name}:{delprop.device}")
+                log_received_per_device(rconn, delprop.device, f"delProperty:{delprop.name}", timestamp)
             else:
-                log_received_per_device(rconn, delprop.device, "delDevice")
-                log_received(rconn, f"delDevice:{delprop.device}")
+                log_received_per_device(rconn, delprop.device, "delDevice", timestamp)
         elif child.tag == "setTextVector":
             text_vector = TextVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, text_vector, child)
+            log_setvector(rconn, text_vector, child, timestamp)
         elif child.tag == "setNumberVector":
             number_vector = NumberVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, number_vector, child)
+            # numbers are logged to a special 500 length store
+            log_setnumbervector(rconn, number_vector, child, timestamp)
         elif child.tag == "setSwitchVector":
             switch_vector = SwitchVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, switch_vector, child)
+            log_setvector(rconn, switch_vector, child, timestamp)
         elif child.tag == "setLightVector":
             light_vector = LightVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, light_vector, child)
+            log_setvector(rconn, light_vector, child, timestamp)
         elif child.tag == "setBLOBVector":
             blob_vector = BLOBVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, blob_vector, child)
+            log_setvector(rconn, blob_vector, child, timestamp)
 
 
-def log_setvector(rconn, propertyvector, setvector):
-    "Logs data when a setVector arrives"
+
+def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
+    "logs data when a setNumberVector arrives"
+    global _NUMBERS
+    # key of prefix + logdata:<propertyname>:<devicename>' will be used to store this vector,
+    # in both _NUMBERS, and in redis
+    numberkey = key('logdata',propertyvector.name, propertyvector.device)
+    # The data logged is a json string.
+    logdata = {
+               "state": propertyvector.state,
+               "timeout": propertyvector.timeout,
+               "timestamp": propertyvector.timestamp,
+               "message": propertyvector.message,
+               }
+    # logelements will be a dictionary of number name : formatted number
+    logelements = {}
+    for child in propertyvector:
+        logelements[child.name] = str(child)
+    # set the logelements dictionary as an item in logdata under key 'elements' 
+    logdata["elements"] = logelements
+    # create a json string of this dictionary, which will be the string to log
+    data = json.dumps(logdata)
+    # check the number has changed
+    if data == _NUMBERS.get(numberkey):
+        # The data received has not changed, so do not log it
+        return
+    # The data received has changed, record it in _NUMBERS and log it
+    _NUMBERS[numberkey] = data
+    # set it into a redis store
+    time_and_data = timestamp + " " + data
+    print(time_and_data)
+    rconn.lpush(numberkey, time_and_data)
+    # and limit number of logs to 500
+    rconn.ltrim(numberkey, 0, 499)
+    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
+    log_received(rconn, f"{setnumbervector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
+
+
+
+
+def log_setvector(rconn, propertyvector, setvector, timestamp):
+    "Logs data when a setVector arrives apart from setnumber vector, which have a specialist store"
     print(propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
-    log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
-    log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}")
+    log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}", timestamp)
+    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
+    log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
 
 
-def log_received(rconn, logdata):
+
+def log_received_per_device(rconn, device, logdata, timestamp):
+    """Add a logdata string to a 'device' list - one is created for every device
+       key is prefix + "logdata:" + device"""
+    if not logdata:
+        return
+    time_and_data = timestamp + " " + logdata
+    rconn.lpush(key('logdata',device), time_and_data)
+    print(key('logdata',device), time_and_data)
+    # and limit number of logs to 100
+    rconn.ltrim(key('logdata',device), 0, 99)
+    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
+    log_received(rconn, logdata + ":" + device, timestamp)
+
+
+def log_received(rconn, logdata, timestamp):
     """Add a logdata string to a list which contains the 100 last logs
        key is prefix + "logdata"    ("logdata" is literal string, not the argument value)
        and each value logged is timestamp space logdata, where timestamp is the time at which the value is logged
@@ -157,24 +215,13 @@ def log_received(rconn, logdata):
     global _FROM_INDI_CHANNEL
     if not logdata:
         return
-    time_and_data = datetime.utcnow().isoformat(sep='T') + " " + logdata
+    time_and_data = timestamp + " " + logdata
     rconn.lpush(key('logdata'), time_and_data)
     # and limit number of logs to 100
     rconn.ltrim(key('logdata'), 0, 99)
     # and publishes an alert
     rconn.publish(_FROM_INDI_CHANNEL, logdata)
 
-
-def log_received_per_device(rconn, device, logdata):
-    """Add a logdata string to a 'device' list - one is created for every device
-       key is prefix + "logdata:" + device"""
-    if not logdata:
-        return
-    time_and_data = datetime.utcnow().isoformat(sep='T') + " " + logdata
-    rconn.lpush(key('logdata',device), time_and_data)
-    print(key('logdata',device), time_and_data)
-    # and limit number of logs to 100
-    rconn.ltrim(key('logdata',device), 0, 99)
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):

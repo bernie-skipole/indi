@@ -475,29 +475,6 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
 
 
-def check_for_device_change(skicall):
-    "Checks to see if a device has changed, in which case the properties page should have a html refresh"
-    if ('device' in skicall.call_data) and ('timestamp' in skicall.call_data):
-        devicename = skicall.call_data['device']
-        timestamp = skicall.call_data['timestamp']
-    else:
-        # device / timestamp not available, better refresh anyway
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-        return
-    rconn = skicall.proj_data["rconn"]
-    redisserver = skicall.proj_data["redisserver"]
-    # check if last log for this device has an older timestamp than this page
-    logentry = tools.last_log(rconn, redisserver, devicename)
-    if logentry is None:
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-        return
-    logtime, logdata = logentry
-    if timestamp < logtime:
-        # logged data is for this device, and logged timestamp is later than the
-        # current page timestamp, so better renew the page
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-
-
 
 def check_for_update(skicall):
     "When updating the devices page by json, update entire page if any change has occurred"
@@ -518,4 +495,36 @@ def check_for_update(skicall):
     if timestamp < logtime:
         # page timestamp is earlier than last log entry, so update the page
         skicall.page_data['JSONtoHTML'] = 'home'
+
+
+def check_for_device_change(skicall):
+    "Checks to see if a device has changed, in which case the properties page should have a html refresh"
+    if ('device' in skicall.call_data) and ('timestamp' in skicall.call_data):
+        devicename = skicall.call_data['device']
+        timestamp = skicall.call_data['timestamp']
+    else:
+        # device / timestamp not available, better refresh anyway
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+        return
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    # check if last log for this device has an older timestamp than this page
+    logentry = tools.last_log(rconn, redisserver, devicename)
+    if logentry is None:
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+        return
+    logtime, logdata = logentry
+    if timestamp > logtime:
+        # the web page timestamp is later than any logged change, so no need
+        # to refresh the page, just return 
+        return
+    # If the last change is only a setnumber vector change, then possibly
+    # the page can be updated by json rather than a full refresh.
+    # Check all log entries up to the point 
+    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+
+    
+
+
+
 
