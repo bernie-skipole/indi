@@ -35,6 +35,10 @@ def devicelist(skicall):
         skicall.page_data['device_'+str(index),'devicename', 'button_text'] = devicename
         skicall.page_data['device_'+str(index),'devicename','get_field1'] = devicename
         # to add device messages here
+        devicemessage = tools.last_message(rconn, redisserver, devicename)
+        if devicemessage:
+            skicall.page_data['device_'+str(index),'devicemessage','para_text'] = devicemessage
+ 
 
 
 def propertylist(skicall):
@@ -104,6 +108,13 @@ def _findproperties(skicall, devicename):
     properties = tools.properties(rconn, redisserver, devicename)
     if not properties:
         raise FailPage("No properties for the device have been found")
+    # get last message and last device message
+    message = tools.last_message(rconn, redisserver)
+    if message:
+        skicall.page_data['message', 'para_text'] = message
+    devicemessage = tools.last_message(rconn, redisserver, devicename)
+    if devicemessage:
+        skicall.page_data['devicemessage','para_text'] = devicemessage
     # properties is a list of properties for the given device
     # create a section for each property, and fill it in
     skicall.page_data['property','multiplier'] = len(properties)

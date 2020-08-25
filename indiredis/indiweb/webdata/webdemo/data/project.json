@@ -98,6 +98,25 @@
 }
 ],
 [
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "devicemessage",
+"brief": "Shows device message",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+],
+[
 "ClosedPart",
 {
 "tag_name": "hr",
@@ -2480,6 +2499,25 @@
 [
 "Widget",
 {
+"class": "paras.DivPara",
+"name": "message",
+"brief": "Shows system message",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
 "class": "links.ButtonLink1",
 "name": "getprops",
 "brief": "Calls getproperties",
@@ -2520,6 +2558,25 @@
 "show_error": "",
 "small_text": "",
 "widget_class": "",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "devicemessage",
+"brief": "Shows device message",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
 "widget_style": ""
 }
 }
