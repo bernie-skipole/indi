@@ -25,7 +25,7 @@ import xml.etree.ElementTree as ET
 
 from datetime import datetime
 
-import re
+import re, json
 
 import redis
 
@@ -175,7 +175,6 @@ def last_log(rconn, redisserver, device=""):
     return logentry.decode("utf-8").split(" ", maxsplit=1)
 
 
-
 def get_logs(rconn, redisserver, number):
     "Return the number of logs as [(timestamp,data),..] or None if not available"
     logkey = _key(redisserver, "logdata")
@@ -184,6 +183,16 @@ def get_logs(rconn, redisserver, number):
         return
     return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
 
+
+def last_numbervector(rconn, redisserver, device="", name=""):
+    """Return the last log as (timestamp,data) or None if not available
+       data is a dictionary of the number vector"""
+    logkey = _key(redisserver, "logdata", name, device)
+    logentry = rconn.lindex(logkey, 0)
+    if logentry is None:
+        return
+    timestamp, data = logentry.decode("utf-8").split(" ", maxsplit=1)
+    return timestamp, json.loads(data)
 
 
 def getProperties(rconn, redisserver, device="", name=""):

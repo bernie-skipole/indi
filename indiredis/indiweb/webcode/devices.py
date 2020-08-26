@@ -498,7 +498,9 @@ def check_for_update(skicall):
 
 
 def check_for_device_change(skicall):
-    "Checks to see if a device has changed, in which case the properties page should have a html refresh"
+    """Checks to see if a device has changed, in which case the properties page should have a html refresh
+       If however only numbers have changed, then update just the numbers by JSON, without html refresh
+       This is done since number change may be a common occurence as a measurement is tracked"""
     if ('device' in skicall.call_data) and ('timestamp' in skicall.call_data):
         devicename = skicall.call_data['device']
         timestamp = skicall.call_data['timestamp']
@@ -514,16 +516,77 @@ def check_for_device_change(skicall):
         skicall.page_data['JSONtoHTML'] = 'refreshproperties'
         return
     logtime, logdata = logentry
-    if timestamp > logtime:
-        # the web page timestamp is later than any logged change, so no need
-        # to refresh the page, just return 
+    if timestamp < logtime:
+        # page timestamp is earlier than last log entry, so update the page
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
         return
-    # If the last change is only a setnumber vector change, then possibly
-    # the page can be updated by json rather than a full refresh.
-    # Check all log entries up to the point 
-    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+    # check if any setnumber vectors have been updated after the page timestamp
+    # if they have, return the change in a json call
+    properties = tools.properties(rconn, redisserver, devicename)
+    if not properties:
+        raise FailPage("No properties for the device have been found")
+    # for each property, check timestamp of last update
+    att_list = []  # attributes needed to find index of property
+    for propertyname in properties:
+        # get the property attributes
+        att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
+        # Ensure the label is set
+        label = att_dict.get('label')
+        if label is None:
+            att_dict['label'] = propertyname
+        att_list.append(att_dict)
+    # now sort properties by group and then by label
+    att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
+    for index, ad in enumerate(att_list):
+        # loops through each property, where ad is the attribute dictionary of the property
+        # and index is the section index on the web page
+        if ad['vector'] != "NumberVector":
+            continue
+        propertyname = ad['name']
+        vector = tools.last_numbervector(rconn, redisserver, devicename, propertyname)
+        if not vector:
+            continue
+        loggedtime, logdata = vector
+        if timestamp > loggedtime:
+            # page has been updated since this logged time, no need to update this vector
+            continue
 
-    
+        # set the change into page data
+        # items which may have changed:
+        #            state
+        #            timeout
+        #            timestamp
+        #            message
+        #            elements:{name:number,...}
+
+        # set the state, one of Idle, OK, Busy and Alert
+        set_state(skicall, index, ad)
+        skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+        skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+
+        element_list = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        if not element_list:
+            continue
+        # permission is one of ro, wo, rw
+        if ad['perm'] == "xx":   #wo
+            continue                              ########## still to do
+        elif ad['perm'] == "rw":
+            # permission is rw
+            col2 = []
+            inputdict = {}
+            for eld in element_list:
+                col2.append(eld['formatted_number'])
+                inputdict[eld['name']] = eld['formatted_number']
+            skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
+            skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+        else:
+            # permission is ro
+            col2 = []
+            for eld in element_list:
+                col2.append(eld['formatted_number'])
+            skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
+
+
 
 
 
