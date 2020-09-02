@@ -1,5 +1,5 @@
 
-import os, sys
+import os, sys, json
 
 
 from datetime import datetime
@@ -21,13 +21,14 @@ def start_call(called_ident, skicall):
     if skicall.ident_data:
         # if ident_data exists, it should be a timestamp and the device name
         # set these into skicall.call_data["device"] and skicall.call_data["timestamp"]
-        splitdata = skicall.ident_data.split(" ", maxsplit=1)
-        if len(splitdata) == 1:
-            skicall.call_data["timestamp"] = splitdata[0]
-        elif len(splitdata) == 2:
-            timestamp, device = skicall.ident_data.split(" ", maxsplit=1)
-            skicall.call_data["timestamp"] = timestamp
+        sessiondata = json.loads(skicall.ident_data)
+        skicall.call_data["timestamp"] = sessiondata.get('timestamp')
+        device = sessiondata.get('device')
+        if device is not None:
             skicall.call_data["device"] = device
+        group = sessiondata.get('group')
+        if group is not None:
+            skicall.call_data["group"] = group
     return called_ident
 
 @use_submit_list
@@ -37,21 +38,28 @@ def submit_data(skicall):
 
 
 def end_call(page_ident, page_type, skicall):
-    """This function is called at the end of a call prior to filling the returned page with skicall.page_data,
-       it can also return an optional session cookie string."""
+    """This function is called at the end of a call prior to filling the returned page with skicall.page_data"""
     if "status" in skicall.call_data:
         # display a modal status message
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
         skicall.page_data["status", "hide"] = False
-    # set timestamp and device to ident_data
+
+    # set timestamp and device into a dictionary sent as ident_data
     if "timestamp" in skicall.call_data:
         timestamp = skicall.call_data["timestamp"]
     else:
         timestamp = datetime.utcnow().isoformat(sep='T')
     if "device" in skicall.call_data:
-        skicall.page_data['ident_data'] = timestamp + " " + skicall.call_data["device"]
+        device = skicall.call_data["device"]
     else:
-        skicall.page_data['ident_data'] = timestamp
+        device = None
+    if "group" in skicall.call_data:
+        group = skicall.call_data["group"]
+    else:
+        group = None
+    # save a string version of this session data dictionary to ident_data
+    skicall.page_data['ident_data'] = json.dumps( {'timestamp':timestamp, 'device':device, 'group':group} )
+    
 
 
 def make_wsgi_app(redis_host):

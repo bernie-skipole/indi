@@ -5,6 +5,7 @@
 "version": "0.0.1",
 "skipole": "5.0.0",
 "specialpages": {
+"changegroup": 8,
 "checkupdates": 5,
 "favicon": 3002,
 "general_json": 2070,
@@ -194,6 +195,36 @@
 "Client created using the skipole wsgi generator."
 ]
 ]
+}
+]
+]
+}
+],
+"group": [
+"Section",
+{
+"tag_name": "span",
+"brief": "a bar button and link",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Widget",
+{
+"class": "links.Link",
+"name": "grouplink",
+"brief": "Links to a property group",
+"fields": {
+"content": "home",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"link_ident": "changegroup",
+"show": true,
+"target": "",
+"widget_class": "w3-bar-item w3-button w3-mobile w3-blue",
+"widget_style": ""
+}
 }
 ]
 ]
@@ -2709,6 +2740,30 @@
 }
 ],
 [
+"Part",
+{
+"tag_name": "div",
+"brief": "div to hold the bar navigation",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-bar w3-black"
+},
+"parts": [
+[
+"SectionPlaceHolder",
+{
+"brief": "bar navigation",
+"section_name": "group",
+"placename": "group",
+"multiplier": 0,
+"mtag": "div"
+}
+]
+]
+}
+],
+[
 "ClosedPart",
 {
 "tag_name": "hr",
@@ -2748,6 +2803,25 @@
 }
 },
 "pages": {
+"changegroup": {
+"ident": 8,
+"brief": "Changes the group displayed",
+"RespondPage": {
+"class": "FieldStoreSubmit",
+"original_args": {
+"fail_ident": "home",
+"submit_list": [
+"webcode",
+"devices",
+"changegroup"
+],
+"target_ident": 4003
+},
+"original_fields": {
+"get_field1": ""
+}
+}
+},
 "checkupdates": {
 "ident": 5,
 "brief": "If any property updates, refreshes the page",

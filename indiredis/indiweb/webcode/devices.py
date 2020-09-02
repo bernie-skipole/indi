@@ -66,6 +66,23 @@ def propertylist(skicall):
     _findproperties(skicall, devicename)
 
 
+def changegroup(skicall):
+    "Called by group navigation, sets the group to be displayed"
+    # gets device from skicall.call_data["device"] 
+    devicename = skicall.call_data.get("device","")
+    if not devicename:
+        raise FailPage("Device not recognised")
+    # get data in skicall.submit_dict under key 'received'
+    # with value being a dictionary with keys being the widgfield tuples of the submitting widgets
+    # in this case, only one key should be given for the group
+    datadict = skicall.submit_dict['received']
+    if len(datadict) != 1:
+       raise FailPage("Invalid submission")
+    for gp in datadict.values():
+        skicall.call_data['group'] = gp
+    # and refresh the properties on the page
+    _findproperties(skicall, devicename)
+
 
 def getProperties(skicall):
     "Sends getProperties request"
@@ -87,7 +104,6 @@ def getDeviceProperties(skicall):
     redisserver = skicall.proj_data["redisserver"]
     # publish getProperties
     textsent = tools.getProperties(rconn, redisserver, device=devicename)
-    print(textsent)
     # wait two seconds for the data to hopefully refresh
     sleep(2)
     # and refresh the properties on the page
@@ -126,7 +142,7 @@ def _findproperties(skicall, devicename):
     # create a section for each property, and fill it in
     skicall.page_data['property','multiplier'] = len(properties)
     # create list of property attributes dictionaries
-    att_list = [] 
+    att_list = []
     for propertyname in properties:
         # get the property attributes
         att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
@@ -135,7 +151,24 @@ def _findproperties(skicall, devicename):
         if label is None:
             att_dict['label'] = propertyname
         att_list.append(att_dict)
-    # now sort it by group and then by label
+    # get a set of groups for the group navigation bar
+    group_set = set(ad.get('group', "No group") for ad in att_list)
+    group_list = sorted(group_set)
+    group = skicall.call_data.get('group')
+    if (group is None) or (group not in group_list):
+        group = group_list[0]
+        skicall.call_data['group'] = group
+    skicall.page_data['group', 'multiplier'] = len(group_list)
+    for index, gp in enumerate(group_list):
+        group_alias = f"group_{index}"
+        skicall.page_data[group_alias, 'grouplink', 'content'] = gp
+        skicall.page_data[group_alias, 'grouplink', 'get_field1'] = gp
+        # highlight the bar item chosen
+        if gp == group:
+            skicall.page_data[group_alias, 'grouplink', 'widget_class'] = "w3-bar-item w3-button w3-mobile w3-blue"
+        else:
+            skicall.page_data[group_alias, 'grouplink', 'widget_class'] = "w3-bar-item w3-button w3-mobile"
+    # now sort att_list by group and then by label
     att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
     for index, ad in enumerate(att_list):
         # loops through each property, where ad is the attribute directory of the property
@@ -153,6 +186,11 @@ def _findproperties(skicall, devicename):
         else:
             skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
             skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
+        # Only display the properties with the given group attribute
+        if group == ad.get('group'):
+            skicall.page_data['property_'+str(index),'hide'] = False
+        else:
+            skicall.page_data['property_'+str(index),'hide'] = True
 
 
 def _show_textvector(skicall, index, ad):
