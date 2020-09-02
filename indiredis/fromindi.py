@@ -72,10 +72,11 @@ _FROM_INDI_CHANNEL = ""
 # 'logdata:<devicename>' - list of "Timestamp space logged data"
 
 #
-# multiple keys : lists. each list is 500 items to keep a history of number changes
+# multiple keys : lists. each list is 50 items to keep a history of number changes
 # 'logdata:<propertyname>:<devicename>' - list of "Timestamp space json string of set numbervector"
 
 
+# global variable to help prevent storing duplicate numbers
 _NUMBERS = {}
 
 
@@ -131,7 +132,7 @@ def receive_from_indiserver(data, rconn):
             log_setvector(rconn, text_vector, child, timestamp)
         elif child.tag == "setNumberVector":
             number_vector = NumberVector.update_from_setvector(rconn, child)
-            # numbers are logged to a special 500 length store
+            # numbers are logged to a special 50 length store
             log_setnumbervector(rconn, number_vector, child, timestamp)
         elif child.tag == "setSwitchVector":
             switch_vector = SwitchVector.update_from_setvector(rconn, child)
@@ -176,8 +177,8 @@ def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
     time_and_data = timestamp + " " + data
     print(time_and_data)
     rconn.lpush(numberkey, time_and_data)
-    # and limit number of logs to 500
-    rconn.ltrim(numberkey, 0, 499)
+    # and limit number of logs to 50
+    rconn.ltrim(numberkey, 0, 49)
     # also set the fact a change has occurred in log 'logdata', this also publishes an alert
     log_received(rconn, f"{setnumbervector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
 

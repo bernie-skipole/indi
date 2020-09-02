@@ -61,9 +61,26 @@ SKIPOLE.inallowedlist =  function (item, allowed_values) {
     }
 
 
+
 SKIPOLE.setfields = function(result) {
     try {
        // result is the contents of a json page listing widgfields and values
+       if ("ident_data" in result) {
+           // set the value of SKIPOLE.identdata
+           var oldidentdata = SKIPOLE.identdata;
+           var pageidentarray = SKIPOLE.identdata.split('_');
+           // set identdata to projectname_pagenumber_ident_data
+           SKIPOLE.identdata = pageidentarray[0] + '_' + pageidentarray[1] + '_' + result["ident_data"];
+           // set this in all hidden input 'ident' fields 
+           $("input[name='ident']:hidden").attr("value", SKIPOLE.identdata);
+           // and in all url get 'ident' fields
+           var old_string = "?ident=" + oldidentdata
+           var new_string = "?ident=" + SKIPOLE.identdata
+           $("a[href*='?ident=']").each(function(){
+               // Update the ?ident= part of the url to the new ident_data string
+               $(this).attr('href',$(this).attr('href').replace(old_string,new_string));
+               }); 
+           }
        if ("ClearAllErrors" in result) {
            // Clear errors in the page
            SKIPOLE.clear_all_errors();
@@ -102,22 +119,6 @@ SKIPOLE.setfields = function(result) {
            if(SKIPOLE.interval && SKIPOLE.IntervalTarget) {
               SKIPOLE.interval_id = setInterval(SKIPOLE.refreshjson, SKIPOLE.interval*1000, SKIPOLE.IntervalTarget);
               }
-           }
-       if ("ident_data" in result) {
-           // set the value of SKIPOLE.identdata
-           var oldidentdata = SKIPOLE.identdata;
-           var pageidentarray = SKIPOLE.identdata.split('_');
-           // set identdata to projectname_pagenumber_ident_data
-           SKIPOLE.identdata = pageidentarray[0] + '_' + pageidentarray[1] + '_' + result["ident_data"];
-           // set this in all hidden input 'ident' fields 
-           $("input[name='ident']:hidden").attr("value", SKIPOLE.identdata);
-           // and in all url get 'ident' fields
-           var old_string = "?ident=" + oldidentdata
-           var new_string = "?ident=" + SKIPOLE.identdata
-           $("a[href*='" + old_string + "']").each(function(){
-               // Update the ?ident= part of the url to thre new ident_data string 
-               $(this).attr('href',$(this).attr('href').replace(old_string,new_string));
-               }); 
            }
        if ("sessionStorage" in result) {
            // set the session storage data

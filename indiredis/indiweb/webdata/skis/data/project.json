@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "Library project of static files",
-"version": "4.0.8",
-"skipole": "4.0.8",
+"version": "5.0.0",
+"skipole": "5.0.0",
 "specialpages": {
 "general_json": 870,
 "jquery_core": 20,
@@ -107,6 +107,7 @@
 "icons": {
 "ident": 2000,
 "brief": "Folder holding SVG icon pages",
+"default_page_name": "index",
 "restricted": false,
 "folders": {},
 "pages": {
@@ -476,11 +477,11 @@
 "restricted": false,
 "folders": {},
 "pages": {
-"jquery-3.4.1.min.js": {
+"jquery-3.5.1.min.js": {
 "ident": 20,
-"brief": "Link to static/js/jquery-3.4.1.min.js",
+"brief": "Link to static/js/jquery-3.5.1.min.js",
 "FilePage": {
-"filepath": "skis/static/js/jquery-3.4.1.min.js",
+"filepath": "skis/static/js/jquery-3.5.1.min.js",
 "enable_cache": true,
 "mimetype": "application/javascript"
 }

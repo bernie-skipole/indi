@@ -59,14 +59,20 @@ SKIPOLE.radio.RadioTable2.prototype.setvalues = function (fieldlist, result) {
             // for each row
             // set its class
             if (row_classes && row_classes.length) {
-                $(this).attr("class", row_classes[index]);
+                if (row_classes[index] !== null) {
+                    $(this).attr("class", row_classes[index]);
+                    }
                 }
             var cells = $(this).children();
             if (col1 && col1.length) {
-                $(cells[0]).text(col1[index]);
+                if (col1[index] !== null) {
+                    $(cells[0]).text(col1[index]);
+                    }
                  }
             if (col2 && col2.length) {
-                $(cells[1]).text(col2[index]);
+                if (col2[index] !== null) {
+                    $(cells[1]).text(col2[index]);
+                    }
                  }
             if (itemchecked) {
                 // Remove checked status from all rows

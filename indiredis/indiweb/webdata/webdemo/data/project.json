@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "4.0.8",
+"skipole": "4.0.9",
 "specialpages": {
 "checkupdates": 5,
 "favicon": 3002,
