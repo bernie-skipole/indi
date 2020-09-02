@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "4.0.9",
+"skipole": "5.0.0",
 "specialpages": {
 "checkupdates": 5,
 "favicon": 3002,
@@ -12,7 +12,7 @@
 "getproperties": 4,
 "home": 1,
 "homeonanyupdate": 6,
-"jquery_core": "skis,jquery_core",
+"jquery_core": "https://cdn.jsdelivr.net/gh/jquery/jquery@3/dist/jquery.min.js",
 "json_failed": 11,
 "no_javascript": 10,
 "properties": 3,
@@ -22,34 +22,35 @@
 "set_numbervector": 5030,
 "set_switchvector": 5020,
 "set_textvector": 5010,
-"ski_basic": "skis,ski_basic",
-"ski_checkbox": "skis,ski_checkbox",
-"ski_confirm": "skis,ski_confirm",
-"ski_debug_tools": "skis,ski_debug_tools",
-"ski_dropdown": "skis,ski_dropdown",
-"ski_error_messages": "skis,ski_error_messages",
-"ski_footers": "skis,ski_footers",
-"ski_headers": "skis,ski_headers",
-"ski_info": "skis,ski_info",
-"ski_inputforms": "skis,ski_inputforms",
-"ski_inputtables": "skis,ski_inputtables",
-"ski_inputtext": "skis,ski_inputtext",
-"ski_links": "skis,ski_links",
-"ski_lists": "skis,ski_lists",
-"ski_logins": "skis,ski_logins",
-"ski_paras": "skis,ski_paras",
-"ski_paths": "skis,ski_paths",
-"ski_radio": "skis,ski_radio",
-"ski_svgbasics": "skis,ski_svgbasics",
-"ski_svggraphs": "skis,ski_svggraphs",
-"ski_svgmeters": "skis,ski_svgmeters",
-"ski_tables": "skis,ski_tables",
-"ski_textarea": "skis,ski_textarea",
-"ski_upload": "skis,ski_upload",
-"skipole_js": "skis,skipole_js",
+"ski_basic": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/basic.min.js",
+"ski_checkbox": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/checkbox.min.js",
+"ski_confirm": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/confirm.min.js",
+"ski_debug_tools": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/debug_tools.min.js",
+"ski_dropdown": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/dropdown.min.js",
+"ski_error_messages": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/error_messages.min.js",
+"ski_footers": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/footers.min.js",
+"ski_headers": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/headers.min.js",
+"ski_info": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/info.min.js",
+"ski_inputforms": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/inputforms.min.js",
+"ski_inputtables": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/inputtables.min.js",
+"ski_inputtext": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/inputtext.min.js",
+"ski_links": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/links.min.js",
+"ski_lists": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/lists.min.js",
+"ski_logins": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/logins.min.js",
+"ski_paras": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/paras.min.js",
+"ski_paths": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/paths.min.js",
+"ski_radio": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/radio.min.js",
+"ski_svgbasics": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/svgbasics.min.js",
+"ski_svggraphs": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/svggraphs.min.js",
+"ski_svgmeters": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/svgmeters.min.js",
+"ski_tables": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/tables.min.js",
+"ski_textarea": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/textarea.min.js",
+"ski_upload": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/upload.min.js",
+"skipole_js": "https://cdn.jsdelivr.net/gh/bernie-skipole/skipole@5/skipole/templates/skis/static/js/skipole.min.js",
+"skipolelogo": 3001,
 "url_not_found": 2080,
 "validate_error": 2010,
-"w3_css": "skis,w3_css",
+"w3_css": "https://www.w3schools.com/w3css/4/w3.css",
 "w3_theme_ski_css": 1008
 },
 "sections": {
@@ -122,6 +123,77 @@
 "tag_name": "hr",
 "brief": "Horizontal rule",
 "show": true
+}
+]
+]
+}
+],
+"footer": [
+"Section",
+{
+"tag_name": "div",
+"brief": "Link to skipole",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-theme-d1"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Link paragraph",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"href": "https://bernie-skipole.github.io/skipole"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "img",
+"brief": "Image link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"alt": "SKIPOLE",
+"height": "32px",
+"src": "{skipolelogo}",
+"width": "64px"
+},
+"parts": []
+}
+]
+]
+}
+],
+[
+"HTMLSymbol",
+{
+"text": "&nbsp;"
+}
+],
+[
+"HTMLSymbol",
+{
+"text": "&nbsp;"
+}
+],
+[
+"Text",
+"Client created using the skipole wsgi generator."
+]
+]
 }
 ]
 ]
@@ -2295,6 +2367,16 @@
 }
 ]
 ]
+}
+],
+[
+"SectionPlaceHolder",
+{
+"brief": "footer with link to skipole",
+"section_name": "footer",
+"placename": "footer",
+"multiplier": 0,
+"mtag": "div"
 }
 ]
 ]
