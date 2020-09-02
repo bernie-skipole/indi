@@ -6,10 +6,10 @@ import threading, os, sys
 
 
 ############ these lines for development mode ###########
-#skipole_package_location = "/home/bernard/git/skipole"
-#
-#if skipole_package_location not in sys.path:
-#    sys.path.insert(0,skipole_package_location)
+skipole_package_location = "/home/bernard/git/skipole"
+
+if skipole_package_location not in sys.path:
+    sys.path.insert(0,skipole_package_location)
 ##########################################################
 
 ####### indiserver should be running in a separate process, for example, in another terminal, run:

@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from time import sleep
+from base64 import urlsafe_b64encode
 
 from skipole import FailPage
 
@@ -9,6 +10,12 @@ from ... import tools
 
 from .setvalues import set_state
 
+
+def _safekey(key):
+    """When setting a widgfield with a dictionary, it is necessary to have a safe dictionary key, this creates
+       a base64 encoded key from a given key"""
+    b64binarydata = urlsafe_b64encode(key.encode('utf-8')).rstrip(b"=")  # removes final '=' padding
+    return b64binarydata.decode('ascii')
 
 def devicelist(skicall):
     "Gets a list of devices and fill index devices page"
@@ -181,7 +188,7 @@ def _show_textvector(skicall, index, ad):
         for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append(eld['value'])
-            inputdict[eld['name']] = eld['value']
+            inputdict[_safekey(eld['name'])] = eld['value']
         if len(eld['value']) > maxsize:
             maxsize = len(eld['value'])
         skicall.page_data['property_'+str(index),'tvtexttable', 'col1'] = col1
@@ -247,7 +254,7 @@ def _show_numbervector(skicall, index, ad):
         for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append(eld['formatted_number'])
-            inputdict[eld['name']] = eld['formatted_number']
+            inputdict[_safekey(eld['name'])] = eld['formatted_number']
         if len(eld['formatted_number']) > maxsize:
             maxsize = len(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
@@ -576,7 +583,7 @@ def check_for_device_change(skicall):
             inputdict = {}
             for eld in element_list:
                 col2.append(eld['formatted_number'])
-                inputdict[eld['name']] = eld['formatted_number']
+                inputdict[_safekey(eld['name'])] = eld['formatted_number']
             skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
             skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
         else:

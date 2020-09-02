@@ -1,4 +1,6 @@
 
+from base64 import urlsafe_b64decode
+
 from skipole import FailPage
 
 from ... import tools
@@ -7,6 +9,15 @@ from ... import tools
 #
 # propertyname
 # sectionindex
+
+
+def _fromsafekey(safekey):
+    """When setting a widgfield with a dictionary, a safe dictionary key is set, this decodes
+       the original key from the safe key"""
+    b64binarydata = safekey.encode('utf-8') # get the received data and convert to binary
+    # add padding
+    b64binarydata = b64binarydata + b"=" * (4-len(b64binarydata)%4)
+    return urlsafe_b64decode(b64binarydata).decode('utf-8') # b64 decode, and convert to string
 
 
 def set_state(skicall, index, state):
@@ -154,8 +165,9 @@ def set_text(skicall):
     valuedict = {nm:'' for nm in names}
     received_data = skicall.submit_dict['received_data']
     if (propertyindex, 'tvtexttable', 'inputdict') in received_data:
-        value = received_data[propertyindex, 'tvtexttable', 'inputdict'] # dictionary of names:values submitted
-        for nm, vl in value.items():
+        value = received_data[propertyindex, 'tvtexttable', 'inputdict'] # dictionary of base64 encoded names:values submitted
+        for safekey, vl in value.items():
+            nm = _fromsafekey(safekey)
             if nm in valuedict:
                 valuedict[nm] = vl
             else:
@@ -185,8 +197,9 @@ def set_number(skicall):
     valuedict = {nm:'' for nm in names}
     received_data = skicall.submit_dict['received_data']
     if (propertyindex, 'nvinputtable', 'inputdict') in received_data:
-        value = received_data[propertyindex, 'nvinputtable', 'inputdict'] # dictionary of names:values submitted
-        for nm, vl in value.items():
+        value = received_data[propertyindex, 'nvinputtable', 'inputdict'] # dictionary of base 64 encoded names:values submitted
+        for safekey, vl in value.items():
+            nm = _fromsafekey(safekey)
             if nm in valuedict:
                 valuedict[nm] = vl
             else:
