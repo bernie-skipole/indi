@@ -19,8 +19,9 @@ PROJECT = 'webdemo'
 def start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if skicall.ident_data:
-        # if ident_data exists, it should be a timestamp and the device name
-        # set these into skicall.call_data["device"] and skicall.call_data["timestamp"]
+        # if ident_data exists, it should be a timestamp and
+        # optionally the device name and property group to be displayed
+        # set these into skicall.call_data
         sessiondata = json.loads(skicall.ident_data)
         skicall.call_data["timestamp"] = sessiondata.get('timestamp')
         device = sessiondata.get('device')

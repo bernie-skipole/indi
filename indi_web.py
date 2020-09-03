@@ -5,12 +5,12 @@
 import threading, os, sys
 
 
-############ these lines for development mode ###########
+############ these lines only required during development ###########
 skipole_package_location = "/home/bernard/git/skipole"
 
 if skipole_package_location not in sys.path:
     sys.path.insert(0,skipole_package_location)
-##########################################################
+#####################################################################
 
 ####### indiserver should be running in a separate process, for example, in another terminal, run:
 ####### indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide

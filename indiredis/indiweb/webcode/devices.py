@@ -30,7 +30,7 @@ def devicelist(skicall):
         skicall.page_data['message', 'para_text'] = "Awaiting device information."
         # publish getProperties
         textsent = tools.getProperties(rconn, redisserver)
-        print(textsent)
+        # print(textsent)
         return
     # get last message
     message = tools.last_message(rconn, redisserver)
@@ -45,7 +45,8 @@ def devicelist(skicall):
         devicemessage = tools.last_message(rconn, redisserver, devicename)
         if devicemessage:
             skicall.page_data['device_'+str(index),'devicemessage','para_text'] = devicemessage
- 
+    # set timestamp into call_data so the end_call function can insert it into ident_data
+    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T') 
 
 
 def propertylist(skicall):
@@ -63,7 +64,8 @@ def propertylist(skicall):
     # redis key 'devices' - set of device names
     if not devicename:
         raise FailPage("Device not recognised")
-    _findproperties(skicall, devicename)
+    skicall.call_data["device"] = devicename
+    refreshproperties(skicall)
 
 
 def changegroup(skicall):
@@ -81,7 +83,7 @@ def changegroup(skicall):
     for gp in datadict.values():
         skicall.call_data['group'] = gp
     # and refresh the properties on the page
-    _findproperties(skicall, devicename)
+    refreshproperties(skicall)
 
 
 def getProperties(skicall):
@@ -90,7 +92,7 @@ def getProperties(skicall):
     redisserver = skicall.proj_data["redisserver"]
     # publish getProperties
     textsent = tools.getProperties(rconn, redisserver)
-    print(textsent)
+    # print(textsent)
 
 
 
@@ -107,24 +109,18 @@ def getDeviceProperties(skicall):
     # wait two seconds for the data to hopefully refresh
     sleep(2)
     # and refresh the properties on the page
-    _findproperties(skicall, devicename)
+    refreshproperties(skicall)
 
 
 def refreshproperties(skicall):
     "Reads redis and refreshes the properties page"
-    # gets device from page_data, which is set into skicall.call_data["device"] 
+    # gets device from skicall.call_data["device"] 
     devicename = skicall.call_data.get("device","")
     if not devicename:
         raise FailPage("Device not recognised")
     # and refresh the properties on the page
-    _findproperties(skicall, devicename)
-
-
-def _findproperties(skicall, devicename):
-    "Gets the properties for the device"
     skicall.page_data['devicename', 'large_text'] = devicename
-    # set device and timestamp into ident_data so it will be available
-    skicall.call_data["device"] = devicename
+    # set timestamp into call_data so the end_call function can insert it into ident_data
     skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -173,6 +169,15 @@ def _findproperties(skicall, devicename):
     for index, ad in enumerate(att_list):
         # loops through each property, where ad is the attribute directory of the property
         # and index is the section index on the web page
+
+        # Only display the properties with the given group attribute
+        if group == ad.get('group'):
+            skicall.page_data['property_'+str(index),'show'] = True
+        else:
+            skicall.page_data['property_'+str(index),'show'] = False
+            # This property is not being shown on the page, so continue
+            continue
+        # and display the property
         if ad['vector'] == "TextVector":
             _show_textvector(skicall, index, ad)
         elif ad['vector'] == "NumberVector":
@@ -186,11 +191,7 @@ def _findproperties(skicall, devicename):
         else:
             skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
             skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
-        # Only display the properties with the given group attribute
-        if group == ad.get('group'):
-            skicall.page_data['property_'+str(index),'hide'] = False
-        else:
-            skicall.page_data['property_'+str(index),'hide'] = True
+
 
 
 def _show_textvector(skicall, index, ad):
@@ -200,8 +201,8 @@ def _show_textvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'textvector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'tvtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
-    skicall.page_data['property_'+str(index),'tvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+    skicall.page_data['property_'+str(index),'tvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'tvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
 
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
@@ -265,8 +266,8 @@ def _show_numbervector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'numbervector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'nvtable', 'col1'] = [ "Group:", "Perm:", "Timeout:", "Timestamp:"]
-    skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+    skicall.page_data['property_'+str(index),'nvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
 
 
     # set the state, one of Idle, OK, Busy and Alert
@@ -329,8 +330,8 @@ def _show_switchvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'switchvector', 'show'] = True
     # list the attributes, group, rule, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'svtable', 'col1'] = [ "Group:", "Rule", "Perm:", "Timeout:", "Timestamp:"]
-    skicall.page_data['property_'+str(index),'svtable', 'col2'] = [ ad['group'], ad['rule'], ad['perm'], ad['timeout'], ad['timestamp']]
+    skicall.page_data['property_'+str(index),'svtable', 'col1'] = [ "Rule", "Perm:", "Timeout:", "Timestamp:"]
+    skicall.page_data['property_'+str(index),'svtable', 'col2'] = [ ad['rule'], ad['perm'], ad['timeout'], ad['timestamp']]
 
     # switchRule  is OneOfMany|AtMostOne|AnyOfMany
 
@@ -501,8 +502,7 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'blobvector', 'show'] = True
     # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'bvproperties', 'contents'] = [ "Group: " + ad['group'],
-                                                                             "Perm: " + ad['perm'],
+    skicall.page_data['property_'+str(index),'bvproperties', 'contents'] = [ "Perm: " + ad['perm'],
                                                                              "Timeout: " + ad['timeout'],
                                                                              "Timestamp: " + ad['timestamp'] ]
     # set the state, one of Idle, OK, Busy and Alert
@@ -553,6 +553,10 @@ def check_for_device_change(skicall):
         # device / timestamp not available, better refresh anyway
         skicall.page_data['JSONtoHTML'] = 'refreshproperties'
         return
+    group = skicall.call_data.get('group')
+    if group is None:
+        # something is wrong
+        raise FailPage("Invalid data, no group has been specified in the request")
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     # check if last log for this device has an older timestamp than this page
@@ -587,6 +591,10 @@ def check_for_device_change(skicall):
         # and index is the section index on the web page
         if ad['vector'] != "NumberVector":
             continue
+        # Only check the properties with the given group attribute currently being displayed
+        if group != ad.get('group'):
+            # This property is not being shown on the page, so continue
+            continue
         propertyname = ad['name']
         vector = tools.last_numbervector(rconn, redisserver, devicename, propertyname)
         if not vector:
@@ -606,7 +614,7 @@ def check_for_device_change(skicall):
 
         # set the state, one of Idle, OK, Busy and Alert
         set_state(skicall, index, ad)
-        skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['group'], ad['perm'], ad['timeout'], ad['timestamp']]
+        skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
         skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
 
         element_list = tools.property_elements(rconn, redisserver, devicename, propertyname)
@@ -630,6 +638,9 @@ def check_for_device_change(skicall):
             for eld in element_list:
                 col2.append(eld['formatted_number'])
             skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
+    # and since the page has been updated, update the timestamp
+    # in call_data so the end_call function can insert it into ident_data
+    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
 
 
 

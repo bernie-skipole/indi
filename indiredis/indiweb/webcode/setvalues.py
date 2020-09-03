@@ -129,7 +129,7 @@ def set_switch(skicall):
                 else:
                     raise FailPage("Error parsing data")
         data_sent = tools.newswitchvector(rconn, redisserver, devicename, propertyname, valuedict)
-        print(data_sent)
+        # print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")
     elif (propertyindex, 'svcheckbox', 'checked') in received_data:
@@ -142,7 +142,7 @@ def set_switch(skicall):
             else:
                 raise FailPage("Error sending data")
         data_sent = tools.newswitchvector(rconn, redisserver, devicename, propertyname, valuedict)
-        print(data_sent)
+        # print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")
     else:
@@ -173,7 +173,7 @@ def set_text(skicall):
             else:
                 raise FailPage("Error parsing data")
         data_sent = tools.newtextvector(rconn, redisserver, devicename, propertyname, valuedict)
-        print(data_sent)
+        # print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")
     else:
@@ -205,7 +205,7 @@ def set_number(skicall):
             else:
                 raise FailPage("Error parsing data")
         data_sent = tools.newnumbervector(rconn, redisserver, devicename, propertyname, valuedict)
-        print(data_sent)
+        # print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")
     else:

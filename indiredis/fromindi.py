@@ -92,7 +92,6 @@ def receive_from_indiserver(data, rconn):
     xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
     root = ET.fromstring(xmlstring)
     for child in root:
-        print(child.tag)
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
@@ -175,7 +174,6 @@ def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
     _NUMBERS[numberkey] = data
     # set it into a redis store
     time_and_data = timestamp + " " + data
-    print(time_and_data)
     rconn.lpush(numberkey, time_and_data)
     # and limit number of logs to 50
     rconn.ltrim(numberkey, 0, 49)
@@ -187,7 +185,6 @@ def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
 
 def log_setvector(rconn, propertyvector, setvector, timestamp):
     "Logs data when a setVector arrives apart from setnumber vector, which have a specialist store"
-    print(propertyvector.device, f"{setvector.tag}:{propertyvector.name}")
     log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}", timestamp)
     # also set the fact a change has occurred in log 'logdata', this also publishes an alert
     log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
@@ -201,7 +198,6 @@ def log_received_per_device(rconn, device, logdata, timestamp):
         return
     time_and_data = timestamp + " " + logdata
     rconn.lpush(key('logdata',device), time_and_data)
-    print(key('logdata',device), time_and_data)
     # and limit number of logs to 100
     rconn.ltrim(key('logdata',device), 0, 99)
     # also set the fact a change has occurred in log 'logdata', this also publishes an alert
