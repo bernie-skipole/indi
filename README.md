@@ -147,7 +147,7 @@ indiredis.indiwsgi provides a client application which discover devices and prop
 properties according to the Indi specification. It has no prior knowledge of the devices connected, and
 is very 'general purpose'.
 
-Example Python script running the web service:
+Example Python script (webservice.py) which can run the web service:
 ```
 import threading, os, sys
 
@@ -178,6 +178,14 @@ application = indiwsgi.make_wsgi_app(redis_host)
 serve(application, host='127.0.0.1', port=8000)
 
 ```
+
+You will need indiserver to be running - either started in another terminal, or as a service.
+
+On running this script ( with python3 webservice.py ) in a terminal, connect your browser to
+localhost:8000 to view the web pages.
+
+To end the program, press Ctrl-c a few times in the terminal.
+
 
 ### mqtt and redis - why?
 

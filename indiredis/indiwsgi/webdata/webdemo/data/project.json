@@ -2140,7 +2140,7 @@
 "TemplatePage": {
 "show_backcol": false,
 "last_scroll": true,
-"interval": 10,
+"interval": 5,
 "interval_target": "homeonanyupdate",
 "catch_to_html": "json_failed",
 "lang": "en",
