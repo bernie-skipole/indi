@@ -137,7 +137,7 @@ web service.
 
 WSGI - https://wsgi.readthedocs.io/en/latest/what.html
 
-WSGI is a specification that describes how a web server communicates with web applications. indiwsg is such an
+WSGI is a specification that describes how a web server communicates with web applications. indiwsgi is such an
 application, and produces html and javascript code which is then served by a web server that understands wsgi.
 
 indiwsgi requires the 'skipole' Python framework, available from Pypi, and a wsgi web server, such as 'waitress'
