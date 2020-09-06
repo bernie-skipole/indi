@@ -64,22 +64,6 @@ _FROM_INDI_CHANNEL = ""
 
 
 
-#  one key : list
-# 'logdata' list of "Timestamp space logged data"
-
-#
-#  multiple keys : lists
-# 'logdata:<devicename>' - list of "Timestamp space logged data"
-
-#
-# multiple keys : lists. each list is 50 items to keep a history of number changes
-# 'logdata:<propertyname>:<devicename>' - list of "Timestamp space json string of set numbervector"
-
-
-# global variable to help prevent storing duplicate numbers
-_NUMBERS = {}
-
-
 
 _LOGLENGTHS = {
                 'devices' : 5,
@@ -150,83 +134,6 @@ def receive_from_indiserver(data, rconn):
         elif child.tag == "setBLOBVector":
             blob_vector = BLOBVector.update_from_setvector(rconn, child)
             blob_vector.log(rconn, timestamp)
-
-
-
-def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
-    "logs data when a setNumberVector arrives"
-    global _NUMBERS, _LOGLENGTHS
-    # key of prefix + logdata:<propertyname>:<devicename>' will be used to store this vector,
-    # in both _NUMBERS, and in redis
-    numberkey = key('logdata',propertyvector.name, propertyvector.device)
-    # The data logged is a json string.
-    logdata = {
-               "state": propertyvector.state,
-               "timeout": propertyvector.timeout,
-               "timestamp": propertyvector.timestamp,
-               "message": propertyvector.message,
-               }
-    # logelements will be a dictionary of number name : formatted number
-    logelements = {}
-    for child in propertyvector:
-        logelements[child.name] = str(child)
-    # set the logelements dictionary as an item in logdata under key 'elements' 
-    logdata["elements"] = logelements
-    # create a json string of this dictionary, which will be the string to log
-    data = json.dumps(logdata)
-    # check the number has changed
-    if data == _NUMBERS.get(numberkey):
-        # The data received has not changed, so do not log it
-        return
-    # The data received has changed, record it in _NUMBERS and log it
-    _NUMBERS[numberkey] = data
-    # set it into a redis store
-    time_and_data = timestamp + " " + data
-    rconn.lpush(numberkey, time_and_data)
-    # and limit number of logs to 50
-    rconn.ltrim(numberkey, 0, 49)
-    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
-    log_received(rconn, f"{setnumbervector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
-
-
-
-
-def log_setvector(rconn, propertyvector, setvector, timestamp):
-    "Logs data when a setVector arrives apart from setnumber vector, which have a specialist store"
-    log_received_per_device(rconn, propertyvector.device, f"{setvector.tag}:{propertyvector.name}", timestamp)
-    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
-    log_received(rconn, f"{setvector.tag}:{propertyvector.name}:{propertyvector.device}", timestamp)
-
-
-
-def log_received_per_device(rconn, device, logdata, timestamp):
-    """Add a logdata string to a 'device' list - one is created for every device
-       key is prefix + "logdata:" + device"""
-    if not logdata:
-        return
-    time_and_data = timestamp + " " + logdata
-    rconn.lpush(key('logdata',device), time_and_data)
-    # and limit number of logs to 100
-    rconn.ltrim(key('logdata',device), 0, 99)
-    # also set the fact a change has occurred in log 'logdata', this also publishes an alert
-    log_received(rconn, logdata + ":" + device, timestamp)
-
-
-def log_received(rconn, logdata, timestamp):
-    """Add a logdata string to a list which contains the 100 last logs
-       key is prefix + "logdata"    ("logdata" is literal string, not the argument value)
-       and each value logged is timestamp space logdata, where timestamp is the time at which the value is logged
-       Also publishes the logdata on redis _FROM_INDI_CHANNEL for any service that cares to listen"""
-    global _FROM_INDI_CHANNEL
-    if not logdata:
-        return
-    time_and_data = timestamp + " " + logdata
-    rconn.lpush(key('logdata'), time_and_data)
-    # and limit number of logs to 100
-    rconn.ltrim(key('logdata'), 0, 99)
-    # and publishes an alert
-    rconn.publish(_FROM_INDI_CHANNEL, logdata)
-
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
@@ -1149,9 +1056,24 @@ class delProperty():
                     # and limit number of logs
                     rconn.ltrim(logkey, 0, _LOGLENGTHS['devices'])
             # log changes in messages to logdata:messages
-
-
-
+            messagelist = Message.get_message(rconn)
+            if not messagelist:
+                return
+            logkey = key("logdata", "messages")
+            logentry = rconn.lindex(logkey, 0)   # gets last log entry
+            if logentry is None:
+                newstring = timestamp + " " + json.dumps(messagelist)
+                rconn.lpush(logkey, newstring)
+            else:
+                # Get the last log
+                logtime, logmessage = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_[timestamp message]"
+                logmessagelist = json.loads(logmessage)
+                if logmessagelist != messagelist:
+                    # there has been a change in the message
+                    newstring = timestamp + " " + json.dumps(messagelist)
+                    rconn.lpush(logkey, newstring)
+                    # and limit number of logs
+                    rconn.ltrim(logkey, 0, _LOGLENGTHS['messages'])
 
 
 

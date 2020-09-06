@@ -522,7 +522,8 @@ def _show_blobvector(skicall, index, ad):
 
 
 def check_for_update(skicall):
-    "When updating the devices page by json, update entire page if any change has occurred"
+    """When updating the devices page by json, update entire page if any change has occurred
+       This means the devices log, the messages log, and for every device, the devicemessages log"""
     if 'timestamp' in skicall.call_data:
         timestamp = skicall.call_data['timestamp']
     else:
@@ -531,16 +532,39 @@ def check_for_update(skicall):
         return
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    # check if last log has an older timestamp than this page
-    logentry = tools.last_log(rconn, redisserver)
-    if logentry is None:
+    devices = tools.devices(rconn, redisserver)
+    if not devices:
+        # no devices! Keep updating
         skicall.page_data['JSONtoHTML'] = 'home'
         return
-    logtime, logdata = logentry
-    if timestamp < logtime:
-        # page timestamp is earlier than last log entry, so update the page
-        skicall.page_data['JSONtoHTML'] = 'home'
+    # check if devices has a later timestamp than this page
+    logentry = tools.logs(rconn, redisserver, 1, 'devices')
+    if logentry is not None:
+        logtime, logdata = logentry
+        if timestamp < logtime:
+            # page timestamp is earlier than last log entry, so update the page
+            skicall.page_data['JSONtoHTML'] = 'home'
+            return
+    # check if messages has a later timestamp than this page
+    logentry = tools.logs(rconn, redisserver, 1, 'messages')
+    if logentry is not None:
+        logtime, logdata = logentry
+        if timestamp < logtime:
+            # page timestamp is earlier than last log entry, so update the page
+            skicall.page_data['JSONtoHTML'] = 'home'
+            return
+    # For every device, check if devicemessages has a later timestamp than this page
+    for device in devices:
+        logentry = tools.logs(rconn, redisserver, 1, 'devicemessages', device)
+        if logentry is not None:
+            logtime, logdata = logentry
+            if timestamp < logtime:
+                # page timestamp is earlier than last log entry, so update the page
+                skicall.page_data['JSONtoHTML'] = 'home'
+                return
+    # No update has been made, so do not refresh the page
 
+ 
 
 def check_for_device_change(skicall):
     """Checks to see if a device has changed, in which case the properties page should have a html refresh
@@ -559,50 +583,108 @@ def check_for_device_change(skicall):
         raise FailPage("Invalid data, no group has been specified in the request")
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    # check if last log for this device has an older timestamp than this page
-    logentry = tools.last_log(rconn, redisserver, devicename)
-    if logentry is None:
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+    devices = tools.devices(rconn, redisserver)
+    if not devices:
+        # no devices! go to home
+        skicall.page_data['JSONtoHTML'] = 'home'
         return
-    logtime, logdata = logentry
-    if timestamp < logtime:
-        # page timestamp is earlier than last log entry, so update the page
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+    if devicename not in devices:
+        # device has been deleted, go to home
+        skicall.page_data['JSONtoHTML'] = 'home'
         return
-    # check if any setnumber vectors have been updated after the page timestamp
-    # if they have, return the change in a json call
+    # if a devicemessage has updated, refresh the page
+    logentry = tools.logs(rconn, redisserver, 1, 'devicemessages', devicename)
+    if logentry is not None:
+        logtime, logdata = logentry
+        if timestamp < logtime:
+            # page timestamp is earlier than last log entry, so update the page
+            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+            return
+    # check properties list for this device have not changed
     properties = tools.properties(rconn, redisserver, devicename)
     if not properties:
         raise FailPage("No properties for the device have been found")
-    # for each property, check timestamp of last update
-    att_list = []  # attributes needed to find index of property
+    # check if properties for this device has a later timestamp than this page
+    logentry = tools.logs(rconn, redisserver, 1, 'properties', devicename)
+    if logentry is not None:
+        logtime, logdata = logentry
+        if timestamp < logtime:
+            # page timestamp is earlier than last log entry, so update the page
+            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+            return
+    # check if attributes of a property have changed, and also list numbervectors
+    numbervectors = []
+    propertygroup = []
     for propertyname in properties:
         # get the property attributes
         att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
-        # Ensure the label is set
-        label = att_dict.get('label')
-        if label is None:
-            att_dict['label'] = propertyname
-        att_list.append(att_dict)
-    # now sort properties by group and then by label
-    att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
-    for index, ad in enumerate(att_list):
-        # loops through each property, where ad is the attribute dictionary of the property
-        # and index is the section index on the web page
-        if ad['vector'] != "NumberVector":
+        if att_dict['group'] == group:
+            propertygroup.append(propertyname)
+        if att_dict['vector'] == "NumberVector":
+            numbervectors.append(propertyname)
+        else:
+            # check if attribute has changed
+            logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
+            if logentry is not None:
+                logtime, logdata = logentry
+                if timestamp < logtime:
+                    # page timestamp is earlier than last log entry, so update the page
+                    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+                    return
+    # for every property in the displayed group, other than numbervectors, check elements have not changed
+    for propertyname in properties:
+        if propertyname not in propertygroup:
             continue
-        # Only check the properties with the given group attribute currently being displayed
-        if group != ad.get('group'):
-            # This property is not being shown on the page, so continue
+        if propertyname in numbervectors:
             continue
-        propertyname = ad['name']
-        vector = tools.last_numbervector(rconn, redisserver, devicename, propertyname)
-        if not vector:
+        elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        if not elements:
             continue
-        loggedtime, logdata = vector
-        if timestamp > loggedtime:
-            # page has been updated since this logged time, no need to update this vector
+        # check if elements for this property has a later timestamp than this page
+        logentry = tools.logs(rconn, redisserver, 1, 'elements', propertyname, devicename)
+        if logentry is not None:
+            logtime, logdata = logentry
+            if timestamp < logtime:
+                # page timestamp is earlier than last log entry, so update the page
+                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+                return
+        # check for updated element attributes
+        for elementname in elements:
+            # check if attribute has changed
+            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementname, propertyname, devicename)
+            if logentry is not None:
+                logtime, logdata = logentry
+                if timestamp < logtime:
+                    # page timestamp is earlier than last log entry, so update the page
+                    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+                    return
+    # for numbervectors only, if there has been a change, update the page by json
+    updatelist = []
+    for propertyname in numbervectors:
+        if propertyname not in propertygroup:
             continue
+        elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        if not elements:
+            continue
+        # check if elements for this property has a later timestamp than this page
+        logentry = tools.logs(rconn, redisserver, 1, 'elements', propertyname, devicename)
+        if logentry is not None:
+            logtime, logdata = logentry
+            if timestamp < logtime:
+                # page timestamp is earlier than last log entry, so update the page
+                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+                return
+        # check for updated element attributes
+        for elementname in elements:
+            # check if attribute has changed
+            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementname, propertyname, devicename)
+            if logentry is not None:
+                logtime, logdata = logentry
+                if timestamp < logtime:
+                    updatelist.append([propertyname,elementname])
+    if updatelist:
+        # this property/element has to be updated
+
 
         # set the change into page data
         # items which may have changed:

@@ -161,39 +161,56 @@ def property_elements(rconn, redisserver, device, name):
     # sort element_dictionary_list by label
     element_dictionary_list.sort(key=_split_element_labels)
     return element_dictionary_list
+
+
+def logs(rconn, redisserver, number, *keys):
+    """Return the the number of logs as [[timestamp,data], ...] or empty list if none available"""
+    logkey = _key(redisserver, "logdata", *keys)
+    logs = rconn.lrange(logkey, 0, number-1)
+    if logs is None:
+        return []
+    nlogs = []
+    for logentry in logs
+        logtime, logdata = logentry.decode("utf-8").split(" ", maxsplit=1)
+        logdata = json.loads(logdata)
+        nlogs.append([logtime,logdata])
+
+
+
+
     
 
-def last_log(rconn, redisserver, device=""):
-    """Return the last log as (timestamp,data) or None if not available
-       If device given, the last log from this device is returned"""
-    if device:
-        logkey = _key(redisserver, "logdata", device)
-    else:
-        logkey = _key(redisserver, "logdata")
-    logentry = rconn.lindex(logkey, 0)
-    if logentry is None:
-        return
-    return logentry.decode("utf-8").split(" ", maxsplit=1)
+#def last_log(rconn, redisserver, device=""):
+#    """Return the last log as (timestamp,data) or None if not available
+#       If device given, the last log from this device is returned"""
+#    if device:
+#        logkey = _key(redisserver, "logdata", device)
+#    else:
+#        logkey = _key(redisserver, "logdata")
+#    logentry = rconn.lindex(logkey, 0)
+#    if logentry is None:
+#        return
+#    return logentry.decode("utf-8").split(" ", maxsplit=1)
 
 
-def get_logs(rconn, redisserver, number):
-    "Return the number of logs as [(timestamp,data),..] or None if not available"
-    logkey = _key(redisserver, "logdata")
-    loglist = rconn.lrange(logkey, 0, number)
-    if not loglist:
-        return
-    return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
+#def get_logs(rconn, redisserver, number):
+#    "Return the number of logs as [(timestamp,data),..] or None if not available"
+#    logkey = _key(redisserver, "logdata")
+#    loglist = rconn.lrange(logkey, 0, number)
+#    if not loglist:
+#        return
+#    return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
 
 
-def last_numbervector(rconn, redisserver, device="", name=""):
-    """Return the last log as (timestamp,data) or None if not available
-       data is a dictionary of the number vector"""
-    logkey = _key(redisserver, "logdata", name, device)
-    logentry = rconn.lindex(logkey, 0)
-    if logentry is None:
-        return
-    timestamp, data = logentry.decode("utf-8").split(" ", maxsplit=1)
-    return timestamp, json.loads(data)
+#def last_numbervector(rconn, redisserver, device="", name=""):
+#    """Return the last log as (timestamp,data) or None if not available
+#       data is a dictionary of the number vector"""
+#    logkey = _key(redisserver, "logdata", name, device)
+#    logentry = rconn.lindex(logkey, 0)
+#    if logentry is None:
+#        return
+#    timestamp, data = logentry.decode("utf-8").split(" ", maxsplit=1)
+#    return timestamp, json.loads(data)
 
 
 def getProperties(rconn, redisserver, device="", name=""):
