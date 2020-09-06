@@ -82,11 +82,16 @@ _NUMBERS = {}
 
 
 _LOGLENGTHS = {
-                'devices' : 50,
-                'properties' : 50,
-                'attributes' : 50,
-                'elements': 50
-
+                'devices' : 5,
+                'properties' : 5,
+                'attributes' : 5,
+                'elements': 5,
+                'messages': 5,
+                'textvector': 5,
+                'numbervector':50,
+                'switchvector':5,
+                'lightvector':5,
+                'blobvector':5
               }
 
 
@@ -106,53 +111,45 @@ def receive_from_indiserver(data, rconn):
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
             text_vector.log(rconn, timestamp)
-            log_received_per_device(rconn, text_vector.device, f"defTextVector:{text_vector.name}", timestamp)
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
             number_vector.write(rconn)
-            log_received_per_device(rconn, number_vector.device, f"defNumberVector:{number_vector.name}", timestamp)
+            number_vector.log(rconn, timestamp)
         elif child.tag == "defSwitchVector":
             switch_vector = SwitchVector(child)
             switch_vector.write(rconn)
-            log_received_per_device(rconn, switch_vector.device, f"defSwitchVector:{switch_vector.name}", timestamp)
+            switch_vector.log(rconn, timestamp)
         elif child.tag == "defLightVector":
             light_vector = LightVector(child)
             light_vector.write(rconn)
-            log_received_per_device(rconn, light_vector.device, f"defLightVector:{light_vector.name}", timestamp)
+            light_vector.log(rconn, timestamp)
         elif child.tag == "defBLOBVector":
             blob_vector = BLOBVector(child)
             blob_vector.write(rconn)
-            log_received_per_device(rconn, blob_vector.device, f"defBlobVector:{blob_vector.name}", timestamp)
+            blob_vector.log(rconn, timestamp)
         elif child.tag == "message":
             message = Message(child)
             message.write(rconn)
-            if message.device:
-                log_received_per_device(rconn, message.device, "message", timestamp)
-            else:
-                log_received(rconn, "message", timestamp)
+            message.log(rconn, timestamp)
         elif child.tag == "delProperty":
             delprop = delProperty(child)
             delprop.write(rconn)
-            if delprop.name:
-                log_received_per_device(rconn, delprop.device, f"delProperty:{delprop.name}", timestamp)
-            else:
-                log_received_per_device(rconn, delprop.device, "delDevice", timestamp)
+            delprop.log(rconn, timestamp)
         elif child.tag == "setTextVector":
             text_vector = TextVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, text_vector, child, timestamp)
+            text_vector.log(rconn, timestamp)
         elif child.tag == "setNumberVector":
             number_vector = NumberVector.update_from_setvector(rconn, child)
-            # numbers are logged to a special 50 length store
-            log_setnumbervector(rconn, number_vector, child, timestamp)
+            number_vector.log(rconn, timestamp)
         elif child.tag == "setSwitchVector":
             switch_vector = SwitchVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, switch_vector, child, timestamp)
+            switch_vector.log(rconn, timestamp)
         elif child.tag == "setLightVector":
             light_vector = LightVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, light_vector, child, timestamp)
+            light_vector.log(rconn, timestamp)
         elif child.tag == "setBLOBVector":
             blob_vector = BLOBVector.update_from_setvector(rconn, child)
-            log_setvector(rconn, blob_vector, child, timestamp)
+            blob_vector.log(rconn, timestamp)
 
 
 
@@ -337,6 +334,15 @@ class ParentProperty():
         return set(e.decode("utf-8") for e in elementset)
 
 
+    def get_elements_dict(self, rconn, elementname):
+        "Returns a dictionary of element attributes for the given element name, as saved in redis"
+        elkey = key("elementattributes", elementname, self.name, self.device)
+        eldict = rconn.hgetall(elkey)
+        if not eldict:
+            return {}
+        return {k.decode("utf-8"):v.decode("utf-8") for k,v in eldict.items()}
+
+
     def write(self, rconn):
         "Saves this device, and property to redis connection rconn"
         # add the device to redis set 'devices'
@@ -424,6 +430,25 @@ class ParentProperty():
                 rconn.lpush(logkey, newstring)
                 # and limit number of logs
                 rconn.ltrim(logkey, 0, _LOGLENGTHS['elements'])
+        # log changes in element attributes
+        for element in self.elements.values():
+            # log changes in attributes to logdata:elementattributes:<elementname>:<propertyname>:<devicename>
+            elattdict = self.get_elements_dict(rconn, element.name)
+            logkey = key("logdata", 'elementattributes',element.name, self.name, self.device)
+            logentry = rconn.lindex(logkey, 0)   # gets last log entry
+            if logentry is None:
+                newstring = timestamp + " " + json.dumps(elattdict)
+                rconn.lpush(logkey, newstring)
+            else:
+                # Get the last log
+                logtime, logelattributes = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_element_attributes_dict"
+                logelattdict = json.loads(logelattributes)
+                if logelattdict != elattdict:
+                    # there has been a change in the element attributes
+                    newstring = timestamp + " " + json.dumps(elattdict)
+                    rconn.lpush(logkey, newstring)
+                    # and limit number of logs
+                    rconn.ltrim(logkey, 0, _LOGLENGTHS[self.vector.lower()])
 
 
 
@@ -939,19 +964,56 @@ class Message():
         self.message = child.get("message", default = "")                                # Received message
 
 
+    @classmethod
+    def get_message(cls, rconn, device=""):
+        """Return the last message as list of [timestamp, message] or [] if not available
+           If device not given, return the last system message
+           If device given, the last message from this device is returned"""
+        if device:
+            mkey = key("devicemessages", device)
+        else:
+            mkey = key("messages")
+        message = rconn.get(mkey)
+        if message is None:
+            return []
+        return message.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp message"
+
     def write(self, rconn):
-        "Saves this message to a list, which contains the last ten messages"
+        "Saves this message as a string, 'timestamp message'"
         if not self.message:
             return
         time_and_message = self.timestamp + " " + self.message
         if self.device:
-            rconn.lpush(key('devicemessages', self.device), time_and_message)
-            # and limit number of messages to 10
-            rconn.ltrim(key('devicemessages', self.device), 0, 9)
+            rconn.set(key('devicemessages', self.device), time_and_message)
         else:
-            rconn.lpush(key('messages'), time_and_message)
-            # and limit number of messages to 10
-            rconn.ltrim(key('messages'), 0, 9)
+            rconn.set(key('messages'), time_and_message)
+
+
+    def log(self, rconn, timestamp):
+        "Reads last log entry in redis for this object, and, if changed, logs change with the given timestamp"
+        global _LOGLENGTHS
+        # log changes in messages to logdata:messages or to logdata:devicemessages:<devicename>
+        messagelist = self.get_message(rconn, device=self.device)
+        if not messagelist:
+            return
+        if self.device:
+            logkey = key("logdata", "devicemessages", self.device)
+        else:
+            logkey = key("logdata", "messages")
+        logentry = rconn.lindex(logkey, 0)   # gets last log entry
+        if logentry is None:
+            newstring = timestamp + " " + json.dumps(messagelist)
+            rconn.lpush(logkey, newstring)
+        else:
+            # Get the last log
+            logtime, logmessage = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_[timestamp message]"
+            logmessagelist = json.loads(logmessage)
+            if logmessagelist != messagelist:
+                # there has been a change in the message
+                newstring = timestamp + " " + json.dumps(messagelist)
+                rconn.lpush(logkey, newstring)
+                # and limit number of logs
+                rconn.ltrim(logkey, 0, _LOGLENGTHS['messages'])
 
     def __str__(self):
         return self.message
@@ -976,15 +1038,14 @@ class delProperty():
 
     def write(self, rconn):
         "Deletes the property or device from redis"
+        global _LOGLENGTHS
         if self.name:
-            # delete the property and add the message to the device message list
+            # delete the property and add the message to the device message
             if self.message:
                 time_and_message = f"{self.timestamp} {self.message}"
             else:
                 time_and_message = f"{self.timestamp} Property {self.name} deleted from device {self.device}"
-            rconn.lpush(key('messages', self.device), time_and_message)
-            # and limit number of messages to 10
-            rconn.ltrim(key('messages', self.device), 0, 9)
+            rconn.set(key('messages', self.device), time_and_message)
             # delete all elements associated with the property
             elements = rconn.smembers(key('elements', self.name, self.device))
             # delete the set of elements for this property
@@ -997,14 +1058,12 @@ class delProperty():
             rconn.srem(key('properties', self.device), self.name)
             rconn.delete(key('attributes', self.name, self.device))
         else:
-            # delete the device and add the message to the system message list
+            # delete the device and add the message to the system message
             if self.message:
                 time_and_message = f"{self.timestamp} {self.message}"
             else:
                 time_and_message = f"{self.timestamp} {self.device} deleted"
-            rconn.lpush(key('messages'), time_and_message)
-            # and limit number of messages to 10
-            rconn.ltrim(key('messages'), 0, 9)
+            rconn.set(key('messages'), time_and_message)
             # and delete all keys associated with the device
             properties = rconn.smembers(key('properties', self.device))
             # delete the set of properties
@@ -1025,6 +1084,76 @@ class delProperty():
             rconn.delete(key('messages', self.device))
             # delete the device from the 'devices' set
             rconn.srem(key('devices'), self.device)
+
+    def log(self, rconn, timestamp):
+        "Reads last log entry in redis for this object, and, if changed, logs change with the given timestamp"
+        global _LOGLENGTHS
+        if self.name:
+            # a property has been deleted, log changes in property names to logdata:properties:<devicename>
+            propertysetfromredis = rconn.smembers(key('properties', self.device))
+            if not propertysetfromredis:
+                propertyset = set(["--None--"])
+            else:
+                propertyset = set(p.decode("utf-8") for p in propertysetfromredis)
+            logkey = key("logdata", 'properties', self.device)
+            logentry = rconn.lindex(logkey, 0)   # gets last log entry
+            if logentry is None:
+                newstring = timestamp + " " + json.dumps(list(propertyset))
+                rconn.lpush(logkey, newstring)
+            else:
+                # Get the last log
+                logtime, logproperties = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_properties_list"
+                logpropertyset = set(json.loads(logproperties))
+                if logpropertyset != propertyset:
+                    # there has been a change in the properties
+                    newstring = timestamp + " " + json.dumps(list(propertyset))
+                    rconn.lpush(logkey, newstring)
+                    # and limit number of logs
+                    rconn.ltrim(logkey, 0, _LOGLENGTHS['properties'])
+            # log changes in messages to logdata:devicemessages:<devicename>
+            messagelist = Message.get_message(rconn, device=self.device)
+            if not messagelist:
+                return
+            logkey = key("logdata", "devicemessages", self.device)
+            logentry = rconn.lindex(logkey, 0)   # gets last log entry
+            if logentry is None:
+                newstring = timestamp + " " + json.dumps(messagelist)
+                rconn.lpush(logkey, newstring)
+            else:
+                # Get the last log
+                logtime, logmessage = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_[timestamp message]"
+                logmessagelist = json.loads(logmessage)
+                if logmessagelist != messagelist:
+                    # there has been a change in the message
+                    newstring = timestamp + " " + json.dumps(messagelist)
+                    rconn.lpush(logkey, newstring)
+                    # and limit number of logs
+                    rconn.ltrim(logkey, 0, _LOGLENGTHS['messages'])
+        else:
+            # no property name, so an entire device has been wiped
+            # log changes in devices to logdata:devices
+            deviceset = ParentProperty.get_devices(rconn)
+            logkey = key("logdata", "devices")
+            logentry = rconn.lindex(logkey, 0)   # gets last log entry
+            if logentry is None:
+                newstring = timestamp + " " + json.dumps(list(deviceset))
+                rconn.lpush(logkey, newstring)
+            else:
+                # Get the last log
+                logtime, logdevices = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_devices_list"
+                logdeviceset = set(json.loads(logdevices))
+                if logdeviceset != deviceset:
+                    # there has been a change in the devices
+                    newstring = timestamp + " " + json.dumps(list(deviceset))
+                    rconn.lpush(logkey, newstring)
+                    # and limit number of logs
+                    rconn.ltrim(logkey, 0, _LOGLENGTHS['devices'])
+            # log changes in messages to logdata:messages
+
+
+
+
+
 
 
 ######## Read a vector from redis ################

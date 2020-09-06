@@ -55,12 +55,13 @@ def open_redis(redisserver):
 
 def last_message(rconn, redisserver, device=""):
     """Return the last message or None if not available
-       If device given, the last message from this device is returned"""
+       If device given, the last message from this device is returned
+       message is a string of timestamp space message text"""
     if device:
         mkey = _key(redisserver, "devicemessages", device)
     else:
         mkey = _key(redisserver, "messages")
-    message = rconn.lindex(mkey, 0)
+    message = rconn.get(mkey)
     if message is None:
         return
     return message.decode("utf-8")
