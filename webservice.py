@@ -33,9 +33,9 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 
 # call inditoredis - which is blocking, so run in its own thread
-run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
+#run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
 # and start it
-run_inditoredis.start()
+#run_inditoredis.start()
 
 # create a wsgi application, which requires the redis_host tuple
 application = indiwsgi.make_wsgi_app(redis_host)

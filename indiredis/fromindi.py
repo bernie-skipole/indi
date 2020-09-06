@@ -81,6 +81,13 @@ _NUMBERS = {}
 
 
 
+_LOGLENGTHS = {
+                'devices' : 50
+
+              }
+
+
+
 def receive_from_indiserver(data, rconn):
     "receives xml data, parses it and stores in redis. Publishes an alert that data is received"
     if rconn is None:
@@ -95,6 +102,7 @@ def receive_from_indiserver(data, rconn):
         if child.tag == "defTextVector":
             text_vector = TextVector(child)         # store the received data in a TextVector object
             text_vector.write(rconn)                # call the write method to store data in redis
+            text_vector.log(rconn, timestamp)
             log_received_per_device(rconn, text_vector.device, f"defTextVector:{text_vector.name}", timestamp)
         elif child.tag == "defNumberVector":
             number_vector = NumberVector(child)
@@ -147,7 +155,7 @@ def receive_from_indiserver(data, rconn):
 
 def log_setnumbervector(rconn, propertyvector, setnumbervector, timestamp):
     "logs data when a setNumberVector arrives"
-    global _NUMBERS
+    global _NUMBERS, _LOGLENGTHS
     # key of prefix + logdata:<propertyname>:<devicename>' will be used to store this vector,
     # in both _NUMBERS, and in redis
     numberkey = key('logdata',propertyvector.name, propertyvector.device)
@@ -296,6 +304,15 @@ class ParentProperty():
             self.perm = 'ro'
 
 
+    @classmethod
+    def get_devices(cls, rconn):
+        "Return a set of device names"
+        deviceset = rconn.smembers(key('devices'))
+        if not deviceset:
+            return set()
+        return set(d.decode("utf-8") for d in deviceset)
+
+
     def write(self, rconn):
         "Saves this device, and property to redis connection rconn"
         # add the device to redis set 'devices'
@@ -310,6 +327,29 @@ class ParentProperty():
         elementlist.sort(key=lambda x: self.elements[x].label)
         for elementname in elementlist:
             rconn.sadd(key('elements', self.name, self.device), elementname)   # add element name to 'elements:<propertyname>:<devicename>'
+
+
+    def log(self, rconn, timestamp):
+        "Reads last log entry in redis for this object, and, if changed, logs change with the given timestamp"
+        global _LOGLENGTHS
+        # log changes in devices to logdata:devices
+        deviceset = self.get_devices(rconn)
+        logkey = key("logdata", "devices")
+        logentry = rconn.lindex(logkey, 0)   # gets last log entry
+        if logentry is None:
+            newstring = timestamp + " " + json.dumps(list(deviceset))
+            rconn.lpush(logkey, newstring)
+        else:
+            # Get the last log
+            logtime, logdevices = logentry.decode("utf-8").split(" ", maxsplit=1)  # decode b"timestamp json_string_of_devices_list"
+            logdeviceset = set(json.loads(logdevices))
+            if logdeviceset != deviceset:
+                # there has been a change in the devices
+                newstring = timestamp + " " + json.dumps(list(deviceset))
+                rconn.lpush(logkey, newstring)
+                # and limit number of logs
+                rconn.ltrim(logkey, 0, _LOGLENGTHS['devices'])
+        # log changes in property names to logdata:properties:<devicename>
 
 
     @classmethod
