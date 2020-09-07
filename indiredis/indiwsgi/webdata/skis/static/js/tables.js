@@ -26,7 +26,7 @@ SKIPOLE.tables.TwoColTable1.prototype.setvalues = function (fieldlist, result) {
     var self = this;
     var index = 0;
     var header = false;
-    if (the_widg.find('th')) {
+    if (the_widg.find('th').length) {
         header = true;
         }
     the_widg.find('tr').each(function() {
@@ -40,7 +40,7 @@ SKIPOLE.tables.TwoColTable1.prototype.setvalues = function (fieldlist, result) {
                 $(cells[0]).text(col1[index]);
                  }
             if (col2) {
-               $(cells[1]).text(col2[index])
+               $(cells[1]).text(col2[index]);
                 }
              index=index+1;
             }
@@ -66,7 +66,7 @@ SKIPOLE.tables.ThreeColTable1.prototype.setvalues = function (fieldlist, result)
     var self = this;
     var index = 0;
     var header = false;
-    if (the_widg.find('th')) {
+    if (the_widg.find('th').length) {
         header = true;
         }
     the_widg.find('tr').each(function() {

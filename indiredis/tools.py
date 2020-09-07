@@ -193,41 +193,6 @@ def logs(rconn, redisserver, number, *keys):
 
 
 
-    
-
-#def last_log(rconn, redisserver, device=""):
-#    """Return the last log as (timestamp,data) or None if not available
-#       If device given, the last log from this device is returned"""
-#    if device:
-#        logkey = _key(redisserver, "logdata", device)
-#    else:
-#        logkey = _key(redisserver, "logdata")
-#    logentry = rconn.lindex(logkey, 0)
-#    if logentry is None:
-#        return
-#    return logentry.decode("utf-8").split(" ", maxsplit=1)
-
-
-#def get_logs(rconn, redisserver, number):
-#    "Return the number of logs as [(timestamp,data),..] or None if not available"
-#    logkey = _key(redisserver, "logdata")
-#    loglist = rconn.lrange(logkey, 0, number)
-#    if not loglist:
-#        return
-#    return [logentry.decode("utf-8").split(" ", maxsplit=1) for logentry in loglist]
-
-
-#def last_numbervector(rconn, redisserver, device="", name=""):
-#    """Return the last log as (timestamp,data) or None if not available
-#       data is a dictionary of the number vector"""
-#    logkey = _key(redisserver, "logdata", name, device)
-#    logentry = rconn.lindex(logkey, 0)
-#    if logentry is None:
-#        return
-#    timestamp, data = logentry.decode("utf-8").split(" ", maxsplit=1)
-#    return timestamp, json.loads(data)
-
-
 def getProperties(rconn, redisserver, device="", name=""):
     """Sends getProperties request, returns the xml string sent, or None on failure
 
@@ -327,12 +292,15 @@ def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
         
     
 def clearredis(rconn, redisserver):
-    "Deletes the redis keys apart from logs"
+    "Deletes the redis keys"
     device_list = devices(rconn, redisserver)
     rconn.delete( _key(redisserver, "devices") )
+    rconn.delete( _key(redisserver, "logdata", "devices") )    
     rconn.delete( _key(redisserver, "messages") )
+    rconn.delete( _key(redisserver, "logdata", "messages") )
     for device in device_list:
         rconn.delete( _key(redisserver, "devicemessages", device) )
+        rconn.delete( _key(redisserver, "logdata", "devicemessages", device) )
         property_list = properties(rconn, redisserver, device)
         rconn.delete( _key(redisserver, "properties", device) )
         for name in property_list:
