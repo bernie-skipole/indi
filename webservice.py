@@ -41,7 +41,7 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 application = indiwsgi.make_wsgi_app(redis_host)
 
 # add skiadmin during development
-# application = indiwsgi.add_skiadmin(application)
+application = indiwsgi.add_skiadmin(application)
 
 # serve the application with the python waitress web server
 serve(application, host='127.0.0.1', port=8000)

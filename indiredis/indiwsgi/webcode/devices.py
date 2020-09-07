@@ -528,7 +528,7 @@ def _check_logs(skicall, *args):
     redisserver = skicall.proj_data["redisserver"]
     timestamp = skicall.call_data['timestamp']
     logentry = tools.logs(rconn, redisserver, 1, *args)
-    if logentry is not None:
+    if logentry:
         logtime, logdata = logentry
         if timestamp < logtime:
             # page timestamp is earlier than last log entry
@@ -669,7 +669,7 @@ def check_for_device_change(skicall):
             return
         # check for updated property attributes
         logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
-        if logentry is not None:
+        if logentry:
             logtime, logdata = logentry
             if timestamp < logtime:
                 updatedict[propertyname] = elements
@@ -678,7 +678,7 @@ def check_for_device_change(skicall):
         # check for updated element attributes
         for elementdict in elements:
             logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementdict['name'], propertyname, devicename)
-            if logentry is not None:
+            if logentry:
                 logtime, logdata = logentry
                 if timestamp < logtime:
                     updatedict[propertyname] = elements
