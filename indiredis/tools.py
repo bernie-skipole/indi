@@ -164,16 +164,27 @@ def property_elements(rconn, redisserver, device, name):
 
 
 def logs(rconn, redisserver, number, *keys):
-    """Return the the number of logs as [[timestamp,data], ...] or empty list if none available"""
+    """If number is 1, return the latest log as [timestamp,data],
+       If number > 1 return the number of logs as [[timestamp,data], ...] or empty list if none available"""
+    if number < 1:
+        return []
     logkey = _key(redisserver, "logdata", *keys)
+    if number == 1:
+        logentry = rconn.lindex(logkey, 0)
+        if logentry is None:
+            return []
+        logtime, logdata = logentry.decode("utf-8").split(" ", maxsplit=1)
+        logdata = json.loads(logdata)
+        return [logtime,logdata]
     logs = rconn.lrange(logkey, 0, number-1)
     if logs is None:
         return []
     nlogs = []
-    for logentry in logs
+    for logentry in logs:
         logtime, logdata = logentry.decode("utf-8").split(" ", maxsplit=1)
         logdata = json.loads(logdata)
         nlogs.append([logtime,logdata])
+    return nlogs
 
 
 
