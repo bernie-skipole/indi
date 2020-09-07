@@ -521,13 +521,26 @@ def _show_blobvector(skicall, index, ad):
 
 
 
+def _check_logs(skicall, *args):
+    """Checks logs defined by *args, and if changed after the timestamp
+       given in skicall returns True"""
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    timestamp = skicall.call_data['timestamp']
+    logentry = tools.logs(rconn, redisserver, 1, *args)
+    if logentry is not None:
+        logtime, logdata = logentry
+        if timestamp < logtime:
+            # page timestamp is earlier than last log entry
+            return True
+    return False
+
+
+
 def check_for_update(skicall):
     """When updating the devices page by json, update entire page if any change has occurred
-       This means the devices log, the messages log, and for every device, the devicemessages log"""
-    if 'timestamp' in skicall.call_data:
-        timestamp = skicall.call_data['timestamp']
-    else:
-        # device / timestamp not available, better refresh anyway
+       This means check the devices log, the messages log, and for every device, the devicemessages log"""
+    if 'timestamp' not in skicall.call_data:
         skicall.page_data['JSONtoHTML'] = 'home'
         return
     rconn = skicall.proj_data["rconn"]
@@ -538,30 +551,18 @@ def check_for_update(skicall):
         skicall.page_data['JSONtoHTML'] = 'home'
         return
     # check if devices has a later timestamp than this page
-    logentry = tools.logs(rconn, redisserver, 1, 'devices')
-    if logentry is not None:
-        logtime, logdata = logentry
-        if timestamp < logtime:
-            # page timestamp is earlier than last log entry, so update the page
-            skicall.page_data['JSONtoHTML'] = 'home'
-            return
+    if _check_logs(skicall, 'devices'):
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
     # check if messages has a later timestamp than this page
-    logentry = tools.logs(rconn, redisserver, 1, 'messages')
-    if logentry is not None:
-        logtime, logdata = logentry
-        if timestamp < logtime:
-            # page timestamp is earlier than last log entry, so update the page
-            skicall.page_data['JSONtoHTML'] = 'home'
-            return
+    if _check_logs(skicall, 'messages'):
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
     # For every device, check if devicemessages has a later timestamp than this page
     for device in devices:
-        logentry = tools.logs(rconn, redisserver, 1, 'devicemessages', device)
-        if logentry is not None:
-            logtime, logdata = logentry
-            if timestamp < logtime:
-                # page timestamp is earlier than last log entry, so update the page
-                skicall.page_data['JSONtoHTML'] = 'home'
-                return
+        if _check_logs(skicall, 'devicemessages', device):
+            skicall.page_data['JSONtoHTML'] = 'home'
+            return
     # No update has been made, so do not refresh the page
 
  
@@ -570,19 +571,20 @@ def check_for_device_change(skicall):
     """Checks to see if a device has changed, in which case the properties page should have a html refresh
        If however only numbers have changed, then update just the numbers by JSON, without html refresh
        This is done since number change may be a common occurence as a measurement is tracked"""
-    if ('device' in skicall.call_data) and ('timestamp' in skicall.call_data):
-        devicename = skicall.call_data['device']
-        timestamp = skicall.call_data['timestamp']
-    else:
-        # device / timestamp not available, better refresh anyway
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+    # The device page which has called for this update should list all the properties in
+    # a particular group, and the device, timestamp and group should all be present
+    if ('device' not in skicall.call_data) or ('timestamp' not in skicall.call_data):
+        skicall.page_data['JSONtoHTML'] = 'home'
         return
+    devicename = skicall.call_data['device']
+    timestamp = skicall.call_data['timestamp']
     group = skicall.call_data.get('group')
     if group is None:
         # something is wrong
         raise FailPage("Invalid data, no group has been specified in the request")
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
+    # check devicename is a valid device
     devices = tools.devices(rconn, redisserver)
     if not devices:
         # no devices! go to home
@@ -592,137 +594,147 @@ def check_for_device_change(skicall):
         # device has been deleted, go to home
         skicall.page_data['JSONtoHTML'] = 'home'
         return
-    # if a devicemessage has updated, refresh the page
-    logentry = tools.logs(rconn, redisserver, 1, 'devicemessages', devicename)
-    if logentry is not None:
-        logtime, logdata = logentry
-        if timestamp < logtime:
-            # page timestamp is earlier than last log entry, so update the page
-            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-            return
-    # check properties list for this device have not changed
+    # are properties present for this device
     properties = tools.properties(rconn, redisserver, devicename)
     if not properties:
         raise FailPage("No properties for the device have been found")
-    # check if properties for this device has a later timestamp than this page
-    logentry = tools.logs(rconn, redisserver, 1, 'properties', devicename)
-    if logentry is not None:
-        logtime, logdata = logentry
-        if timestamp < logtime:
-            # page timestamp is earlier than last log entry, so update the page
-            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-            return
+    # now check logs
+
+    # if a devicemessage has updated, refresh the page
+    if _check_logs(skicall, 'devicemessages', devicename):
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+        return
+
+    # check if property names found for this device has a later timestamp than this page
+    if _check_logs(skicall, 'properties', devicename):
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+        return
+
+    # numbervectors are treated different to other vectors - they will have a json page update
+    # whereas all other property changes will cause a full page refresh
     # check if attributes of a property have changed, and also list numbervectors
-    numbervectors = []
-    propertygroup = []
+    numbervectors = []   # record properties which are numbervectors
+    propertygroup = []   # record properties which are in the group being displayed
+    att_list = []        # record property attributes - used to sort properties on the page
     for propertyname in properties:
         # get the property attributes
         att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
+        # Ensure the label is set
+        label = att_dict.get('label')
+        if label is None:
+            att_dict['label'] = propertyname
+        att_list.append(att_dict)
         if att_dict['group'] == group:
             propertygroup.append(propertyname)
         if att_dict['vector'] == "NumberVector":
             numbervectors.append(propertyname)
         else:
-            # check if attribute has changed
-            logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
-            if logentry is not None:
-                logtime, logdata = logentry
-                if timestamp < logtime:
-                    # page timestamp is earlier than last log entry, so update the page
-                    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-                    return
+            # if any property other than a number vector has changed attributes, refresh the page
+            if _check_logs(skicall, 'attributes', propertyname, devicename):
+                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+                return
+
     # for every property in the displayed group, other than numbervectors, check elements have not changed
-    for propertyname in properties:
-        if propertyname not in propertygroup:
-            continue
+    for propertyname in propertygroup:
         if propertyname in numbervectors:
             continue
         elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        # elements is a list of dictionaries of element attributes
         if not elements:
             continue
-        # check if elements for this property has a later timestamp than this page
-        logentry = tools.logs(rconn, redisserver, 1, 'elements', propertyname, devicename)
-        if logentry is not None:
-            logtime, logdata = logentry
-            if timestamp < logtime:
-                # page timestamp is earlier than last log entry, so update the page
+        # check if element names for this property has changed
+        if _check_logs(skicall, 'elements', propertyname, devicename):
+            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+            return
+        # check for updated element attributes
+        for elementdict in elements:
+            # check if attribute has changed
+            if _check_logs(skicall, 'elementattributes', elementdict['name'], propertyname, devicename):
                 skicall.page_data['JSONtoHTML'] = 'refreshproperties'
                 return
-        # check for updated element attributes
-        for elementname in elements:
-            # check if attribute has changed
-            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementname, propertyname, devicename)
-            if logentry is not None:
-                logtime, logdata = logentry
-                if timestamp < logtime:
-                    # page timestamp is earlier than last log entry, so update the page
-                    skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-                    return
-    # for numbervectors only, if there has been a change, update the page by json
-    updatelist = []
+
+    # for numbervectors in this group only, if there has been a change
+    # set property name :elements list into updatedict
+    updatedict = {}
     for propertyname in numbervectors:
         if propertyname not in propertygroup:
             continue
         elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        # elements is a list of dictionaries of element attributes
         if not elements:
             continue
-        # check if elements for this property has a later timestamp than this page
-        logentry = tools.logs(rconn, redisserver, 1, 'elements', propertyname, devicename)
+        # check if element names for this property has changed
+        if _check_logs(skicall, 'elements', propertyname, devicename):
+            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+            return
+        # check for updated property attributes
+        logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
         if logentry is not None:
             logtime, logdata = logentry
             if timestamp < logtime:
-                # page timestamp is earlier than last log entry, so update the page
-                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-                return
+                updatedict[propertyname] = elements
+                # property needs to be updated
+                continue
         # check for updated element attributes
-        for elementname in elements:
-            # check if attribute has changed
-            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementname, propertyname, devicename)
+        for elementdict in elements:
+            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementdict['name'], propertyname, devicename)
             if logentry is not None:
                 logtime, logdata = logentry
                 if timestamp < logtime:
-                    updatelist.append([propertyname,elementname])
-    if updatelist:
-        # this property/element has to be updated
+                    updatedict[propertyname] = elements
+                    # property needs to be updated, do not bother checking further elements in the property
+                    break
 
+    # updatedict keys are the property names needing updating,
+    # values are the list of element attribute dictionaries within that property
+    if updatedict:
+        # this property has to be updated
+        # sort att_list by group and then by label
+        att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
+        for index, ad in enumerate(att_list):
+            # loops through each property, where ad is the attribute directory of the property
+            # and index is the section index on the web page
+            propertyname = ad['name']
+            if propertyname not in updatedict:
+                continue 
+            
+            # set the change into page data
+            # items which may have changed:
+            #            state
+            #            timeout
+            #            timestamp
+            #            message
+            #            elements:{name:number,...}
 
-        # set the change into page data
-        # items which may have changed:
-        #            state
-        #            timeout
-        #            timestamp
-        #            message
-        #            elements:{name:number,...}
+            # set the state, one of Idle, OK, Busy and Alert
+            set_state(skicall, index, ad)
+            skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
+            skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
 
-        # set the state, one of Idle, OK, Busy and Alert
-        set_state(skicall, index, ad)
-        skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
-        skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
-
-        element_list = tools.property_elements(rconn, redisserver, devicename, propertyname)
-        if not element_list:
-            continue
-        # permission is one of ro, wo, rw
-        if ad['perm'] == "xx":   #wo
-            continue                              ########## still to do
-        elif ad['perm'] == "rw":
-            # permission is rw
-            col2 = []
-            inputdict = {}
-            for eld in element_list:
-                col2.append(eld['formatted_number'])
-                inputdict[_safekey(eld['name'])] = eld['formatted_number']
-            skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
-            skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
-        else:
-            # permission is ro
-            col2 = []
-            for eld in element_list:
-                col2.append(eld['formatted_number'])
-            skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
-    # and since the page has been updated, update the timestamp
-    # in call_data so the end_call function can insert it into ident_data
-    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
+            element_list = updatedict[propertyname]
+            if not element_list:
+                continue
+            # permission is one of ro, wo, rw
+            if ad['perm'] == "xx":   #wo
+                continue                              ########## still to do
+            elif ad['perm'] == "rw":
+                # permission is rw
+                col2 = []
+                inputdict = {}
+                for eld in element_list:
+                    col2.append(eld['formatted_number'])
+                    inputdict[_safekey(eld['name'])] = eld['formatted_number']
+                skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
+                skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+            else:
+                # permission is ro
+                col2 = []
+                for eld in element_list:
+                    col2.append(eld['formatted_number'])
+                skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
+        # and since the page has been updated, update the timestamp
+        # in call_data so the end_call function can insert it into ident_data
+        skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
 
 
 
