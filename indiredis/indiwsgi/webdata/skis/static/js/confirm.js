@@ -79,6 +79,7 @@ SKIPOLE.confirm.ConfirmBox1.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.confirm.ConfirmBox1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -233,6 +234,7 @@ SKIPOLE.confirm.ConfirmBox2.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.confirm.ConfirmBox2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -303,6 +305,7 @@ SKIPOLE.confirm.AlertClear1.prototype.setvalues = function (fieldlist, result) {
 SKIPOLE.confirm.AlertClear1.prototype.eventfunc = function (e) {
     // pressing close is the equivalent of clearing the error
     // and preventing the link send
+    SKIPOLE.skiprefresh = true;
     this.clear_error();
     e.preventDefault();
     };

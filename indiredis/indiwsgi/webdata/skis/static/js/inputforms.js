@@ -142,6 +142,7 @@ SKIPOLE.inputforms.Form1.prototype.setvalues = function (fieldlist, result) {
     this.sethiddenfields(fieldlist, result);
     };
 SKIPOLE.inputforms.Form1.prototype.eventfunc = function(e) {
+    SKIPOLE.skiprefresh = true;
     var selected_form = $(e.target);
     if (!SKIPOLE.form_validate(selected_form)) {
         // prevent the submission if validation failure
@@ -164,6 +165,7 @@ SKIPOLE.inputforms.SubmitForm1.prototype.setvalues = function (fieldlist, result
     };
 
 SKIPOLE.inputforms.SubmitForm1.prototype.eventfunc = function(e) {
+    SKIPOLE.skiprefresh = true;
     var selected_form = $(e.target);
     if (!SKIPOLE.form_validate(selected_form)) {
         // prevent the submission if validation failure
@@ -261,6 +263,7 @@ SKIPOLE.inputforms.SubmitForm2.prototype.setvalues = function (fieldlist, result
     };
 
 SKIPOLE.inputforms.SubmitForm2.prototype.eventfunc = function(e) {
+    SKIPOLE.skiprefresh = true;
     var selected_form = $(e.target);
     if (!SKIPOLE.form_validate(selected_form)) {
         // prevent the submission if validation failure

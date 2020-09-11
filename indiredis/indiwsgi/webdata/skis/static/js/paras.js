@@ -503,6 +503,7 @@ SKIPOLE.paras.JSONTextLink.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.paras.JSONTextLink.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -671,6 +672,7 @@ SKIPOLE.paras.JSONDivLink.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.paras.JSONDivLink.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }

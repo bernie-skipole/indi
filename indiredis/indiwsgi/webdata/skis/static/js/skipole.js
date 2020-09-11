@@ -4,6 +4,7 @@ var SKIPOLE = {};
 SKIPOLE.widgets = {};
 SKIPOLE.validators = {};
 SKIPOLE.sections = [];
+SKIPOLE.skiprefresh = false;
 
 
 SKIPOLE.restorepagepos = function() {
@@ -26,6 +27,10 @@ SKIPOLE.restorepagepos = function() {
 
 SKIPOLE.refreshjson = function( target ) {
      /* called by setInterval when a page needs regular updating */
+     if (SKIPOLE.skiprefresh) {
+         SKIPOLE.skiprefresh = false;
+         return;
+         }
      $.getJSON(target, "ident=" + SKIPOLE.identdata)
          .done(function(result){
                 SKIPOLE.setfields(result);

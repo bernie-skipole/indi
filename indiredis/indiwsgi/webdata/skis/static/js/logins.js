@@ -40,6 +40,7 @@ SKIPOLE.logins.NamePasswd1.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.logins.NamePasswd1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         if (!SKIPOLE.form_validate(this.widg)) {
@@ -181,6 +182,7 @@ SKIPOLE.logins.Pin4.prototype.clear_error = function() {
     };
 
 SKIPOLE.logins.Pin4.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     // prevent any key being input
     e.preventDefault();
     // ignore backspace key

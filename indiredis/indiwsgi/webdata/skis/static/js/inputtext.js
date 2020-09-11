@@ -166,6 +166,7 @@ SKIPOLE.inputtext.SubmitTextInput1.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.inputtext.SubmitTextInput1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         if (!SKIPOLE.form_validate(this.widg)) {
@@ -318,6 +319,7 @@ SKIPOLE.inputtext.SubmitTextInput3.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.inputtext.SubmitTextInput3.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         if (!SKIPOLE.form_validate(this.widg)) {
@@ -434,6 +436,7 @@ SKIPOLE.inputtext.TwoInputsSubmit1.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.inputtext.TwoInputsSubmit1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         if (!SKIPOLE.form_validate(this.widg)) {
@@ -570,6 +573,7 @@ SKIPOLE.inputtext.SubmitTextInput2.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.inputtext.SubmitTextInput2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         e.preventDefault();

@@ -504,6 +504,7 @@ SKIPOLE.headers.NavButtons3.prototype.setvalues = function (fieldlist, result) {
     };
 
 SKIPOLE.headers.NavButtons3.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -557,6 +558,7 @@ SKIPOLE.headers.TabButtons1 = function (widg_id, error_message, fieldmap) {
 SKIPOLE.headers.TabButtons1.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.headers.TabButtons1.prototype.constructor = SKIPOLE.headers.TabButtons1;
 SKIPOLE.headers.TabButtons1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     var button = $(e.target);
     this.setbutton(button.index());
     }

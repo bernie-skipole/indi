@@ -90,6 +90,7 @@ SKIPOLE.links.ContainerLink2.prototype.setvalues = function (fieldlist, result) 
         }
     };
 SKIPOLE.links.ContainerLink2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -263,6 +264,7 @@ SKIPOLE.links.JSONButtonLink.prototype.setvalues = function (fieldlist, result) 
     };
 
 SKIPOLE.links.JSONButtonLink.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -502,6 +504,7 @@ SKIPOLE.links.ButtonLink2.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.links.ButtonLink2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -563,6 +566,7 @@ SKIPOLE.links.CloseButton = function (widg_id, error_message, fieldmap) {
 SKIPOLE.links.CloseButton.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.links.CloseButton.prototype.constructor = SKIPOLE.links.CloseButton;
 SKIPOLE.links.CloseButton.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -602,6 +606,7 @@ SKIPOLE.links.OpenButton = function (widg_id, error_message, fieldmap) {
 SKIPOLE.links.OpenButton.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.links.OpenButton.prototype.constructor = SKIPOLE.links.OpenButton;
 SKIPOLE.links.OpenButton.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -680,6 +685,7 @@ SKIPOLE.links.OpenButton2.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.links.OpenButton2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -752,6 +758,7 @@ SKIPOLE.links.MessageButton.prototype.setvalues = function (fieldlist, result) {
     };
 
 SKIPOLE.links.MessageButton.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -887,6 +894,7 @@ SKIPOLE.links.Table1_Button.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.links.Table1_Button.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -953,6 +961,7 @@ SKIPOLE.links.Table2_Button.prototype.setvalues = function (fieldlist, result) {
         }
     };
 SKIPOLE.links.Table2_Button.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -999,6 +1008,7 @@ SKIPOLE.links.Table3_Buttons2 = function (widg_id, error_message, fieldmap) {
 SKIPOLE.links.Table3_Buttons2.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.links.Table3_Buttons2.prototype.constructor = SKIPOLE.links.Table3_Buttons2;
 SKIPOLE.links.Table3_Buttons2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -1121,6 +1131,7 @@ SKIPOLE.links.GeneralButtonTable2 = function (widg_id, error_message, fieldmap) 
 SKIPOLE.links.GeneralButtonTable2.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.links.GeneralButtonTable2.prototype.constructor = SKIPOLE.links.GeneralButtonTable2;
 SKIPOLE.links.GeneralButtonTable2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -1427,6 +1438,7 @@ SKIPOLE.links.GeneralButtonTable1 = function (widg_id, error_message, fieldmap) 
 SKIPOLE.links.GeneralButtonTable1.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.links.GeneralButtonTable1.prototype.constructor = SKIPOLE.links.GeneralButtonTable1;
 SKIPOLE.links.GeneralButtonTable1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }

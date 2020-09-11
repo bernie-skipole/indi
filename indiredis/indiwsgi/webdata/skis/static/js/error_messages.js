@@ -230,6 +230,7 @@ SKIPOLE.error_messages.ErrorClear1.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.error_messages.ErrorClear1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
@@ -325,6 +326,7 @@ SKIPOLE.error_messages.ErrorClear2.prototype.setvalues = function (fieldlist, re
         }
     };
 SKIPOLE.error_messages.ErrorClear2.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     // pressing close is the equivalent of clearing the error
     // and preventing the link send
     this.clear_error();

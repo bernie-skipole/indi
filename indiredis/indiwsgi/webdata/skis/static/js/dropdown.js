@@ -16,6 +16,7 @@ SKIPOLE.dropdown.SubmitDropDown1 = function (widg_id, error_message, fieldmap) {
 SKIPOLE.dropdown.SubmitDropDown1.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.dropdown.SubmitDropDown1.prototype.constructor = SKIPOLE.dropdown.SubmitDropDown1;
 SKIPOLE.dropdown.SubmitDropDown1.prototype.eventfunc = function(e) {
+    SKIPOLE.skiprefresh = true;
     // if action_json url set, call a json page
     var jsonurl = this.fieldvalues["url"];
     if (jsonurl) {
@@ -136,6 +137,7 @@ SKIPOLE.dropdown.HiddenContainer.prototype.setvalues = function (fieldlist, resu
         }
     };
 SKIPOLE.dropdown.HiddenContainer.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     // pressing close fades out the widget and prevents the link send
     var the_widg = this.widg;
     if (the_widg.is(":visible")) {

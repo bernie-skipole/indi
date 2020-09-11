@@ -201,6 +201,7 @@ SKIPOLE.checkbox.SubmitCheckBox1.prototype.setvalues = function (fieldlist, resu
         }
     };
 SKIPOLE.checkbox.SubmitCheckBox1.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (e.type == 'submit') {
         // form submitted
         if (!SKIPOLE.form_validate(this.widg)) {

@@ -78,6 +78,7 @@ SKIPOLE.inputtables.InputTable5 = function (widg_id, error_message, fieldmap) {
 SKIPOLE.inputtables.InputTable5.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
 SKIPOLE.inputtables.InputTable5.prototype.constructor = SKIPOLE.inputtables.InputTable5;
 SKIPOLE.inputtables.InputTable5.prototype.eventfunc = function(e) {
+    SKIPOLE.skiprefresh = true;
      var selected_form = $(e.target);
     if (!SKIPOLE.form_validate(selected_form)) {
         // prevent the submission if validation failure
@@ -255,6 +256,7 @@ SKIPOLE.inputtables.InputTable4.prototype.setvalues = function (fieldlist, resul
         })
     };
 SKIPOLE.inputtables.InputTable4.prototype.eventfunc = function (e) {
+    SKIPOLE.skiprefresh = true;
     if (!this.widg_id) {
         return;
         }
