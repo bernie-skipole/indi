@@ -36,11 +36,15 @@ SKIPOLE.tables.TwoColTable1.prototype.setvalues = function (fieldlist, result) {
         else {
             // for each row
             var cells = $(this).children();
-            if (col1) {
-                $(cells[0]).text(col1[index]);
+            if (col1 && col1.length) {
+                if (col1[index] !== null) {
+                    $(cells[0]).text(col1[index]);
+                    }
                  }
-            if (col2) {
-               $(cells[1]).text(col2[index]);
+            if (col2 && col2.length) {
+                if (col2[index] !== null) {
+                    $(cells[1]).text(col2[index]);
+                    }
                 }
              index=index+1;
             }
@@ -76,15 +80,21 @@ SKIPOLE.tables.ThreeColTable1.prototype.setvalues = function (fieldlist, result)
         else {
             // for each row
             var cells = $(this).children();
-            if (col1) {
-                $(cells[0]).text(col1[index]);
+            if (col1 && col1.length) {
+                if (col1[index] !== null) {
+                    $(cells[0]).text(col1[index]);
+                    }
                  }
-            if (col2) {
-                $(cells[1]).text(col2[index]);
-                 }
-            if (col3) {
-                $(cells[2]).text(col3[index]);
-                 }
+            if (col2 && col2.length) {
+                if (col2[index] !== null) {
+                    $(cells[1]).text(col2[index]);
+                    }
+                }
+            if (col3 && col3.length) {
+                if (col3[index] !== null) {
+                    $(cells[2]).text(col3[index]);
+                    }
+                }
              index=index+1;
             }
         })

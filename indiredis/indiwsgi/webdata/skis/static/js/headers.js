@@ -450,6 +450,106 @@ SKIPOLE.headers.NavButtons2.prototype = Object.create(SKIPOLE.BaseWidget.prototy
 SKIPOLE.headers.NavButtons2.prototype.constructor = SKIPOLE.headers.NavButtons2;
 
 
+SKIPOLE.headers.NavButtons3 = function (widg_id, error_message, fieldmap) {
+    SKIPOLE.BaseWidget.call(this, widg_id, error_message, fieldmap);
+    this.display_errors = false;
+    };
+SKIPOLE.headers.NavButtons3.prototype = Object.create(SKIPOLE.BaseWidget.prototype);
+SKIPOLE.headers.NavButtons3.prototype.constructor = SKIPOLE.headers.NavButtons3;
+SKIPOLE.headers.NavButtons3.prototype.setvalues = function (fieldlist, result) {
+    if (!this.widg_id) {
+        return;
+        }
+    var the_widg = this.widg;
+    // links
+    var button_text = this.fieldarg_in_result('button_text', result, fieldlist);
+    var get_field1 = this.fieldarg_in_result('get_field1', result, fieldlist);
+    var get_field2 = this.fieldarg_in_result('get_field2', result, fieldlist);
+    var button_classes = this.fieldarg_in_result('button_classes', result, fieldlist);
+
+    var self = this;
+    var index = 0;
+
+    the_widg.find('a').each(function() {
+            // for each link
+            // set its class
+            if (button_classes && button_classes.length) {
+                if (button_classes[index] !== null) {
+                    $(this).attr("class", button_classes[index]);
+                    }
+                }
+            if (button_text && button_text.length) {
+                if (button_text[index] !== null) {
+                    $(this).text(button_text[index]);
+                    }
+                }
+            /* get_field1 */
+            if (get_field1 && get_field1.length) {
+                if (get_field1[index] !== null) {
+                    let href = $(this).attr('href');
+                    let url = self.setgetfield(href, 'get_field1',get_field1[index]);
+                    $(this).attr('href', url);
+                    }
+                }
+            /* get_field2 */
+            if (get_field2 && get_field2.length) {
+                if (get_field2[index] !== null) {
+                    let href = $(this).attr('href');
+                    let url = self.setgetfield(href, 'get_field2',get_field2[index]);
+                    $(this).attr('href', url);
+                    }
+                }
+             index=index+1;
+        })
+    };
+
+SKIPOLE.headers.NavButtons3.prototype.eventfunc = function (e) {
+    if (!this.widg_id) {
+        return;
+        }
+    var fieldvalues = this.fieldvalues;
+    if (!fieldvalues["jsonurl"]) {
+        // no json url, return and call html link
+        return;
+        }
+
+    var the_widg = this.widg;
+    var button_pressed = $(e.target);
+    var url = fieldvalues["jsonurl"];
+
+    var href = button_pressed.attr('href');
+    var senddata = href.substring(href.indexOf('?')+1);
+    e.preventDefault();
+    // respond to json or html
+    $.ajax({
+          url: url,
+          data: senddata
+              })
+          .done(function(result, textStatus, jqXHR) {
+             if (jqXHR.responseJSON) {
+                  // JSON response
+                  SKIPOLE.setfields(result);
+                  } else {
+                      // html response
+                      document.open();
+                      document.write(result);
+                      document.close();
+                      }
+              })
+          .fail(function( jqXHR, textStatus, errorThrown ) {
+                      if (jqXHR.status == 400 || jqXHR.status == 404 || jqXHR.status == 500)  {
+                          document.open();
+                          document.write(jqXHR.responseText);
+                          document.close();
+                          }
+                      else {
+                          SKIPOLE.json_failed( jqXHR, textStatus, errorThrown );
+                          }
+              });
+
+    };
+
+
 SKIPOLE.headers.TabButtons1 = function (widg_id, error_message, fieldmap) {
     SKIPOLE.BaseWidget.call(this, widg_id, error_message, fieldmap);
     this.display_errors = false;

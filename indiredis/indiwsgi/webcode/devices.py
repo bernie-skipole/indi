@@ -70,18 +70,12 @@ def propertylist(skicall):
 
 def changegroup(skicall):
     "Called by group navigation, sets the group to be displayed"
-    # gets device from skicall.call_data["device"] 
     devicename = skicall.call_data.get("device","")
     if not devicename:
         raise FailPage("Device not recognised")
-    # get data in skicall.submit_dict under key 'received'
-    # with value being a dictionary with keys being the widgfield tuples of the submitting widgets
-    # in this case, only one key should be given for the group
-    datadict = skicall.submit_dict['received']
-    if len(datadict) != 1:
-       raise FailPage("Invalid submission")
-    for gp in datadict.values():
-        skicall.call_data['group'] = gp
+    if ('navlinks', 'get_field1') not in skicall.call_data:
+        raise FailPage("Group not recognised")
+    skicall.call_data['group'] = skicall.call_data['navlinks', 'get_field1']
     # and refresh the properties on the page
     refreshproperties(skicall)
 
@@ -154,16 +148,20 @@ def refreshproperties(skicall):
     if (group is None) or (group not in group_list):
         group = group_list[0]
         skicall.call_data['group'] = group
-    skicall.page_data['group', 'multiplier'] = len(group_list)
-    for index, gp in enumerate(group_list):
-        group_alias = f"group_{index}"
-        skicall.page_data[group_alias, 'grouplink', 'content'] = gp
-        skicall.page_data[group_alias, 'grouplink', 'get_field1'] = gp
+    link_classes = []
+    link_buttons = []
+    link_getfields = []
+    for gp in group_list:
+        link_buttons.append(gp)
+        link_getfields.append(gp)
         # highlight the bar item chosen
         if gp == group:
-            skicall.page_data[group_alias, 'grouplink', 'widget_class'] = "w3-bar-item w3-button w3-mobile w3-blue"
+            link_classes.append("w3-bar-item w3-button w3-mobile w3-blue")
         else:
-            skicall.page_data[group_alias, 'grouplink', 'widget_class'] = "w3-bar-item w3-button w3-mobile"
+            link_classes.append("w3-bar-item w3-button w3-mobile")
+    skicall.page_data['navlinks', 'button_classes'] = link_classes
+    skicall.page_data['navlinks', 'button_text'] = link_buttons
+    skicall.page_data['navlinks', 'get_field1'] = link_getfields
     # now sort att_list by group and then by label
     att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
     for index, ad in enumerate(att_list):

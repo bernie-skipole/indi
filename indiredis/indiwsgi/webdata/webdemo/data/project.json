@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "5.0.0",
+"skipole": "5.0.1",
 "specialpages": {
 "changegroup": 8,
 "checkupdates": 5,
@@ -195,36 +195,6 @@
 "Client created using the skipole wsgi generator."
 ]
 ]
-}
-]
-]
-}
-],
-"group": [
-"Section",
-{
-"tag_name": "span",
-"brief": "a bar button and link",
-"show": true,
-"hide_if_empty": false,
-"parts": [
-[
-"Widget",
-{
-"class": "links.Link",
-"name": "grouplink",
-"brief": "Links to a property group",
-"fields": {
-"content": "home",
-"force_ident": false,
-"get_field1": "",
-"get_field2": "",
-"link_ident": "changegroup",
-"show": true,
-"target": "",
-"widget_class": "w3-bar-item w3-button w3-mobile w3-blue",
-"widget_style": ""
-}
 }
 ]
 ]
@@ -2740,27 +2710,23 @@
 }
 ],
 [
-"Part",
+"Widget",
 {
-"tag_name": "div",
-"brief": "div to hold the bar navigation",
+"class": "headers.NavButtons3",
+"name": "navlinks",
+"brief": "Widget showing the nav link buttons",
+"fields": {
+"button_classes": [],
+"button_style": "",
+"button_text": [],
+"get_field1": [],
+"get_field2": [],
+"json_ident": "",
+"link_ident": "changegroup",
 "show": true,
-"hide_if_empty": false,
-"attribs": {
-"class": "w3-bar w3-black"
-},
-"parts": [
-[
-"SectionPlaceHolder",
-{
-"brief": "bar navigation",
-"section_name": "group",
-"placename": "group",
-"multiplier": 0,
-"mtag": "div"
+"widget_class": "w3-bar w3-black",
+"widget_style": ""
 }
-]
-]
 }
 ],
 [
@@ -2805,20 +2771,27 @@
 "pages": {
 "changegroup": {
 "ident": 8,
-"brief": "Changes the group displayed",
+"brief": "Changes displayed group",
 "RespondPage": {
-"class": "FieldStoreSubmit",
+"class": "AllowStore",
 "original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
 "fail_ident": "home",
 "submit_list": [
 "webcode",
 "devices",
 "changegroup"
 ],
-"target_ident": 4003
+"submit_option": true,
+"target_ident": 4003,
+"validate_fail_ident": null,
+"validate_option": false
 },
 "original_fields": {
-"get_field1": ""
+"navlinks:get_field1": ""
 }
 }
 },
