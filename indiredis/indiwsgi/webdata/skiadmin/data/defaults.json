@@ -88,6 +88,14 @@
 "inner_class": "w3-panel w3-theme-d4",
 "widget_class": "w3-modal"
 },
+"AlertClear2": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d4",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"error_class": "w3-panel w3-red",
+"inner_class": "w3-panel w3-theme-d4",
+"widget_class": "w3-modal"
+},
 "ConfirmBox1": {
 "button1_class": "w3-button w3-round w3-theme-d4",
 "button1_style": "margin-left:20%;margin-right:10px;",

@@ -2667,7 +2667,7 @@
 [
 "Widget",
 {
-"class": "confirm.AlertClear1",
+"class": "confirm.AlertClear2",
 "name": "status",
 "brief": "Shows modal status box when submission made",
 "fields": {
@@ -2684,6 +2684,7 @@
 "hide": true,
 "inner_class": "w3-panel w3-theme-d4",
 "inner_style": "",
+"json_ident": "checkupdates",
 "link_ident": "no_javascript",
 "para_text": "",
 "pre_line": true,
