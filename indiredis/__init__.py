@@ -110,8 +110,6 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
     return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
 
 
-
-
 def _open_redis(redisserver):
     "Opens a redis connection"
     try:
@@ -138,7 +136,7 @@ async def _txtoindi(writer):
             await asyncio.sleep(0.5)
 
 
-async def _rxfromindi(reader, rconn):
+async def _rxfromindi(reader, loop, rconn):
     # get received data, and put it into message
     message = b''
     messagetagnumber = None
@@ -161,7 +159,8 @@ async def _rxfromindi(reader, rconn):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                fromindi.receive_from_indiserver(message, rconn)
+                # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+                result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -172,7 +171,8 @@ async def _rxfromindi(reader, rconn):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            fromindi.receive_from_indiserver(message, rconn)
+            # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+            result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
@@ -182,7 +182,7 @@ async def _indiconnection(loop, rconn, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
     sent = _txtoindi(writer)
-    received = _rxfromindi(reader, rconn)
+    received = _rxfromindi(reader, loop, rconn)
     await asyncio.gather(sent, received)
 
 
