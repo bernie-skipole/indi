@@ -32,10 +32,8 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
                           to_indi_channel='to_indi', from_indi_channel='from_indi')
 
 
-# call inditoredis - which is blocking, so run in its own thread
-run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
-# and start it
-run_inditoredis.start()
+
+
 
 # create a wsgi application, which requires the redis_host tuple
 application = indiwsgi.make_wsgi_app(redis_host)
@@ -44,6 +42,11 @@ application = indiwsgi.make_wsgi_app(redis_host)
 # application = indiwsgi.add_skiadmin(application)
 
 # serve the application with the python waitress web server
-serve(application, host='127.0.0.1', port=8000)
+webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+# and start it
+webapp.start()
+
+# and start inditoredis
+inditoredis(indi_host, redis_host)
 
 

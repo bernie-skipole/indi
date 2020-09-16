@@ -19,7 +19,7 @@
 
    """
 
-import sys, collections, socket, selectors, threading
+import sys, collections, socket, selectors, threading, asyncio
 
 from time import sleep
 
@@ -55,6 +55,30 @@ MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', '
 
 
 #mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
+
+
+# All xml data received should be contained in one of the following tags
+_TAGS = (b'defTextVector',
+         b'defNumberVector',
+         b'defSwitchVector',
+         b'defLightVector',
+         b'defBLOBVector',
+         b'message',
+         b'delProperty',
+         b'setTextVector',
+         b'setNumberVector',
+         b'setSwitchVector',
+         b'setLightVector',
+         b'setBLOBVector'
+        )
+
+_STARTTAGS = tuple(b'<' + tag for tag in _TAGS)
+
+# _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
+
+_ENDTAGS = tuple(b'</' + tag + b'>' for tag in _TAGS)
+
+# _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
 
 
 def indi_server(host='localhost', port=7624):
@@ -102,6 +126,66 @@ def _open_redis(redisserver):
     return rconn
 
 
+async def _txtoindi(writer):
+    while True:
+        if _TO_INDI:
+            # Send the next message to the indiserver
+            to_indi = _TO_INDI.popleft()
+            writer.write(to_indi)
+            await writer.drain()
+        else:
+            # no message to send, do an async pause
+            await asyncio.sleep(0.5)
+
+
+async def _rxfromindi(reader, rconn):
+    # get received data, and put it into message
+    message = b''
+    messagetagnumber = None
+    while True:
+        # get blocks of data from the indiserver
+        data = await reader.readuntil(separator=b'>')
+        if not message:
+            # data is expected to start with <tag, first strip any newlines
+            data = data.strip()
+            for index, st in enumerate(_STARTTAGS):
+                if data.startswith(st):
+                    messagetagnumber = index
+                    break
+            if messagetagnumber is None:
+                # data does not start with a recognised tag, so ignore it
+                # and continue waiting for a valid message start
+                continue
+            # set this data into the received message
+            message = data
+            # either further children of this tag are coming, or maybe its a single tag ending in "/>"
+            if message.endswith(b'/>'):
+                # the message is complete, handle message here
+                fromindi.receive_from_indiserver(message, rconn)
+                # and start again, waiting for a new message
+                message = b''
+                messagetagnumber = None
+            # and read either the next message, or the children of this tag
+            continue
+        # To reach this point, the message is in progress, with a messagetagnumber set
+        # keep adding the received data to message, until an endtag is reached
+        message += data
+        if message.endswith(_ENDTAGS[messagetagnumber]):
+            # the message is complete, handle message here
+            fromindi.receive_from_indiserver(message, rconn)
+            # and start again, waiting for a new message
+            message = b''
+            messagetagnumber = None
+
+
+async def _indiconnection(loop, rconn, indiserver):
+    "coroutine to create the connection and start the sender and receiver"
+    reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
+    sent = _txtoindi(writer)
+    received = _rxfromindi(reader, rconn)
+    await asyncio.gather(sent, received)
+
+
 def inditoredis(indiserver, redisserver):
     "Blocking call that provides the indiserver - redis conversion"
     global _TO_INDI
@@ -130,45 +214,11 @@ def inditoredis(indiserver, redisserver):
     run_toindi = threading.Thread(target=senderloop)
     # and start senderloop in its thread
     run_toindi.start()
+    # the senderloop will place data to transmit to indiserver in the _TO_INDI dequeue
 
-    # set up socket connections to the indiserver
-    mysel = selectors.DefaultSelector()
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((indiserver.host, indiserver.port))
-        sock.setblocking(False)
-
-        # Set up the selector to watch for when the socket is ready
-        # to send data as well as when there is data to read.
-        mysel.register( sock, selectors.EVENT_READ | selectors.EVENT_WRITE )
-
-        print('waiting for I/O')
-
-        # get blocks of data from the indiserver and fill up this list
-        from_indi_list = []
-
-        while True:
-
-            for key, mask in mysel.select(timeout=0.1):    # blocks for .1 second
-                connection = key.fileobj
-
-                if mask & selectors.EVENT_READ:
-                    data = connection.recv(1024)
-                    if data:
-                        # A readable client socket has data
-                        from_indi_list.append(data)
-                elif from_indi_list:
-                    # no data to read, so gather the data received so far into a string
-                    from_indi = b"".join(from_indi_list)
-                    # and empty the from_indi_list
-                    from_indi_list.clear()
-                    # send the data to fromindi to parse and store in redis
-                    fromindi.receive_from_indiserver(from_indi, rconn)
-
-                if mask & selectors.EVENT_WRITE:
-                    if _TO_INDI:
-                        # Send the next message to the indiserver
-                        to_indi = _TO_INDI.popleft()
-                        sock.sendall(to_indi)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
+    loop.close()
 
 
 
@@ -236,6 +286,9 @@ def inditomqtt(indiserver, mqttserver):
     # connect to the MQTT server
     mqtt_client.connect(host=mqttserver.host, port=mqttserver.port)
     mqtt_client.loop_start()
+
+
+
 
     # set up socket connections to the indiserver
     mysel = selectors.DefaultSelector()

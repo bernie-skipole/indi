@@ -86,54 +86,51 @@ def receive_from_indiserver(data, rconn):
         return
     # this timestamp is the time at which the data is received
     timestamp = datetime.utcnow().isoformat(sep='T')
-    # data comes in block of xml elements, not inside a root, so create a root
-    # element 'commsroot'
-    xmlstring = b"".join((b"<commsroot>", data, b"</commsroot>"))
-    root = ET.fromstring(xmlstring)
-    for child in root:
-        if child.tag == "defTextVector":
-            text_vector = TextVector(child)         # store the received data in a TextVector object
-            text_vector.write(rconn)                # call the write method to store data in redis
-            text_vector.log(rconn, timestamp)
-        elif child.tag == "defNumberVector":
-            number_vector = NumberVector(child)
-            number_vector.write(rconn)
-            number_vector.log(rconn, timestamp)
-        elif child.tag == "defSwitchVector":
-            switch_vector = SwitchVector(child)
-            switch_vector.write(rconn)
-            switch_vector.log(rconn, timestamp)
-        elif child.tag == "defLightVector":
-            light_vector = LightVector(child)
-            light_vector.write(rconn)
-            light_vector.log(rconn, timestamp)
-        elif child.tag == "defBLOBVector":
-            blob_vector = BLOBVector(child)
-            blob_vector.write(rconn)
-            blob_vector.log(rconn, timestamp)
-        elif child.tag == "message":
-            message = Message(child)
-            message.write(rconn)
-            message.log(rconn, timestamp)
-        elif child.tag == "delProperty":
-            delprop = delProperty(child)
-            delprop.write(rconn)
-            delprop.log(rconn, timestamp)
-        elif child.tag == "setTextVector":
-            text_vector = TextVector.update_from_setvector(rconn, child)
-            text_vector.log(rconn, timestamp)
-        elif child.tag == "setNumberVector":
-            number_vector = NumberVector.update_from_setvector(rconn, child)
-            number_vector.log(rconn, timestamp)
-        elif child.tag == "setSwitchVector":
-            switch_vector = SwitchVector.update_from_setvector(rconn, child)
-            switch_vector.log(rconn, timestamp)
-        elif child.tag == "setLightVector":
-            light_vector = LightVector.update_from_setvector(rconn, child)
-            light_vector.log(rconn, timestamp)
-        elif child.tag == "setBLOBVector":
-            blob_vector = BLOBVector.update_from_setvector(rconn, child)
-            blob_vector.log(rconn, timestamp)
+    root = ET.fromstring(data)
+
+    if root.tag == "defTextVector":
+        text_vector = TextVector(root)         # store the received data in a TextVector object
+        text_vector.write(rconn)                # call the write method to store data in redis
+        text_vector.log(rconn, timestamp)
+    elif root.tag == "defNumberVector":
+        number_vector = NumberVector(root)
+        number_vector.write(rconn)
+        number_vector.log(rconn, timestamp)
+    elif root.tag == "defSwitchVector":
+        switch_vector = SwitchVector(root)
+        switch_vector.write(rconn)
+        switch_vector.log(rconn, timestamp)
+    elif root.tag == "defLightVector":
+        light_vector = LightVector(root)
+        light_vector.write(rconn)
+        light_vector.log(rconn, timestamp)
+    elif root.tag == "defBLOBVector":
+        blob_vector = BLOBVector(root)
+        blob_vector.write(rconn)
+        blob_vector.log(rconn, timestamp)
+    elif root.tag == "message":
+        message = Message(root)
+        message.write(rconn)
+        message.log(rconn, timestamp)
+    elif root.tag == "delProperty":
+        delprop = delProperty(root)
+        delprop.write(rconn)
+        delprop.log(rconn, timestamp)
+    elif root.tag == "setTextVector":
+        text_vector = TextVector.update_from_setvector(rconn, root)
+        text_vector.log(rconn, timestamp)
+    elif root.tag == "setNumberVector":
+        number_vector = NumberVector.update_from_setvector(rconn, root)
+        number_vector.log(rconn, timestamp)
+    elif root.tag == "setSwitchVector":
+        switch_vector = SwitchVector.update_from_setvector(rconn, root)
+        switch_vector.log(rconn, timestamp)
+    elif root.tag == "setLightVector":
+        light_vector = LightVector.update_from_setvector(rconn, root)
+        light_vector.log(rconn, timestamp)
+    elif root.tag == "setBLOBVector":
+        blob_vector = BLOBVector.update_from_setvector(rconn, root)
+        blob_vector.log(rconn, timestamp)
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel):

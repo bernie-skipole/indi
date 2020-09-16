@@ -111,8 +111,6 @@ class SenderLoop():
         # blocks and listens to redis
         while True:
             message = ps.get_message()
-            if message:
-                print(message)
             sleep(0.1)
 
 

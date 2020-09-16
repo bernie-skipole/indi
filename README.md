@@ -147,7 +147,7 @@ indiredis.indiwsgi provides a client application which discover devices and prop
 properties according to the Indi specification. It has no prior knowledge of the devices connected, and
 is very 'general purpose'.
 
-Example Python script (webservice.py) which can run the web service:
+Example Python script (webclient.py) which can run the web service (requires indiserver to be running):
 ```
 import threading, os, sys
 
@@ -166,22 +166,22 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
                           to_indi_channel='to_indi', from_indi_channel='from_indi')
 
 
-# call inditoredis - which is blocking, so run in its own thread
-run_inditoredis = threading.Thread(target=inditoredis, args=(indi_host, redis_host))
-# and start it
-run_inditoredis.start()
-
 # create a wsgi application, which requires the redis_host tuple
 application = indiwsgi.make_wsgi_app(redis_host)
 
-# serve the application with the python waitress web server
-serve(application, host='127.0.0.1', port=8000)
+# serve the application with the python waitress web server in its own thread
+webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+# and start it
+webapp.start()
+
+# and start inditoredis
+inditoredis(indi_host, redis_host)
 
 ```
 
-You will need indiserver to be running - either started in another terminal, or as a service.
+You will need indiserver to be running first - either started in another terminal, or as a service.
 
-On running this script ( with python3 webservice.py ) in a terminal, connect your browser to
+On running this script ( with python3 webclient.py ) in a terminal, connect your browser to
 localhost:8000 to view the web pages.
 
 To end the program, press Ctrl-c a few times in the terminal.
