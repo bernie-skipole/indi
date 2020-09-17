@@ -1,5 +1,9 @@
 
+"""Defines blocking function inditomqtt:
 
+       Receives XML data from indiserver on port 7624 and publishes via MQTT.
+       Receives data from MQTT, and outputs to port 7624 and indiserver.
+   """
 
 import sys, collections, threading, asyncio
 
@@ -19,29 +23,13 @@ except:
 
 _TO_INDI = collections.deque(maxlen=5)
 
-
-# All xml data received should be contained in one of the following tags
-_TAGS = (b'defTextVector',
-         b'defNumberVector',
-         b'defSwitchVector',
-         b'defLightVector',
-         b'defBLOBVector',
-         b'message',
-         b'delProperty',
-         b'setTextVector',
-         b'setNumberVector',
-         b'setSwitchVector',
-         b'setLightVector',
-         b'setBLOBVector'
-        )
-
-_STARTTAGS = tuple(b'<' + tag for tag in _TAGS)
-
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
 
-_ENDTAGS = tuple(b'</' + tag + b'>' for tag in _TAGS)
+_STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
+
+_ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
 
@@ -178,7 +166,7 @@ def inditomqtt(indiserver, mqttserver):
     mqtt_client.connect(host=mqttserver.host, port=mqttserver.port)
     mqtt_client.loop_start()
 
-
+    # and create a loop to txrx the indiserver port
     loop = asyncio.get_event_loop()
     loop.run_until_complete(_indiconnection(loop, mqtt_client, mqttserver.from_indi_topic, indiserver))
     loop.close()

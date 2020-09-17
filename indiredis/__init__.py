@@ -2,8 +2,7 @@
 """Defines functions to create named tuples for the indi, redis and mqtt servers
    used by indiredis.
 
-   Blocking functions used to run the service are provided, the user script
-   will run one of these on the appropiate servers.
+   Provides blocking functions used to run the service:
 
    inditoredis:
        Receives XML data from indiserver on port 7624 and stores in redis.
@@ -19,35 +18,16 @@
 
    """
 
-import sys, collections, socket, selectors, threading, asyncio
-
-from time import sleep
-
-REDIS_AVAILABLE = True
-try:
-    import redis
-except:
-    REDIS_AVAILABLE = False
+import collections
 
 
-MQTT_AVAILABLE = True
-try:
-    import paho.mqtt.client as mqtt
-except:
-    MQTT_AVAILABLE = False
+# make the functions inditoredis, inditomqtt, mqtttoredis available to scripts importing this module
+from .i_to_r import inditoredis
+from .i_to_m import inditomqtt
+from .m_to_r import mqtttoredis
 
 
-from . import toindi, fromindi, tools
-
-
-
-# The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to indiserver. Limit length to five items - an arbitrary setting
-
-_TO_INDI = collections.deque(maxlen=5)
-
-
-# define the server parameters
+# define namedtuples to hold server parameters
 
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
 RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
@@ -57,9 +37,7 @@ MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', '
 #mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
 
 
-# make the function inditoredis available to scripts importing this module
-from .i_to_r import inditoredis
-from .i_to_m import inditomqtt
+# Functions which return the appropriate named tuple. Provides defaults and enforces values
 
 def indi_server(host='localhost', port=7624):
     "Creates a named tuple to hold indi server parameters"
@@ -69,9 +47,6 @@ def indi_server(host='localhost', port=7624):
 
 def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='', from_indi_channel=''):
     "Creates a named tuple to hold redis server parameters"
-    if not REDIS_AVAILABLE:
-        print("Error - Unable to import the Python redis package")
-        sys.exit(1)
     if (not to_indi_channel) or (not from_indi_channel) or (to_indi_channel == from_indi_channel):
         raise ValueError("Redis channels must exist and must be different from each other.")
     if (not port) or (not isinstance(port, int)):
@@ -80,128 +55,11 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
 
 def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
     "Creates a named tuple to hold mqtt server parameters"
-    if not MQTT_AVAILABLE:
-        print("Error - Unable to import the Python paho.mqtt.client package")
-        sys.exit(1)
     if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
         raise ValueError("MQTT topics must exist and must be different from each other.")
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 1883 is default")
     return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
-
-
-
-
-
-
-### MQTT Handlers for mqtttoredis
-
-def _mqtttoredis_on_message(client, userdata, message):
-    "Callback when an MQTT message is received"
-    # we have received a message from the indiserver, load it into redis
-    fromindi.receive_from_indiserver(message.payload, userdata["rconn"] )
- 
-
-def _mqtttoredis_on_connect(client, userdata, flags, rc):
-    "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
-
-    if rc == 0:
-        userdata['comms'] = True
-        # Subscribing in on_connect() means that if we lose the connection and
-        # reconnect then subscriptions will be renewed.
-        # subscribe to topic "FomIndiServer/#"
-        client.subscribe( userdata["from_indi_topic"], 2 )
-        print("MQTT client connected")
-    else:
-        userdata['comms'] = False
-
-
-def _mqtttoredis_on_disconnect(client, userdata, rc):
-    "The MQTT client has disconnected, set userdata['comms'] = False"
-    userdata['comms'] = False
-
-
-# Define an object with an append method to be sent to
-# to toindi.toindi.SenderLoop, which will be used to 'transmit' data
-
-
-class _SenderToMQTT():
-
-    def __init__(self, mqtt_client, userdata):
-        "Sets the client and topic"
-        self.mqtt_client = mqtt_client
-        self.topic = userdata["to_indi_topic"]
-        self.userdata = userdata
-
-    def append(self, data):
-        "send the data via mqtt to the remote"
-        if self.userdata["comms"]:
-            result = self.mqtt_client.publish(topic=self.topic, payload=data, qos=2)
-            result.wait_for_publish()
-            return
-        # however if self.userdata["comms"] is False, then nothing
-        # is published, and the data is discarded
-
-
-def mqtttoredis(mqttserver, redisserver):
-    "Blocking call that provides the mqtt - redis connection"
-
-    if not MQTT_AVAILABLE:
-        print("Error - Unable to import the Python paho.mqtt.client package")
-        sys.exit(1)
-
-    if not REDIS_AVAILABLE:
-        print("Error - Unable to import the Python redis package")
-        sys.exit(1)
-
-    print("mqtttoredis started")
-
-    # wait two seconds before starting, to give mqtt and other servers
-    # time to start up
-    sleep(2)
-
-    # set up the redis server
-    rconn = _open_redis(redisserver)
-    # set the prefix to use for redis keys
-    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
-
-    # on startup, clear all redis keys
-    tools.clearredis(rconn, redisserver)
-
-    # create an mqtt client and connection
-    userdata={ "comms"           : False,        # an indication mqtt connection is working
-               "to_indi_topic"   : mqttserver.to_indi_topic,
-               "from_indi_topic" : mqttserver.from_indi_topic,
-               "redisserver"     : redisserver,
-               "rconn"           : rconn }
-
-    mqtt_client = mqtt.Client(userdata=userdata)
-    # attach callback function to client
-    mqtt_client.on_connect = _mqtttoredis_on_connect
-    mqtt_client.on_disconnect = _mqtttoredis_on_disconnect
-    mqtt_client.on_message = _mqtttoredis_on_message
-    # If a username/password is set on the mqtt server
-    if mqttserver.username and mqttserver.password:
-        mqtt_client.username_pw_set(username = mqttserver.username, password = mqttserver.password)
-    elif mqttserver.username:
-        mqtt_client.username_pw_set(username = mqttserver.username)
-    # connect to the server
-    mqtt_client.connect(host=mqttserver.host, port=mqttserver.port)
-
-    # create a sender object, with an append method, which, if used, sends the appended
-    # data to mqtt
-    sender = _SenderToMQTT(mqtt_client, userdata)
-
-    # Create a SenderLoop object, with the sender object and redis connection
-    senderloop = toindi.SenderLoop(sender, rconn, redisserver)
-    # run senderloop - which is blocking, so run in its own thread
-    run_toindi = threading.Thread(target=senderloop)
-    # and start senderloop in its thread
-    run_toindi.start()
-
-    # now run the MQTT blocking loop
-    print("MQTT loop started")
-    mqtt_client.loop_forever()
 
 
 

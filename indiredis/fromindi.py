@@ -2,7 +2,7 @@
 
 ###################
 #
-#  fromxml
+#  fromindi.py
 #
 ###################
 
@@ -18,6 +18,24 @@ import math, json
 from datetime import datetime
 
 from base64 import standard_b64decode, standard_b64encode
+
+
+# All xml data received should be contained in one of the following tags
+TAGS = (b'defTextVector',
+        b'defNumberVector',
+        b'defSwitchVector',
+        b'defLightVector',
+        b'defBLOBVector',
+        b'message',
+        b'delProperty',
+        b'setTextVector',
+        b'setNumberVector',
+        b'setSwitchVector',
+        b'setLightVector',
+        b'setBLOBVector'
+       )
+
+
 
 
 ########## redis keys and channels
