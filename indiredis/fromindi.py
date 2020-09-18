@@ -167,13 +167,15 @@ def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):
         _FROM_INDI_CHANNEL = from_indi_channel
     else:
         _FROM_INDI_CHANNEL = ""
-    if log_lengths is not None:
-        for key, value in log_lengths._asdict().items()
-            if key in _LOGLENGTHS:
-                if value > 0:
-                    _LOGLENGTHS[key] = value
-                else:
-                    _LOGLENGTHS[key] = 1
+    if log_lengths:
+        # ensure no item in log_lengths has a value less than 1
+         new_log_lengths = {}
+         for key,value in log_lengths.items():
+             if value<1:
+                 new_log_lengths[key]=1
+             else:
+                 new_log_lengths[key]=value
+        _LOGLENGTHS.update(new_log_lengths)
 
 
 def get_to_indi_channel():
@@ -379,7 +381,6 @@ class ParentProperty():
                     rconn.lpush(logkey, newstring)
                     # and limit number of logs
                     rconn.ltrim(logkey, 0, _LOGLENGTHS[self.vector.lower()])
-
 
 
     @classmethod

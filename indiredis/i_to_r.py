@@ -108,7 +108,7 @@ async def _indiconnection(loop, rconn, indiserver):
     await asyncio.gather(sent, received)
 
 
-def inditoredis(indiserver, redisserver, log_lengths=None):
+def inditoredis(indiserver, redisserver, log_lengths={}):
     "Blocking call that provides the indiserver - redis conversion"
     global _TO_INDI
 

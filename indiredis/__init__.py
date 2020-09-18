@@ -33,19 +33,6 @@ IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
 RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
 MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
 
-LogLengths = collections.namedtuple('LogLengths', [
-                'devices',
-                'properties',
-                'attributes',
-                'elements',
-                'messages',
-                'textvector',
-                'numbervector',
-                'switchvector',
-                'lightvector',
-                'blobvector'
-              ])
-
 
 #mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
 
@@ -75,29 +62,6 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
     return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
 
 
-def log_lengths(devices = 5,
-               properties = 5,
-               attributes = 5,
-               elements = 5,
-               messages = 5,
-               textvector = 5,
-               numbervector = 50,
-               switchvector = 5,
-               lightvector = 5,
-               blobvector = 5 )
-    """Returns a LogLengths named tuple"""
-    return LogLengths(
-                devices,
-                properties,
-                attributes,
-                elements,
-                messages,
-                textvector,
-                numbervector,
-                switchvector,
-                lightvector,
-                blobvector
-              )
 
 
 

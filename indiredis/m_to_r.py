@@ -80,7 +80,7 @@ class _SenderToMQTT():
         # is published, and the data is discarded
 
 
-def mqtttoredis(mqttserver, redisserver, log_lengths=None):
+def mqtttoredis(mqttserver, redisserver, log_lengths={}):
     "Blocking call that provides the mqtt - redis connection"
 
     if not MQTT_AVAILABLE:
