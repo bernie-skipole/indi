@@ -80,7 +80,7 @@ class _SenderToMQTT():
         # is published, and the data is discarded
 
 
-def mqtttoredis(mqttserver, redisserver):
+def mqtttoredis(mqttserver, redisserver, log_lengths=None):
     "Blocking call that provides the mqtt - redis connection"
 
     if not MQTT_AVAILABLE:
@@ -100,7 +100,7 @@ def mqtttoredis(mqttserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths)
 
     # on startup, clear all redis keys
     tools.clearredis(rconn, redisserver)

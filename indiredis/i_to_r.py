@@ -108,7 +108,7 @@ async def _indiconnection(loop, rconn, indiserver):
     await asyncio.gather(sent, received)
 
 
-def inditoredis(indiserver, redisserver):
+def inditoredis(indiserver, redisserver, log_lengths=None):
     "Blocking call that provides the indiserver - redis conversion"
     global _TO_INDI
 
@@ -125,7 +125,7 @@ def inditoredis(indiserver, redisserver):
     # set up the redis server
     rconn = _open_redis(redisserver)
     # set the prefix to use for redis keys
-    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel)
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths)
 
     # on startup, clear all redis keys
     tools.clearredis(rconn, redisserver)

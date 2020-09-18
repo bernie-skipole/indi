@@ -151,9 +151,10 @@ def receive_from_indiserver(data, rconn):
         blob_vector.log(rconn, timestamp)
 
 
-def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
+def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):
     "Sets the redis key prefix and pubsub channels"
-    global _KEYPREFIX, _TO_INDI_CHANNEL, _FROM_INDI_CHANNEL
+    global _KEYPREFIX, _TO_INDI_CHANNEL, _FROM_INDI_CHANNEL, _LOGLENGTHS
+
     if key_prefix:
         _KEYPREFIX = key_prefix
     else:
@@ -166,6 +167,13 @@ def setup_redis(key_prefix, to_indi_channel, from_indi_channel):
         _FROM_INDI_CHANNEL = from_indi_channel
     else:
         _FROM_INDI_CHANNEL = ""
+    if log_lengths is not None:
+        for key, value in log_lengths._asdict().items()
+            if key in _LOGLENGTHS:
+                if value > 0:
+                    _LOGLENGTHS[key] = value
+                else:
+                    _LOGLENGTHS[key] = 1
 
 
 def get_to_indi_channel():
