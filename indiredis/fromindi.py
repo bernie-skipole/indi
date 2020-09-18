@@ -169,12 +169,12 @@ def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):
         _FROM_INDI_CHANNEL = ""
     if log_lengths:
         # ensure no item in log_lengths has a value less than 1
-         new_log_lengths = {}
-         for key,value in log_lengths.items():
-             if value<1:
-                 new_log_lengths[key]=1
-             else:
-                 new_log_lengths[key]=value
+        new_log_lengths = {}
+        for key,value in log_lengths.items():
+            if value<1:
+                new_log_lengths[key]=1
+            else:
+                new_log_lengths[key]=value
         _LOGLENGTHS.update(new_log_lengths)
 
 
