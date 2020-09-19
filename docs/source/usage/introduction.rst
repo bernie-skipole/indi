@@ -16,6 +16,8 @@ other direction; can read data published to redis and send it in INDI XML format
 
 This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage. An example web service is provided. As the code for this project is developed, the redis keys will be defined and documented here.
 
+indiredis code is developed at https://github.com/bernie-skipole/indi
+
 Two options are provided :
 
 The data can be parsed and transferred between indiserver and redis.
