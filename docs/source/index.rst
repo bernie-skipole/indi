@@ -8,6 +8,7 @@ indiredis - an INDI Client
 
 .. toctree::
    :maxdepth: 2
+
    usage/introduction
 
 
