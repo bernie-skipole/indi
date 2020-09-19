@@ -10,6 +10,8 @@ Welcome to indiredis's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   usage/introduction
+
 
 
 Indices and tables
