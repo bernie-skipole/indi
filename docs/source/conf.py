@@ -23,6 +23,9 @@ author = 'Bernard Czenkusz'
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
 
+# ---------------------- Added to get readthedocs to build, by BC
+master_doc = 'index'
+
 
 # -- General configuration ---------------------------------------------------
 
