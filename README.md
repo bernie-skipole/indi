@@ -13,7 +13,7 @@ See https://indilib.org/ for these components.
 This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
 other direction; can read data published to redis and send it in INDI XML format to indiserver.
 
-This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage. An example web service is provided. As the code for this project is developed, the redis keys will be defined and documented here.
+This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage. An example web service is provided. As the code for this project is developed, further documentation, including the redis keys used, will be provided at https://indiredis.readthedocs.io
 
 Two options are provided :
 
