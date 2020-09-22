@@ -1,4 +1,12 @@
 
+
+"""The main aim of indiredis is to provide redis storage for instrument parameters reported via the INDI protocol.
+This makes it possible for a GUI that interfaces to redis to be written.
+
+This module provides a WSGI web application as an example of such a GUI. This can be run by a wsgi complient web server.
+""" 
+
+
 import os, sys
 
 
@@ -61,11 +69,18 @@ def end_call(page_ident, page_type, skicall):
     
 
 
-def make_wsgi_app(redis_host):
-    """create the wsgi application"""
+def make_wsgi_app(redisserver):
+    """Create a wsgi application which can be served by a WSGI compatable web server.
+Reads and writes to redis stores created by indittoredis
+
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :return: A WSGI callable application
+    :rtype: skipole.WSGIApplication
+    """
     # The web service needs a redis connection, available in tools
-    rconn = tools.open_redis(redis_host)
-    proj_data = {"rconn":rconn, "redisserver":redis_host}
+    rconn = tools.open_redis(redisserver)
+    proj_data = {"rconn":rconn, "redisserver":redisserver}
     application = WSGIApplication(project=PROJECT,
                                   projectfiles=PROJECTFILES,
                                   proj_data=proj_data,

@@ -8,6 +8,7 @@ indiredis - an INDI Client
 
    usage/introduction
    usage/redis_keys
+   usage/functions.rst
 
 
 

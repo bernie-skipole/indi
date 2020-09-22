@@ -73,6 +73,8 @@ A key is created for every property name, for every device name. The datastring 
 
 A key is created for every element name, for every property name, for every device name. Each key stores a a JSON string of an attribute object for the element.
 
+.. _log_lengths:
+
 Log Lengths
 ^^^^^^^^^^^
 

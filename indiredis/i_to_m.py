@@ -133,7 +133,14 @@ async def _indiconnection(loop, mqtt_client, topic, indiserver):
 
 
 def inditomqtt(indiserver, mqttserver):
-    "Blocking call that provides the indiserver - mqtt connection"
+    """Blocking call that provides the indiserver - mqtt connection
+
+    :param indiserver: Named Tuple providing the indiserver parameters
+    :type indiserver: collections.namedtuple
+    :param mqttserver: Named Tuple providing the mqtt server parameters
+    :type mqttserver: collections.namedtuple
+    """
+
     global _TO_INDI
 
     if not MQTT_AVAILABLE:

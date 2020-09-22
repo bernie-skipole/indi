@@ -1,22 +1,22 @@
 
-"""Defines functions to create named tuples for the indi, redis and mqtt servers
-   used by indiredis.
+"""
+Defines functions to create named tuples for the indi, redis and mqtt servers.
 
-   Provides blocking functions used to run the service:
+Provides blocking functions used to run the conversion between indiserver and redis storage.
 
-   inditoredis:
-       Receives XML data from indiserver on port 7624 and stores in redis.
-       Reads data published via redis, and outputs to port 7624 and indiserver.
+inditoredis:
+   Receives XML data from indiserver on port 7624 and stores in redis.
+   Reads data published via redis, and outputs to port 7624 and indiserver.
 
-   inditomqtt:
-       Receives XML data from indiserver on port 7624 and publishes via MQTT.
-       Receives data from MQTT, and outputs to port 7624 and indiserver.
+inditomqtt:
+   Receives XML data from indiserver on port 7624 and publishes via MQTT.
+   Receives data from MQTT, and outputs to port 7624 and indiserver.
 
-   mqtttoredis:
-       Receives XML data from MQTT and stores in redis.
-       Reads data published via redis, and outputs to MQTT.
+mqtttoredis:
+   Receives XML data from MQTT and stores in redis.
+   Reads data published via redis, and outputs to MQTT.
 
-   """
+"""
 
 import collections
 
@@ -40,21 +40,69 @@ MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', '
 # Functions which return the appropriate named tuple. Provides defaults and enforces values
 
 def indi_server(host='localhost', port=7624):
-    "Creates a named tuple to hold indi server parameters"
+    """Creates a named tuple to hold indi server parameters
+
+    :param host: The name or ip address of the indiserver, defaults to localhost
+    :type host: String
+    :param port: The port number of the indiserver, defaults to standard port 7624
+    :type port: Integer
+    :return: A named tuple with host and port named elements
+    :rtype: collections.namedtuple
+    """
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 7624 is default")
     return IndiServer(host, port)
 
-def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='', from_indi_channel=''):
-    "Creates a named tuple to hold redis server parameters"
+def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi'):
+    """Creates a named tuple to hold redis server parameters
+
+    :param host: The name or ip address of the redis server, defaults to localhost
+    :type host: String
+    :param port: The port number of the redis server, defaults to standard port 6379
+    :type port: Integer
+    :param db: The redis database, defaults to 0
+    :type db: Integer
+    :param password: The redis password, defaults to none used.
+    :type password: String
+    :param keyprefix: A string to use as a prefix on all redis keys created.
+    :type keyprefix: String
+    :param to_indi_channel: A string to use as the channel which a client can use to publish data to redis
+                            and hence to indiserver.
+    :type to_indi_channel: String
+    :param from_indi_channel: A string to use as the channel on which alerts are published which
+                              the client can optionally listen to. Must be different to the
+                              to_indi_channel string.
+    :type from_indi_channel: String
+    :return: A named tuple with above parameters as named elements
+    :rtype: collections.namedtuple
+    """
     if (not to_indi_channel) or (not from_indi_channel) or (to_indi_channel == from_indi_channel):
         raise ValueError("Redis channels must exist and must be different from each other.")
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 6379 is default")
     return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
 
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='', from_indi_topic=''):
-    "Creates a named tuple to hold mqtt server parameters"
+def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi'):
+    """Creates a named tuple to hold MQTT server parameters
+
+    :param host: The name or ip address of the mqtt server, defaults to localhost
+    :type host: String
+    :param port: The port number of the mqtt server, defaults to standard port 1883
+    :type port: Integer
+    :param username: The mqtt username, defaults to none used
+    :type username: String
+    :param password: The mqtt password, defaults to none used.
+    :type password: String
+    :param to_indi_topic: A string to use as the mqtt topic to publish data towards indiserver.
+    :type to_indi_topic: String
+    :param from_indi_topic: A string to use as the mqtt topic which is used to receive data from indiserver to
+                            send towards redis. Must be different to the to_indi_topic string. These topics
+                            require to be specified to avoid clashing with other communications topics which may
+                            be used on the MQTT server.
+    :type from_indi_topic: String
+    :return: A named tuple with above parameters as named elements
+    :rtype: collections.namedtuple
+    """
     if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
         raise ValueError("MQTT topics must exist and must be different from each other.")
     if (not port) or (not isinstance(port, int)):

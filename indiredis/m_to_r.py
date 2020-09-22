@@ -81,7 +81,16 @@ class _SenderToMQTT():
 
 
 def mqtttoredis(mqttserver, redisserver, log_lengths={}):
-    "Blocking call that provides the mqtt - redis connection"
+    """Blocking call that provides the mqtt - redis connection
+
+    :param mqttserver: Named Tuple providing the mqtt server parameters
+    :type mqttserver: collections.namedtuple
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param log_lengths: provides number of logs to store
+    :type log_lengths: dictionary
+    """
+
 
     if not MQTT_AVAILABLE:
         print("Error - Unable to import the Python paho.mqtt.client package")

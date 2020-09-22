@@ -109,7 +109,17 @@ async def _indiconnection(loop, rconn, indiserver):
 
 
 def inditoredis(indiserver, redisserver, log_lengths={}):
-    "Blocking call that provides the indiserver - redis conversion"
+    """Blocking call that provides the indiserver - redis conversion
+
+    :param indiserver: Named Tuple providing the indiserver parameters
+    :type indiserver: collections.namedtuple
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param log_lengths: provides number of logs to store
+    :type log_lengths: dictionary
+    """
+
+
     global _TO_INDI
 
     if not REDIS_AVAILABLE:

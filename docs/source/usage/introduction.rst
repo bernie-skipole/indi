@@ -66,6 +66,8 @@ For example, your Python script to import and run this service could be::
 
     inditoredis(indi_host, redis_host)
 
+.. _web_client:
+
 indiredis.indiwsgi
 ^^^^^^^^^^^^^^^^^^
 
