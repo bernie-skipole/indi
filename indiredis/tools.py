@@ -1,12 +1,11 @@
 
 
-############################## tools.py ######################################################
-#
-# This is a set of Python functions which read, and publish to your redis server
-# You may find them useful when creating a client gui, if your gui is Python based.
-#
-# These open a redis connection, and return lists of devices, properties, elements etc.,
-#
+"""This is a set of Python functions which read, and publish to your redis server.
+You may find them useful when creating a client gui, if your gui is Python based.
+
+Functions are provided which open a redis connection, and return lists of devices, properties, elements etc.,
+"""
+
 # Typically your script would start with:
 #
 ###############################################################################################
@@ -30,8 +29,6 @@ import re, json
 import redis
 
 
-
-
 def _key(redisserver, *keys):
     "Add the prefix to keys, delimit keys with :"
     # example - if keys are 'device', 'property' this will result in a key of
@@ -40,7 +37,13 @@ def _key(redisserver, *keys):
 
 
 def open_redis(redisserver):
-    "Opens a redis connection, return None on failure"
+    """Opens a redis connection, return None on failure
+
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :return: A redis connection, or None on failure
+    :rtype: redis.client.Redis
+    """
     try:
         # create a connection to redis
         rconn = redis.StrictRedis(host=redisserver.host,
@@ -54,9 +57,20 @@ def open_redis(redisserver):
 
 
 def last_message(rconn, redisserver, device=""):
-    """Return the last message or None if not available
-       If device given, the last message from this device is returned
-       message is a string of timestamp space message text"""
+    """Return the last message or None if not available.
+    If device given, the last message from this device is returned
+    message is a string of timestamp space message text
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param device: If not given the message returned is the last message received without
+                   a device specified. If given the message returned is the last which specified that device name.
+    :type device: String
+    :return: A string of timestamp space message text.
+    :rtype: String
+    """
     try:
         if device:
             mkey = _key(redisserver, "devicemessages", device)
@@ -72,10 +86,23 @@ def last_message(rconn, redisserver, device=""):
 
 
 def getProperties(rconn, redisserver, device="", name=""):
-    """Sends getProperties request, returns the xml bytes string sent
+    """Publishes a getProperties request on the to_indi_channel. If device and name
+    are not specified this is a general request for all devices and properties.
 
-        device, if given, is the device name, set as the device attribute of the xml element
-        name, if given, is the property name, set as the name attribute of the xml element"""
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param device: If given, should be the device name, and will be set as the device
+                   attribute of the xml element sent
+    :type device: String
+    :param name: If given, should be the property name of the given device and will
+                 be set as the name attribute of the xml element sent. If name is given
+                 device must be given as well.
+    :type name: String
+    :return: A bytes string of the xml published, or None on failure
+    :rtype: Bytes
+    """
     gP = ET.Element('getProperties')
     gP.set("version", "1.7")
     if device:
@@ -83,7 +110,10 @@ def getProperties(rconn, redisserver, device="", name=""):
         if name:
             gP.set("name", name)
     etstring = ET.tostring(gP)
-    rconn.publish(redisserver.to_indi_channel, etstring)
+    try:
+        rconn.publish(redisserver.to_indi_channel, etstring)
+    except:
+        etstring = None
     return etstring
 
 
@@ -193,23 +223,6 @@ def logs(rconn, redisserver, number, *keys):
 
 
 
-def getProperties(rconn, redisserver, device="", name=""):
-    """Sends getProperties request, returns the xml string sent, or None on failure
-
-        device, if given, is the device name, set as the device attribute of the xml element
-        name, if given, is the property name, set as the name attribute of the xml element"""
-    gP = ET.Element('getProperties')
-    gP.set("version", "1.7")
-    if device:
-        gP.set("device", device)
-        if name:
-            gP.set("name", name)
-    etstring = ET.tostring(gP)
-    try:
-        rconn.publish(redisserver.to_indi_channel, etstring)
-    except:
-        etstring = None
-    return etstring
 
 
 def newswitchvector(rconn, redisserver, device, name, values, timestamp=None):

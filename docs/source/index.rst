@@ -9,7 +9,7 @@ indiredis - an INDI Client
    usage/introduction
    usage/redis_keys
    usage/functions.rst
-
+   usage/tools.rst
 
 
 Indices and tables
