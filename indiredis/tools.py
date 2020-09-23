@@ -66,9 +66,7 @@ def open_redis(redisserver):
 
 
 def last_message(rconn, redisserver, device=""):
-    """Return the last message or None if not available. If device given,
-    the last message from this device is returned, if not given the message
-    returned is the last message received without a device specified.
+    """Return the last message or None if not available.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
