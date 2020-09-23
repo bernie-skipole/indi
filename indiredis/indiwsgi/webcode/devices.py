@@ -135,7 +135,7 @@ def refreshproperties(skicall):
     att_list = []
     for propertyname in properties:
         # get the property attributes
-        att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
+        att_dict = tools.attributes_dict(rconn, redisserver, propertyname, devicename)
         # Ensure the label is set
         label = att_dict.get('label')
         if label is None:
@@ -616,7 +616,7 @@ def check_for_device_change(skicall):
     att_list = []        # record property attributes - used to sort properties on the page
     for propertyname in properties:
         # get the property attributes
-        att_dict = tools.attributes_dict(rconn, redisserver, devicename, propertyname)
+        att_dict = tools.attributes_dict(rconn, redisserver, propertyname, devicename)
         # Ensure the label is set
         label = att_dict.get('label')
         if label is None:

@@ -4,20 +4,23 @@
 You may find them useful when creating a client gui, if your gui is Python based.
 
 Functions are provided which open a redis connection, and return lists of devices, properties, elements etc.,
-"""
 
-# Typically your script would start with:
-#
-###############################################################################################
-# from indiredis import redis_server, tools
-#
-# redisserver = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
-#                          to_indi_channel='to_indi', from_indi_channel='from_indi')
-#
-# rconn = tools.open_redis(redisserver)
-###############################################################################################
-#
-# and then using rconn and redisserver you could call upon the functions provided here
+Your script could start with::
+
+    from indiredis import redis_server, tools
+
+    redisserver = redis_server(host='localhost', port=6379)
+    rconn = tools.open_redis(redisserver)
+
+and then using rconn and redisserver you could call upon the functions provided here.
+
+Where a timestamp is specified, it will be a string according to the INDI v1.7 white paper which describes it as::
+
+    A timeValue shall be specified in UTC in the form YYYY-MM-DDTHH:MM:SS.S. The final decimal and subsequent
+    fractional seconds are optional and may be specified to whatever precision is deemed necessary by the transmitting entity.
+    This format is in general accord with ISO 86015 and the Complete forms defined in W3C Note "Date and Time Formats"
+
+"""
 
 
 import xml.etree.ElementTree as ET
@@ -124,7 +127,16 @@ def getProperties(rconn, redisserver, device="", name=""):
 
 
 def devices(rconn, redisserver):
-    "Returns a list of devices, uses redis smembers on key devices"
+    """Returns a list of devices, uses redis smembers on key devices
+    applies the key prefix as defined in redisserver.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :return: A list of device name strings, sorted in name order
+    :rtype: List
+    """
     devicekey = _key(redisserver, "devices")
     deviceset = rconn.smembers(devicekey)
     if not deviceset:
@@ -135,7 +147,18 @@ def devices(rconn, redisserver):
 
 
 def properties(rconn, redisserver, device):
-    "Returns a list of properties, uses redis smembers on key properties:device"
+    """Returns a list of property names for the given device, uses redis smembers
+    on key properties:device, applies the key prefix as defined in redisserver.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param device: The device name
+    :type device: String
+    :return: A list of property name strings, sorted in name order
+    :rtype: List
+    """
     propertykey = _key(redisserver, "properties", device)
     propertyset = rconn.smembers(propertykey)
     if not propertyset:
@@ -145,8 +168,20 @@ def properties(rconn, redisserver, device):
     return propertylist
 
 
-def elements(rconn, redisserver, device, name):
-    "Returns a set of elements for the property"
+def elements(rconn, redisserver, name, device):
+    """Returns a list of element names for the given property and device
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :return: A list of element name strings, sorted in name order
+    :rtype: List
+    """
     elementkey = _key(redisserver, "elements", name, device)
     elementset = rconn.smembers(elementkey)
     if not elementset:
@@ -156,8 +191,20 @@ def elements(rconn, redisserver, device, name):
     return elementlist
 
 
-def attributes_dict(rconn, redisserver, device, name):
-    "Returns a dictionary of attributes for the property"
+def attributes_dict(rconn, redisserver, name, device):
+    """Returns a dictionary of attributes for the given property and device
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :return: A dictionary of attributes
+    :rtype: Dict
+    """
     attkey = _key(redisserver, "attributes", name, device)
     attdict = rconn.hgetall(attkey)
     if not attdict:

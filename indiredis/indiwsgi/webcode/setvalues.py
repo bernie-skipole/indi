@@ -93,7 +93,7 @@ def set_switch(skicall):
     redisserver = skicall.proj_data["redisserver"]
     devicename, propertyindex, sectionindex, propertyname = _check_received_data(skicall, 'setswitch')
     # get list of element names for this property
-    names = tools.elements(rconn, redisserver, devicename, propertyname)
+    names = tools.elements(rconn, redisserver, propertyname, devicename)
     if not names:
         raise FailPage("Error parsing data")
     # initially set all element switch values to be Off
@@ -158,7 +158,7 @@ def set_text(skicall):
     redisserver = skicall.proj_data["redisserver"]
     devicename, propertyindex, sectionindex, propertyname = _check_received_data(skicall, 'settext')
     # get set of element names for this property
-    names = tools.elements(rconn, redisserver, devicename, propertyname)
+    names = tools.elements(rconn, redisserver, propertyname, devicename)
     if not names:
         raise FailPage("Error parsing data")
     # initially set all element text values to be empty
@@ -190,7 +190,7 @@ def set_number(skicall):
     redisserver = skicall.proj_data["redisserver"]
     devicename, propertyindex, sectionindex, propertyname = _check_received_data(skicall, 'setnumber')
     # get set of element names for this property
-    names = tools.elements(rconn, redisserver, devicename, propertyname)
+    names = tools.elements(rconn, redisserver, propertyname, devicename)
     if not names:
         raise FailPage("Error parsing data")
     # initially set all element number values to be empty
