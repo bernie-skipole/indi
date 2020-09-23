@@ -26,7 +26,11 @@ from datetime import datetime
 
 import re, json
 
-import redis
+REDIS_AVAILABLE = True
+try:
+    import redis
+except:
+    REDIS_AVAILABLE = False
 
 
 def _key(redisserver, *keys):
@@ -44,6 +48,8 @@ def open_redis(redisserver):
     :return: A redis connection, or None on failure
     :rtype: redis.client.Redis
     """
+    if not REDIS_AVAILABLE:
+        return
     try:
         # create a connection to redis
         rconn = redis.StrictRedis(host=redisserver.host,
