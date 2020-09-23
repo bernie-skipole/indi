@@ -66,16 +66,15 @@ def open_redis(redisserver):
 
 
 def last_message(rconn, redisserver, device=""):
-    """Return the last message or None if not available.
-    If device given, the last message from this device is returned
-    message is a string of timestamp space message text
+    """Return the last message or None if not available. If device given,
+    the last message from this device is returned, if not given the message
+    returned is the last message received without a device specified.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
     :param redisserver: Named Tuple providing the redis server parameters
     :type redisserver: collections.namedtuple
-    :param device: If not given the message returned is the last message received without a device specified.
-                   If given the message returned is the last which specified that device name.
+    :param device: If given, the device to which the message pertains.
     :type device: String
     :return: A string of timestamp space message text.
     :rtype: String
