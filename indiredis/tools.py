@@ -14,7 +14,7 @@ Your script could start with::
 
 and then using rconn and redisserver you could call upon the functions provided here.
 
-Where a timestamp is specified, it will be a string according to the INDI v1.7 white paper which describes it as::
+Where a timestamp is specified, unless otherwise stated, it will be a string according to the INDI v1.7 white paper which describes it as::
 
     A timeValue shall be specified in UTC in the form YYYY-MM-DDTHH:MM:SS.S. The final decimal and subsequent
     fractional seconds are optional and may be specified to whatever precision is deemed necessary by the transmitting entity.
@@ -74,8 +74,8 @@ def last_message(rconn, redisserver, device=""):
     :type rconn: redis.client.Redis
     :param redisserver: Named Tuple providing the redis server parameters
     :type redisserver: collections.namedtuple
-    :param device: If not given the message returned is the last message received without
-                   a device specified. If given the message returned is the last which specified that device name.
+    :param device: If not given the message returned is the last message received without a device specified.
+                   If given the message returned is the last which specified that device name.
     :type device: String
     :return: A string of timestamp space message text.
     :rtype: String
@@ -92,38 +92,6 @@ def last_message(rconn, redisserver, device=""):
     if message is None:
         return
     return message.decode("utf-8")
-
-
-def getProperties(rconn, redisserver, device="", name=""):
-    """Publishes a getProperties request on the to_indi_channel. If device and name
-    are not specified this is a general request for all devices and properties.
-
-    :param rconn: A redis connection
-    :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
-    :param device: If given, should be the device name, and will be set as the device
-                   attribute of the xml element sent
-    :type device: String
-    :param name: If given, should be the property name of the given device and will
-                 be set as the name attribute of the xml element sent. If name is given
-                 device must be given as well.
-    :type name: String
-    :return: A bytes string of the xml published, or None on failure
-    :rtype: Bytes
-    """
-    gP = ET.Element('getProperties')
-    gP.set("version", "1.7")
-    if device:
-        gP.set("device", device)
-        if name:
-            gP.set("name", name)
-    etstring = ET.tostring(gP)
-    try:
-        rconn.publish(redisserver.to_indi_channel, etstring)
-    except:
-        etstring = None
-    return etstring
 
 
 def devices(rconn, redisserver):
@@ -202,7 +170,7 @@ def attributes_dict(rconn, redisserver, name, device):
     :type name: String
     :param device: The device name
     :type device: String
-    :return: A dictionary of attributes
+    :return: A dictionary of property attributes
     :rtype: Dict
     """
     attkey = _key(redisserver, "attributes", name, device)
@@ -212,8 +180,22 @@ def attributes_dict(rconn, redisserver, name, device):
     return {k.decode("utf-8"):v.decode("utf-8") for k,v in attdict.items()}
 
 
-def elements_dict(rconn, redisserver, device, name, elementname):
-    "Returns a dictionary of element attributes"
+def elements_dict(rconn, redisserver, elementname, name, device):
+    """Returns a dictionary of element attributes for the given element, property and device
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param elementname: The element name
+    :type elementname: String
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :return: A dictionary of element attributes
+    :rtype: Dict
+    """
     elkey = _key(redisserver, "elementattributes", elementname, name, device)
     eldict = rconn.hgetall(elkey)
     if not eldict:
@@ -237,22 +219,46 @@ def _split_element_labels(element):
 ## where the lists are lists of element dictionaries
 
 
-def property_elements(rconn, redisserver, device, name):
-    """Returns a list of dictionaries of element attributes
-       for the given device and property name
-       each dictionary will be set in the list in order of label"""
-    element_name_list = elements(rconn, redisserver, device, name)
+def property_elements(rconn, redisserver, name, device):
+    """Returns a list of dictionaries of element attributes for the given property and device
+    each dictionary will be set in the list in order of label
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :return: A list of element attributes dictionaries.
+    :rtype: List
+    """
+    element_name_list = elements(rconn, redisserver, name, device)
     if not element_name_list:
         return []
-    element_dictionary_list = list( elements_dict(rconn, redisserver, device, name, elementname) for elementname in element_name_list )
+    element_dictionary_list = list( elements_dict(rconn, redisserver, elementname, name, device) for elementname in element_name_list )
     # sort element_dictionary_list by label
     element_dictionary_list.sort(key=_split_element_labels)
     return element_dictionary_list
 
 
 def logs(rconn, redisserver, number, *keys):
-    """If number is 1, return the latest log as [timestamp,data],
-       If number > 1 return the number of logs as [[timestamp,data], ...] or empty list if none available"""
+    """Return the number of logs as [[timestamp,data], ...] or empty list if none available
+    where timestamp is the time at which data is received, and data is a json string
+    of the data logged.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param number: The number of logs to return
+    :type number: Integer
+    :param keys: Positional arguments, from just devicename to 'elementattributes', elementname, propertyname, devicename
+    :type keys: Positional arguments
+    :return: A list of lists, inner lists being [timestamp string, json data string]
+    :rtype: List
+    """
     if number < 1:
         return []
     logkey = _key(redisserver, "logdata", *keys)
@@ -262,7 +268,7 @@ def logs(rconn, redisserver, number, *keys):
             return []
         logtime, logdata = logentry.decode("utf-8").split(" ", maxsplit=1)
         logdata = json.loads(logdata)
-        return [logtime,logdata]
+        return [[logtime,logdata]]
     logs = rconn.lrange(logkey, 0, number-1)
     if logs is None:
         return []
@@ -274,14 +280,58 @@ def logs(rconn, redisserver, number, *keys):
     return nlogs
 
 
+def getProperties(rconn, redisserver, name="", device=""):
+    """Publishes a getProperties request on the to_indi_channel. If device and name
+    are not specified this is a general request for all devices and properties.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: If given, should be the property name of the given device and will
+                 be set as the name attribute of the xml element sent. If name is given
+                 device must be given as well.
+    :type name: String
+    :param device: If given, should be the device name, and will be set as the device
+                   attribute of the xml element sent
+    :type device: String
+    :return: A string of the xml published, or None on failure
+    :rtype: String
+    """
+    gP = ET.Element('getProperties')
+    gP.set("version", "1.7")
+    if device:
+        gP.set("device", device)
+        if name:
+            gP.set("name", name)
+    etstring = ET.tostring(gP)
+    try:
+        rconn.publish(redisserver.to_indi_channel, etstring)
+    except:
+        etstring = None
+    return etstring
 
 
+def newswitchvector(rconn, redisserver, name, device, values, timestamp=None):
+    """Sends a newSwitchVector request, returns the xml string sent, or None on failure.
+    Values should be a dictionary of element name:state where state is On or Off.
+    Timestamp should be a datetime object, if None the current utc datetime will be used.
 
-
-def newswitchvector(rconn, redisserver, device, name, values, timestamp=None):
-    """Sends a newSwichVector request, returns the xml string sent, or None on failure
-       values is a dictionary of name:state where name is the switch element name, state is On or Off
-       timestamp is a datetime object, if None the current utc datetime will be used"""
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :param values: Dictionary of {element name:state, ... }
+    :type values: Dict
+    :param timestamp: A datetime.datetime object or None
+    :type timestamp: datetime.datetime
+    :return:  A string of the xml published, or None on failure
+    :rtype: String
+    """
     nsv = ET.Element('newSwitchVector')
     nsv.set("device", device)
     nsv.set("name", name)
@@ -307,10 +357,26 @@ def newswitchvector(rconn, redisserver, device, name, values, timestamp=None):
 
 
 
-def newtextvector(rconn, redisserver, device, name, values, timestamp=None):
-    """Sends a newTextVector request, returns the xml string sent, or None on failure
-       values is a dictionary of text names : values
-       timestamp is a datetime object, if None the current utc datetime will be used"""
+def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
+    """Sends a newTextVector request, returns the xml string sent, or None on failure.
+    Values should be a dictionary of text names : values.
+    Timestamp should be a datetime object, if None the current utc datetime will be used.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: collections.namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :param values: Dictionary of {element name:new text, ... }
+    :type values: Dict
+    :param timestamp: A datetime.datetime object or None
+    :type timestamp: datetime.datetime
+    :return:  A string of the xml published, or None on failure
+    :rtype: String
+    """
     ntv = ET.Element('newTextVector')
     ntv.set("device", device)
     ntv.set("name", name)
@@ -371,7 +437,7 @@ def clearredis(rconn, redisserver):
         rconn.delete( _key(redisserver, "properties", device) )
         for name in property_list:
             rconn.delete( _key(redisserver, "attributes", name, device) )
-            elements_list = elements(rconn, redisserver, device, name)
+            elements_list = elements(rconn, redisserver, name, device)
             rconn.delete( _key(redisserver, "elements", name, device) )
             for elementname in elements_list:
                 rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )

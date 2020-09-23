@@ -71,7 +71,7 @@ def end_call(page_ident, page_type, skicall):
 
 def make_wsgi_app(redisserver):
     """Create a wsgi application which can be served by a WSGI compatable web server.
-Reads and writes to redis stores created by indittoredis
+    Reads and writes to redis stores created by indittoredis
 
     :param redisserver: Named Tuple providing the redis server parameters
     :type redisserver: collections.namedtuple

@@ -207,7 +207,7 @@ def _show_textvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -273,7 +273,7 @@ def _show_numbervector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -341,7 +341,7 @@ def _show_switchvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -478,7 +478,7 @@ def _show_lightvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
     # No permission value for lightvectors
@@ -508,7 +508,7 @@ def _show_blobvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['device'], ad['name'])
+    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
     # list the elements
@@ -527,7 +527,7 @@ def _check_logs(skicall, *args):
     timestamp = skicall.call_data['timestamp']
     logentry = tools.logs(rconn, redisserver, 1, *args)
     if logentry:
-        logtime, logdata = logentry
+        logtime, logdata = logentry[0]
         if timestamp < logtime:
             # page timestamp is earlier than last log entry
             return True
@@ -636,7 +636,7 @@ def check_for_device_change(skicall):
     for propertyname in propertygroup:
         if propertyname in numbervectors:
             continue
-        elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
         # elements is a list of dictionaries of element attributes
         if not elements:
             continue
@@ -657,7 +657,7 @@ def check_for_device_change(skicall):
     for propertyname in numbervectors:
         if propertyname not in propertygroup:
             continue
-        elements = tools.property_elements(rconn, redisserver, devicename, propertyname)
+        elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
         # elements is a list of dictionaries of element attributes
         if not elements:
             continue
@@ -668,7 +668,7 @@ def check_for_device_change(skicall):
         # check for updated property attributes
         logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
         if logentry:
-            logtime, logdata = logentry
+            logtime, logdata = logentry[0]
             if timestamp < logtime:
                 updatedict[propertyname] = elements
                 # property needs to be updated
@@ -677,7 +677,7 @@ def check_for_device_change(skicall):
         for elementdict in elements:
             logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementdict['name'], propertyname, devicename)
             if logentry:
-                logtime, logdata = logentry
+                logtime, logdata = logentry[0]
                 if timestamp < logtime:
                     updatedict[propertyname] = elements
                     # property needs to be updated, do not bother checking further elements in the property

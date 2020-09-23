@@ -5,9 +5,10 @@ Tools
 
 .. autofunction:: indiredis.tools.open_redis
 
-.. autofunction:: indiredis.tools.last_message
+Reading properties
+^^^^^^^^^^^^^^^^^^
 
-.. autofunction:: indiredis.tools.getProperties
+.. autofunction:: indiredis.tools.last_message
 
 .. autofunction:: indiredis.tools.devices
 
@@ -17,9 +18,18 @@ Tools
 
 .. autofunction:: indiredis.tools.attributes_dict
 
+.. autofunction:: indiredis.tools.elements_dict
 
+.. autofunction:: indiredis.tools.property_elements
 
+.. autofunction:: indiredis.tools.logs
 
+Sending values
+^^^^^^^^^^^^^^
 
+.. autofunction:: indiredis.tools.getProperties
 
+.. autofunction:: indiredis.tools.newswitchvector
+
+.. autofunction:: indiredis.tools.newtextvector
 
