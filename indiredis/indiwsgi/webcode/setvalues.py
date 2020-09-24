@@ -204,7 +204,7 @@ def set_number(skicall):
                 valuedict[nm] = vl
             else:
                 raise FailPage("Error parsing data")
-        data_sent = tools.newnumbervector(rconn, redisserver, devicename, propertyname, valuedict)
+        data_sent = tools.newnumbervector(rconn, redisserver, propertyname, devicename, valuedict)
         # print(data_sent)
         if not data_sent:
             raise FailPage("Error sending data")

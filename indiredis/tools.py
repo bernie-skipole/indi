@@ -3,7 +3,12 @@
 """This is a set of Python functions which read, and publish to your redis server.
 You may find them useful when creating a client gui, if your gui is Python based.
 
-Functions are provided which open a redis connection, and return lists of devices, properties, elements etc.,
+Functions are provided which open a redis connection, and return lists of devices,
+properties, elements etc.,
+
+These functions take the namedtuple redisserver as an argument and apply the key
+prefix as defined in the tuple to the redis keys.
+
 
 Your script could start with::
 
@@ -46,8 +51,8 @@ def _key(redisserver, *keys):
 def open_redis(redisserver):
     """Opens a redis connection, return None on failure
 
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :return: A redis connection, or None on failure
     :rtype: redis.client.Redis
     """
@@ -66,12 +71,12 @@ def open_redis(redisserver):
 
 
 def last_message(rconn, redisserver, device=""):
-    """Return the last message or None if not available.
+    """Return the last message or None if not available
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param device: If given, the device to which the message pertains.
     :type device: String
     :return: A string of timestamp space message text.
@@ -92,13 +97,12 @@ def last_message(rconn, redisserver, device=""):
 
 
 def devices(rconn, redisserver):
-    """Returns a list of devices, uses redis smembers on key devices
-    applies the key prefix as defined in redisserver.
-
+    """Returns a list of devices.
+    
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :return: A list of device name strings, sorted in name order
     :rtype: List
     """
@@ -112,13 +116,12 @@ def devices(rconn, redisserver):
 
 
 def properties(rconn, redisserver, device):
-    """Returns a list of property names for the given device, uses redis smembers
-    on key properties:device, applies the key prefix as defined in redisserver.
+    """Returns a list of property names for the given device.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param device: The device name
     :type device: String
     :return: A list of property name strings, sorted in name order
@@ -138,8 +141,8 @@ def elements(rconn, redisserver, name, device):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: The property name
     :type name: String
     :param device: The device name
@@ -161,8 +164,8 @@ def attributes_dict(rconn, redisserver, name, device):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: The property name
     :type name: String
     :param device: The device name
@@ -182,8 +185,8 @@ def elements_dict(rconn, redisserver, elementname, name, device):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param elementname: The element name
     :type elementname: String
     :param name: The property name
@@ -222,8 +225,8 @@ def property_elements(rconn, redisserver, name, device):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: The property name
     :type name: String
     :param device: The device name
@@ -247,11 +250,11 @@ def logs(rconn, redisserver, number, *keys):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param number: The number of logs to return
     :type number: Integer
-    :param keys: Positional arguments, from just devicename to 'elementattributes', elementname, propertyname, devicename
+    :param keys: From just devicename to 'elementattributes', elementname, propertyname, devicename
     :type keys: Positional arguments
     :return: A list of lists, inner lists being [timestamp string, json data string]
     :rtype: List
@@ -277,17 +280,21 @@ def logs(rconn, redisserver, number, *keys):
     return nlogs
 
 
+# The following functions create the XML elements, and uses redis to publish the XML on the to_indi_channel.
+# This is picked up by the inditoredis process (which subscribes to the to_indi_channel), and
+# which then transmits the xml on to indisserver.
+
 def getProperties(rconn, redisserver, name="", device=""):
     """Publishes a getProperties request on the to_indi_channel. If device and name
     are not specified this is a general request for all devices and properties.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: If given, should be the property name of the given device and will
-                 be set as the name attribute of the xml element sent. If name is given
-                 device must be given as well.
+                 be set as the name attribute of the xml element sent. If name is
+                 given then device must be given as well.
     :type name: String
     :param device: If given, should be the device name, and will be set as the device
                    attribute of the xml element sent
@@ -316,8 +323,8 @@ def newswitchvector(rconn, redisserver, name, device, values, timestamp=None):
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: The property name
     :type name: String
     :param device: The device name
@@ -356,13 +363,13 @@ def newswitchvector(rconn, redisserver, name, device, values, timestamp=None):
 
 def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
     """Sends a newTextVector request, returns the xml string sent, or None on failure.
-    Values should be a dictionary of text names : values.
+    Values should be a dictionary of element names : text values.
     Timestamp should be a datetime object, if None the current utc datetime will be used.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
-    :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
     :param name: The property name
     :type name: String
     :param device: The device name
@@ -395,10 +402,26 @@ def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
     return ntvstring
 
 
-def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
-    """Sends a newNumberVector request, returns the xml string sent, or None on failure
-       values is a dictionary of names : values
-       timestamp is a datetime object, if None the current utc datetime will be used"""
+def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
+    """Sends a newNumberVector request, returns the xml string sent, or None on failure.
+    Values should be a dictionary of element names : numeric values.
+    Timestamp should be a datetime object, if None the current utc datetime will be used.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :param values: Dictionary of {element name:new number, ... }
+    :type values: Dict
+    :param timestamp: A datetime.datetime object or None
+    :type timestamp: datetime.datetime
+    :return:  A string of the xml published, or None on failure
+    :rtype: String
+    """
     nnv = ET.Element('newNumberVector')
     nnv.set("device", device)
     nnv.set("name", name)
@@ -421,7 +444,13 @@ def newnumbervector(rconn, redisserver, device, name, values, timestamp=None):
         
     
 def clearredis(rconn, redisserver):
-    "Deletes the redis keys"
+    """Deletes the redis keys, returns None.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
+    """
     device_list = devices(rconn, redisserver)
     rconn.delete( _key(redisserver, "devices") )
     rconn.delete( _key(redisserver, "logdata", "devices") )    
