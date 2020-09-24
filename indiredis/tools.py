@@ -248,13 +248,17 @@ def logs(rconn, redisserver, number, *keys):
     where timestamp is the time at which data is received, and data is a json string
     of the data logged.
 
+    The keys positional arguments define where the logs are sourced, so if just the literal string "devices"
+    the logs will come from "logdata:devices", if arguments are 'elementattributes', elementname, propertyname, devicename
+    then logs will come from redis store "logdata:elementattributes:<elementname>:<propertyname>:<devicename>"
+
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
     :param redisserver: The redis server parameters
     :type redisserver: namedtuple
     :param number: The number of logs to return
     :type number: Integer
-    :param keys: From just devicename to 'elementattributes', elementname, propertyname, devicename
+    :param keys: Defines which redis key is the source of the logs.
     :type keys: Positional arguments
     :return: A list of lists, inner lists being [timestamp string, json data string]
     :rtype: List
@@ -288,16 +292,19 @@ def getProperties(rconn, redisserver, name="", device=""):
     """Publishes a getProperties request on the to_indi_channel. If device and name
     are not specified this is a general request for all devices and properties.
 
+    If device only is given then this is a request for all properties of that device, if
+    device and name is given, this requests an update for that property of the given device.
+    If name is given, device must also be given.
+
+    Return the xml string sent, or None on failure.
+
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
     :param redisserver: The redis server parameters
     :type redisserver: namedtuple
-    :param name: If given, should be the property name of the given device and will
-                 be set as the name attribute of the xml element sent. If name is
-                 given then device must be given as well.
+    :param name: If given, should be the property name.
     :type name: String
-    :param device: If given, should be the device name, and will be set as the device
-                   attribute of the xml element sent
+    :param device: If given, should be the device name.
     :type device: String
     :return: A string of the xml published, or None on failure
     :rtype: String
