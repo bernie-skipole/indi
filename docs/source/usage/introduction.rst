@@ -60,18 +60,16 @@ For example, your Python script to import and run this service could be::
     # which are required as arguments to inditoredis().
 
     indi_host = indi_server(host='localhost', port=7624)
-    redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi')
+    redis_host = redis_server(host='localhost', port=6379)
 
     # blocking call which runs the service, communicating between indiserver and redis
 
     inditoredis(indi_host, redis_host)
 
-.. _web_client:
-
 indiredis.indiwsgi
 ^^^^^^^^^^^^^^^^^^
 
-Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided which creates a Python WSGI application that can provide a demonstration web service.
+Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided which creates a Python WSGI application that can provide a demonstration web service. It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
 
 WSGI - https://wsgi.readthedocs.io/en/latest/what.html
 
@@ -79,42 +77,7 @@ WSGI is a specification that describes how a web server communicates with web ap
 
 indiwsgi requires the 'skipole' Python framework, available from Pypi, and a wsgi web server, such as 'waitress' also available from Pypi.
 
-indiredis.indiwsgi provides a client application which displays connected devices and properties, and allows the user to set properties according to the Indi specification.
-
-Example Python script (webclient.py) which can run the web service (requires indiserver to be running)::
-
-    import threading, os, sys
-
-    from indiredis import inditoredis, indi_server, redis_server, indiwsgi
-
-    # any wsgi web server can serve the wsgi application produced by
-    # indiwsgi.make_wsgi_app, in this example the web server 'waitress' is used
-
-    from waitress import serve
-
-    # define the hosts/ports where servers are listenning, these functions return named tuples
-    # which are required as arguments to inditoredis() and to indiwsgi.make_wsgi_app()
-
-    indi_host = indi_server(host='localhost', port=7624)
-    redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi')
-
-    # create a wsgi application, which requires the redis_host tuple
-    application = indiwsgi.make_wsgi_app(redis_host)
-
-    # serve the application with the python waitress web server in its own thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
-    # and start it
-    webapp.start()
-
-    # and start inditoredis
-    inditoredis(indi_host, redis_host)
-
-
-You will need indiserver to be running first - either started in another terminal, or as a service.
-
-On running this script ( with python3 webclient.py ) in a terminal, connect your browser to localhost:8000 to view the web pages.
-
-To end the program, press Ctrl-c a few times in the terminal.
+An example of creating the wsgi application, and running it with waitress is given at :ref:`web_client`.
 
 As an alternative to the inditoredis function, two further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from the indiserver port 7624 to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service.
 
@@ -133,7 +96,7 @@ Example Python script running on the machine with the connected instruments::
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
     indi_host = indi_server(host='localhost', port=7624)
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
 
     # blocking call which runs the service, communicating between indiserver and mqtt
 
@@ -154,8 +117,8 @@ Example Python script running at the redis server::
 
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi')
-    redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi')
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+    redis_host = redis_server(host='localhost', port=6379)
 
     # blocking call which runs the service, communicating between mqtt and redis
 

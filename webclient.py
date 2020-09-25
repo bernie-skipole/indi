@@ -37,6 +37,9 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 # create a wsgi application, which requires the redis_host tuple
 application = indiwsgi.make_wsgi_app(redis_host)
+if application is None:
+    print("Are you sure the skipole framework is installed?")
+    sys.exit(1)
 
 # add skiadmin during development
 # application = indiwsgi.add_skiadmin(application)

@@ -41,6 +41,8 @@ The two functions below work together to provide communications via an MQTT serv
 
 .. autofunction:: indiredis.mqtttoredis
 
+.. _web_client:
+
 indiwsgi
 ^^^^^^^^
 .. automodule:: indiredis.indiwsgi
@@ -90,8 +92,45 @@ Then, from your web browser connect to http://localhost:8000
 
 Wait a few seconds, and the devices, with their properties, should be discovered and displayed.
 
-A further example, showing how inditoredis and the wsgi application with web server can be run
-in separate threads from a single script is given at :ref:`web_client`.
+To end the program, press Ctrl-c a few times in the terminal.
+
+A further example (webclient.py), showing how inditoredis and the wsgi application with web server
+can be run in separate threads from a single script::
+
+
+    import threading, os, sys
+
+    from indiredis import inditoredis, indi_server, redis_server, indiwsgi
+
+    # any wsgi web server can serve the wsgi application produced by
+    # indiwsgi.make_wsgi_app, in this example the web server 'waitress' is used
+
+    from waitress import serve
+
+    # define the hosts/ports where servers are listenning, these functions return named tuples
+    # which are required as arguments to inditoredis() and to indiwsgi.make_wsgi_app()
+
+    indi_host = indi_server(host='localhost', port=7624)
+    redis_host = redis_server(host='localhost', port=6379)
+
+    # create a wsgi application, which requires the redis_host tuple
+    application = indiwsgi.make_wsgi_app(redis_host)
+    if application is None:
+        print("Are you sure the skipole framework is installed?")
+        sys.exit(1)
+
+    # serve the application with the python waitress web server in its own thread
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    # and start it
+    webapp.start()
+
+    # and start inditoredis
+    inditoredis(indi_host, redis_host)
+
+
+You will still need indiserver to be running first - either started in another terminal, or as a service. On
+running this script ( with python3 webclient.py ) in a terminal, connect your browser to localhost:8000 to view the web pages.
+
 
 
 
