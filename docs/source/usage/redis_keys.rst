@@ -40,6 +40,8 @@ A key is created for every property name, for every device name. Each key stores
 
 A key is created for every element name, for every property name, for every device name. Each key stores a hash table of attributes:values for the element.
 
+.. _logs:
+
 Stored logged values
 ^^^^^^^^^^^^^^^^^^^^
 

@@ -84,9 +84,9 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}):
     """Blocking call that provides the mqtt - redis connection
 
     :param mqttserver: Named Tuple providing the mqtt server parameters
-    :type mqttserver: collections.namedtuple
+    :type mqttserver: namedtuple
     :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :type redisserver: namedtuple
     :param log_lengths: provides number of logs to store
     :type log_lengths: dictionary
     """

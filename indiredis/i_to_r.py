@@ -112,9 +112,9 @@ def inditoredis(indiserver, redisserver, log_lengths={}):
     """Blocking call that provides the indiserver - redis conversion
 
     :param indiserver: Named Tuple providing the indiserver parameters
-    :type indiserver: collections.namedtuple
+    :type indiserver: namedtuple
     :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :type redisserver: namedtuple
     :param log_lengths: provides number of logs to store
     :type log_lengths: dictionary
     """

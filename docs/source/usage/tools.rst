@@ -5,8 +5,8 @@ Tools
 
 .. autofunction:: indiredis.tools.open_redis
 
-Reading properties
-^^^^^^^^^^^^^^^^^^
+Reading values
+^^^^^^^^^^^^^^
 
 .. autofunction:: indiredis.tools.last_message
 
@@ -21,6 +21,11 @@ Reading properties
 .. autofunction:: indiredis.tools.elements_dict
 
 .. autofunction:: indiredis.tools.property_elements
+
+Reading logs
+^^^^^^^^^^^^
+
+This function reads logs from the logdata key stores. See :ref:`logs`.
 
 .. autofunction:: indiredis.tools.logs
 

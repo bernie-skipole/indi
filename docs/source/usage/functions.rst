@@ -43,7 +43,6 @@ The two functions below work together to provide communications via an MQTT serv
 
 indiwsgi
 ^^^^^^^^
-
 .. automodule:: indiredis.indiwsgi
 
 An example with the Waitress web server is given at :ref:`web_client`.

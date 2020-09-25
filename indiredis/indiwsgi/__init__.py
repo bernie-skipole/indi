@@ -1,5 +1,4 @@
 
-
 """The main aim of indiredis is to provide redis storage for instrument parameters reported via the INDI protocol.
 This makes it possible for a GUI that interfaces to redis to be written.
 
@@ -9,16 +8,17 @@ This module provides a WSGI web application as an example of such a GUI. This ca
 
 import os, sys
 
-
 from datetime import datetime
 
-from skipole import WSGIApplication, use_submit_list
 
-from skipole import skis
+SKIPOLE_AVAILABLE = True
+try:
+    from skipole import WSGIApplication, use_submit_list
+    from skipole import skis
+except:
+    SKIPOLE_AVAILABLE = False
 
 from .. import tools
-
-
 
 PROJECTFILES = os.path.join(os.path.dirname(os.path.realpath(__file__)), "webdata")
 PROJECT = 'webdemo'
@@ -74,10 +74,14 @@ def make_wsgi_app(redisserver):
     Reads and writes to redis stores created by indittoredis
 
     :param redisserver: Named Tuple providing the redis server parameters
-    :type redisserver: collections.namedtuple
+    :type redisserver: namedtuple
     :return: A WSGI callable application
     :rtype: skipole.WSGIApplication
     """
+    if not SKIPOLE_AVAILABLE:
+        return
+
+
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)
     proj_data = {"rconn":rconn, "redisserver":redisserver}
@@ -96,13 +100,13 @@ def make_wsgi_app(redisserver):
 
 
 ######## add skiadmin during development
-from skipole import skiadmin, set_debug
+#from skipole import skiadmin, set_debug
 
-def add_skiadmin(application):
-    set_debug(True)
-    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
-    application.add_project(skiadmin_application, url='/skiadmin')
-    return application
+#def add_skiadmin(application):
+#    set_debug(True)
+#    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+#    application.add_project(skiadmin_application, url='/skiadmin')
+#    return application
 
 
 

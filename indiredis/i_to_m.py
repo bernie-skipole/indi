@@ -136,9 +136,9 @@ def inditomqtt(indiserver, mqttserver):
     """Blocking call that provides the indiserver - mqtt connection
 
     :param indiserver: Named Tuple providing the indiserver parameters
-    :type indiserver: collections.namedtuple
+    :type indiserver: namedtuple
     :param mqttserver: Named Tuple providing the mqtt server parameters
-    :type mqttserver: collections.namedtuple
+    :type mqttserver: namedtuple
     """
 
     global _TO_INDI

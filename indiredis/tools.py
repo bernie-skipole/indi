@@ -4,11 +4,15 @@
 You may find them useful when creating a client gui, if your gui is Python based.
 
 Functions are provided which open a redis connection, and return lists of devices,
-properties, elements etc.,
+properties, elements etc., further functions create xml elements and publish them
+which transmits the values on to indiserver and hence the attached instruments.
 
 These functions take the namedtuple redisserver as an argument and apply the key
 prefix as defined in the tuple to the redis keys.
 
+indiserver must be running, and inditoredis, typically in other processes. These
+functions can then be imported into your own GUI clent as a convenient way of
+accessing redis.
 
 Your script could start with::
 
@@ -249,8 +253,9 @@ def logs(rconn, redisserver, number, *keys):
     of the data logged.
 
     The keys positional arguments define where the logs are sourced, so if just the literal string "devices"
-    the logs will come from "logdata:devices", if arguments are 'elementattributes', elementname, propertyname, devicename
-    then logs will come from redis store "logdata:elementattributes:<elementname>:<propertyname>:<devicename>"
+    the logs will come from "logdata:devices", if arguments are 'elementattributes', elementname, propertyname,
+    devicename where elementattributes is a literal string and the other values are the actual names, then logs
+    will come from redis store "logdata:elementattributes:<elementname>:<propertyname>:<devicename>"
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
