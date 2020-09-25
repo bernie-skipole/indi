@@ -40,10 +40,14 @@ def start_call(called_ident, skicall):
             skicall.call_data["group"] = group
     return called_ident
 
-@use_submit_list
-def submit_data(skicall):
-    "This function is called when a Responder wishes to submit data for processing in some manner"
-    return
+
+try:
+    @use_submit_list
+    def submit_data(skicall):
+        "This function is called when a Responder wishes to submit data for processing in some manner"
+        return
+except:
+    SKIPOLE_AVAILABLE = False
 
 
 def end_call(page_ident, page_type, skicall):
