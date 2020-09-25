@@ -56,6 +56,12 @@ def indi_server(host='localhost', port=7624):
 def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi'):
     """Creates a named tuple to hold redis server parameters
 
+    The to_indi_channel string is required, and is a string to use as the channel which a client can use to publish data to redis
+    and hence to indiserver. It can be any string you prefer which does not clash with any other channels you may be using with redis.
+
+    The from_indi_channel string is required, and must be different from the to_indi_channel string. It is used as the channel on
+    which alerts are published which the client can optionally listen to.
+
     :param host: The name or ip address of the redis server, defaults to localhost
     :type host: String
     :param port: The port number of the redis server, defaults to standard port 6379
@@ -66,12 +72,9 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
     :type password: String
     :param keyprefix: A string to use as a prefix on all redis keys created.
     :type keyprefix: String
-    :param to_indi_channel: A string to use as the channel which a client can use to publish data to redis
-                            and hence to indiserver.
+    :param to_indi_channel: Redis channel used to publish data to indiserver.
     :type to_indi_channel: String
-    :param from_indi_channel: A string to use as the channel on which alerts are published which
-                              the client can optionally listen to. Must be different to the
-                              to_indi_channel string.
+    :param from_indi_channel: Redis channel used to publish alerts.
     :type from_indi_channel: String
     :return: A named tuple with above parameters as named elements
     :rtype: collections.namedtuple
@@ -85,6 +88,12 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
 def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi'):
     """Creates a named tuple to hold MQTT server parameters
 
+    The to_indi_topic string is required, and is a string to use as the MQTT topic used to publish data to indiserver.
+    It can be any string you prefer which does not clash with any other topic you may be using with MQTT.
+
+    The from_indi_topic string is required, and must be different from the to_indi_topic string. It is used as the channel on
+    which data is sent from indiserver towards the redis server.
+
     :param host: The name or ip address of the mqtt server, defaults to localhost
     :type host: String
     :param port: The port number of the mqtt server, defaults to standard port 1883
@@ -93,12 +102,9 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
     :type username: String
     :param password: The mqtt password, defaults to none used.
     :type password: String
-    :param to_indi_topic: A string to use as the mqtt topic to publish data towards indiserver.
+    :param to_indi_topic: A string to use as the mqtt topic to send data towards indiserver.
     :type to_indi_topic: String
-    :param from_indi_topic: A string to use as the mqtt topic which is used to receive data from indiserver to
-                            send towards redis. Must be different to the to_indi_topic string. These topics
-                            require to be specified to avoid clashing with other communications topics which may
-                            be used on the MQTT server.
+    :param from_indi_topic: A string to use as the mqtt topic to send data towards redis.
     :type from_indi_topic: String
     :return: A named tuple with above parameters as named elements
     :rtype: collections.namedtuple
