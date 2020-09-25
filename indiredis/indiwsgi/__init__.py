@@ -46,7 +46,8 @@ try:
     def submit_data(skicall):
         "This function is called when a Responder wishes to submit data for processing in some manner"
         return
-except:
+except NameError:
+    # if skipole is not imported @use_submit_list will flag a NameError 
     SKIPOLE_AVAILABLE = False
 
 
