@@ -55,4 +55,43 @@ updates data at a faster rate.
 
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
 
+As a way to test this, the following is suggested. Assuming you have all the dependencies loaded,
+including a redis server operating on your localhost, open three terminals.
+
+In terminal one, run indiserver with the simulated instruments::
+
+    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
+
+In terminal two, run inditoredis using the minimal script described above.
+
+In terminal three, run the following web service::
+
+    import sys
+    from indiredis import redis_server, indiwsgi
+
+    # any wsgi web server can serve the wsgi application produced by
+    # indiwsgi.make_wsgi_app, in this example the web server 'waitress' is used
+
+    from waitress import serve
+
+    redis_host = redis_server(host='localhost', port=6379)
+
+    # create a wsgi application, which requires the redis_host tuple
+    application = indiwsgi.make_wsgi_app(redis_host)
+    if application is None:
+        print("Are you sure the skipole framework is installed?")
+        sys.exit(1)
+
+    # serve the application with the python waitress web server in its own thread
+    serve(application, host=127.0.0.1, port=8000)
+
+Then, from your web browser connect to http://localhost:8000
+
+Wait a few seconds, and the devices, with their properties should be discovered and displayed.
+
+
+
+
+
+
 
