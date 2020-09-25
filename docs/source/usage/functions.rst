@@ -45,18 +45,19 @@ indiwsgi
 ^^^^^^^^
 .. automodule:: indiredis.indiwsgi
 
-An example with the Waitress web server is given at :ref:`web_client`.
-
-This example requires Python3 packages skipole, waitress and redis, available from Pypi.
-
-This particular client is general purpose, and learns all instrument properties from the redis store,
-it employs a browser client refresh every ten seconds, and so may not be useful for an instrument that
-updates data at a faster rate.
+The function to create the wsgi application is:
 
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
 
-As a way to test this, the following is suggested. Assuming you have all the dependencies loaded,
-including a redis server operating on your localhost, open three terminals.
+This particular client application is general purpose, and learns all instrument properties from the
+redis store, it employs a browser client refresh every ten seconds, and so may not be useful for an
+instrument that updates data at a faster rate.
+
+To run this application, the following is suggested, which requires Python3 packages skipole,
+waitress and redis, available from Pypi.
+
+Assuming you have all the dependencies loaded, including a redis server operating on your localhost,
+open three terminals.
 
 In terminal one, run indiserver with the simulated instruments::
 
@@ -82,12 +83,15 @@ In terminal three, run the following web service::
         print("Are you sure the skipole framework is installed?")
         sys.exit(1)
 
-    # serve the application with the python waitress web server in its own thread
+    # blocking call which serves the application with the python waitress web server
     serve(application, host=127.0.0.1, port=8000)
 
 Then, from your web browser connect to http://localhost:8000
 
-Wait a few seconds, and the devices, with their properties should be discovered and displayed.
+Wait a few seconds, and the devices, with their properties, should be discovered and displayed.
+
+A further example, showing how inditoredis and the wsgi application with web server can be run
+in separate threads from a single script is given at :ref:`web_client`.
 
 
 
