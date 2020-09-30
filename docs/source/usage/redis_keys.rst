@@ -141,8 +141,13 @@ For a number element of a NumberVector, additional fields are:
     * formatted_number : The value, formatted as per the format string
     * float_number : The value as a float (parsed from sexagesimal if necessary)
     * min : minimal value
+    * float_min : The minimal value as a float
     * max : maximum value, ignore if min == max
+    * float_max : The maximum value as a float
     * step : allowed increments, ignore if 0
+    * float_step : The step value as a float
+
+Note: as the INDI specification allows various formats for the number value, and for min, max and step values, as well as storing the originals, float values are also stored for each value.
 
 A Blob element has value decoded from base64, but not uncompressed, and additional fields:
 

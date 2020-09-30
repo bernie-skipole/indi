@@ -552,11 +552,15 @@ class NumberVector(ParentProperty):
             self.elements[element.name] = element
 
     def write(self, rconn):
-        "Saves name, label, format, min, max, step, value, formatted_number in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
+        """Saves name, label, format, min, max, step, value, formatted_number, float_number, float_min
+           float_max, float_step in 'elementattributes:<elementname>:<propertyname>:<devicename>'"""
         for element in self.elements.values():
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
             mapping["float_number"] = element.float_number()
+            mapping["float_min"] = element.float_min()
+            mapping["float_max"] = element.float_max()
+            mapping["float_step"] = element.float_step()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
         super().write(rconn)
 
@@ -570,6 +574,9 @@ class NumberVector(ParentProperty):
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
             mapping["float_number"] = element.float_number()
+            mapping["float_min"] = element.float_min()
+            mapping["float_max"] = element.float_max()
+            mapping["float_step"] = element.float_step()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
         super().update(rconn, vector)
 
@@ -607,21 +614,44 @@ class NumberElement(ParentElement):
 
     def float_number(self):
         """Returns the float of the number value"""
-        negative, number_list = self._parse_number()
+        negative, number_list = self._parse_number(self.value)
+        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
+        if negative:
+            value = -1 * value
+        return value
+
+    def float_min(self):
+        "Returns the float of the min value"
+        negative, number_list = self._parse_number(self.min)
+        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
+        if negative:
+            value = -1 * value
+        return value
+
+    def float_max(self):
+        "Returns the float of the max value"
+        negative, number_list = self._parse_number(self.max)
+        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
+        if negative:
+            value = -1 * value
+        return value
+
+    def float_step(self):
+        "Returns the float of the step value"
+        negative, number_list = self._parse_number(self.step)
         value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
         if negative:
             value = -1 * value
         return value
 
 
-    def _parse_number(self):
+    def _parse_number(self, value):
         """Splits the value into a negative flag and three sexagesimal parts
            Returns negative,number_list where negative is True if the number is negative
            and number list is an item of three numbers, number_list[0] is degrees
            number_list[1] is minutes, number_list[2] is seconds. Any of the three values could be
            a float or integer
            """
-        value = self.value
         # negative is True, if the value is negative
         negative = value.startswith("-")
         if negative:
@@ -655,7 +685,7 @@ class NumberElement(ParentElement):
 
     def _sexagesimal(self):
         "Create string of the number according to the given format"
-        negative, number_list = self._parse_number()
+        negative, number_list = self._parse_number(self.value)
         # degrees and minutes should be integers
         if not isinstance(number_list[0], int):
             # its a float, so get integer part and fraction part
@@ -678,20 +708,16 @@ class NumberElement(ParentElement):
             number_list[1] -= 60
             degrees += 1
         number_list[0] += degrees
-
         # so number list is a valid degrees, minutes, seconds
-
         # degrees
         if negative:
             number = f"-{number_list[0]}:"
         else:
             number = f"{number_list[0]}:"
-
         # format string is of the form  %<w>.<f>m
         w,f = self.format.split(".")
         w = w.lstrip("%")
         f = f.rstrip("m")
-
         if (f == "3") or (f == "5"):
             # no seconds, so create minutes value
             minutes = float(number_list[1]) + number_list[2]/60.0
