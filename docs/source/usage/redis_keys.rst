@@ -149,4 +149,10 @@ A Blob element has value decoded from base64, but not uncompressed, and addition
     * size : number of bytes in decoded and uncompressed BLOB
 
 
+Redis pubsub
+^^^^^^^^^^^^
+
+As data is received, as well as being parsed and stored in the redis keys described above, the received XML string is published on the from_indi_channel defined when calling the redis_server function. A logging or diagnostic process can therefore have access to the received XML by subscribing to this channel.
+
+The client can transmit XML data towards indiserver by publishing the required XML on the to_indi_channel.  Alternatively, Python functions which specifically send number, text, etc., values are available in the tools module, described at :ref:`sending`.
 

@@ -60,7 +60,7 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
     and hence to indiserver. It can be any string you prefer which does not clash with any other channels you may be using with redis.
 
     The from_indi_channel string is required, and must be different from the to_indi_channel string. It is used as the channel on
-    which alerts are published which the client can optionally listen to.
+    which received XML data is published which the client can optionally listen to.
 
     :param host: The name or ip address of the redis server, defaults to localhost
     :type host: String

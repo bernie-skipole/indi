@@ -47,6 +47,8 @@ indiwsgi
 ^^^^^^^^
 .. automodule:: indiredis.indiwsgi
 
+This module requires Python3 packages skipole, waitress and redis, available from Pypi.
+
 The function to create the wsgi application is:
 
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
@@ -55,8 +57,10 @@ This particular client application is general purpose, and learns all instrument
 redis store, it employs a browser client refresh every ten seconds, and so may not be useful for an
 instrument that updates data at a faster rate.
 
-To run this application, the following is suggested, which requires Python3 packages skipole,
-waitress and redis, available from Pypi.
+If this wsgi application is not used, the waitress and skipole packages are not required by indiredis,
+and do not have to be installed on your machine.
+
+To run the application, the following is suggested.
 
 Assuming you have all the dependencies loaded, including a redis server operating on your localhost,
 open three terminals.

@@ -99,7 +99,8 @@ _LOGLENGTHS = {
 
 
 def receive_from_indiserver(data, rconn):
-    "receives xml data, parses it and stores in redis. Publishes an alert that data is received"
+    "receives xml data, parses it and stores in redis. Publishes the data is received on _FROM_INDI_CHANNEL"
+    global _FROM_INDI_CHANNEL
     if rconn is None:
         return
     # this timestamp is the time at which the data is received
@@ -149,6 +150,10 @@ def receive_from_indiserver(data, rconn):
     elif root.tag == "setBLOBVector":
         blob_vector = BLOBVector.update_from_setvector(rconn, root)
         blob_vector.log(rconn, timestamp)
+    # and publishes the data received
+    rconn.publish(_FROM_INDI_CHANNEL, data)
+
+
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):

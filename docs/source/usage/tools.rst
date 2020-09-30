@@ -29,9 +29,10 @@ This function reads logs from the logdata key stores. See :ref:`logs`.
 
 .. autofunction:: indiredis.tools.logs
 
+.. _sending:
+
 Sending values
 ^^^^^^^^^^^^^^
-
 
 The following functions create the XML elements, and uses redis to publish the XML on the to_indi_channel.
 This is picked up by the inditoredis process (which subscribes to the to_indi_channel), and
