@@ -556,6 +556,7 @@ class NumberVector(ParentProperty):
         for element in self.elements.values():
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
+            mapping["float_number"] = element.float_number()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
         super().write(rconn)
 
@@ -568,6 +569,7 @@ class NumberVector(ParentProperty):
             element.set_value(child)   # change its value to that given by the xml child
             mapping = {key:value for key,value in element.__dict__.items()}
             mapping["formatted_number"] = element.formatted_number()
+            mapping["float_number"] = element.float_number()
             rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
         super().update(rconn, vector)
 
@@ -595,8 +597,30 @@ class NumberElement(ParentElement):
 
     def formatted_number(self):
         """Returns the string of the number using the format value"""
-        # Splits the number into a negative flag and three sexagesimal parts
-        # then calls self._sexagesimal or self._printf to create the formatted string
+        # Calls self._sexagesimal or self._printf to create the formatted string
+        # convert the number to a formatted string
+        if self.format.startswith("%") and self.format.endswith("m"):
+            return self._sexagesimal()
+        else:
+            return self._printf()
+
+
+    def float_number(self):
+        """Returns the float of the number value"""
+        negative, number_list = self._parse_number()
+        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
+        if negative:
+            value = -1 * value
+        return value
+
+
+    def _parse_number(self):
+        """Splits the value into a negative flag and three sexagesimal parts
+           Returns negative,number_list where negative is True if the number is negative
+           and number list is an item of three numbers, number_list[0] is degrees
+           number_list[1] is minutes, number_list[2] is seconds. Any of the three values could be
+           a float or integer
+           """
         value = self.value
         # negative is True, if the value is negative
         negative = value.startswith("-")
@@ -626,15 +650,12 @@ class NumberElement(ParentElement):
             except ValueError:
                 num = float(part)
             number_list.append(num)
-        # convert the number to a formatted string
-        if self.format.startswith("%") and self.format.endswith("m"):
-            return self._sexagesimal(negative, number_list)
-        else:
-            return self._printf(negative, number_list)
+        return negative, number_list
 
 
-    def _sexagesimal(self, negative, number_list):
+    def _sexagesimal(self):
         "Create string of the number according to the given format"
+        negative, number_list = self._parse_number()
         # degrees and minutes should be integers
         if not isinstance(number_list[0], int):
             # its a float, so get integer part and fraction part
@@ -693,15 +714,12 @@ class NumberElement(ParentElement):
         l = len(number)
         if w>l:
             number = " "*(w-l) + number
-
         return number
 
 
-    def _printf(self, negative, number_list):
+    def _printf(self):
         "Create string of the number according to the given format"
-        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
-        if negative:
-            value = -1 * value
+        value = self.float_number()
         return self.format % value
 
 

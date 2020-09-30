@@ -139,6 +139,7 @@ For a number element of a NumberVector, additional fields are:
 
     * format : A format string, defining how the number should appear
     * formatted_number : The value, formatted as per the format string
+    * float_number : The value as a float (parsed from sexagesimal if necessary)
     * min : minimal value
     * max : maximum value, ignore if min == max
     * step : allowed increments, ignore if 0
