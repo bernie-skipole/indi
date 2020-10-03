@@ -1,5 +1,5 @@
 
-from base64 import urlsafe_b64decode
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 from skipole import FailPage
 
@@ -10,10 +10,14 @@ from ... import tools
 # propertyname
 # sectionindex
 
+def _safekey(key):
+    """Provides a base64 encoded key from a given key"""
+    b64binarydata = urlsafe_b64encode(key.encode('utf-8')).rstrip(b"=")  # removes final '=' padding
+    return b64binarydata.decode('ascii')
+
 
 def _fromsafekey(safekey):
-    """When setting a widgfield with a dictionary, a safe dictionary key is set, this decodes
-       the original key from the safe key"""
+    """Decodes a base64 encoded key"""
     b64binarydata = safekey.encode('utf-8') # get the received data and convert to binary
     # add padding
     b64binarydata = b64binarydata + b"=" * (4-len(b64binarydata)%4)
@@ -215,3 +219,257 @@ def set_number(skicall):
     skicall.call_data["status"] = f"Change to property {propertyname} has been submitted"
 
 
+def up_number(skicall):
+    "An arrow up has been pressed to increment a numeric value on the page only - but not yet to be submitted"
+    if skicall.ident_data:
+        devicename = skicall.call_data["device"]
+    else:
+        raise FailPage("Unknown device")
+
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+
+    received_data = skicall.submit_dict['received_data']
+
+    if len(received_data) != 2:
+        raise FailPage("Unknown property")
+
+    # example of  received_data
+    #
+    # {
+    # ('property_10', 'nvinputtable', 'up_getfield1'): XXXXXXXXXXX,  safekey of propertyname, element index, elementname
+    # ('property_10', 'nvinputtable', 'up_getfield2'): current value
+    # }
+
+    getfield1 = ''
+    getfield2 = ''
+    propertyindex = ''
+
+    for key, value in received_data.items():
+        if (len(key) != 3) or (key[1] != 'nvinputtable'):
+            raise FailPage("Unknown property")
+        if key[2] == 'up_getfield1':
+            getfield1 = value
+        elif key[2] == 'up_getfield2':
+            getfield2 = value
+        else:
+            raise FailPage("Unknown element/value")
+        if propertyindex:
+            if propertyindex != key[0]:
+                raise FailPage("Unknown element/value")
+        else:
+            propertyindex = key[0]
+
+    if (not getfield1) or (not getfield2):
+        raise FailPage("Unknown element/value")
+    parts = _fromsafekey(getfield1).split("\n")
+    if len(parts) != 3:
+        raise FailPage("Unknown element/value")
+    propertyname = parts[0]
+    try:
+        elementindex = int(parts[1])
+    except:
+        raise FailPage("Unknown element/value")
+    elementname = parts[2]
+
+    print(f"device : {devicename}")
+    print(f"property : {propertyname}")
+    print(f"element : {elementname}")
+    print(f"value : {getfield2}")
+
+    # convert numeric value to float
+    fvalue = tools.number_to_float(getfield2)
+
+    # get element properties -  a dictionary of element attributes for the given element, property and device
+    element =  tools.elements_dict(rconn, redisserver, elementname, propertyname, devicename)
+    if not element:
+        raise FailPage("Unknown element/value")
+    # get step and minimum/max
+    step = element['float_step']
+    if not step:
+        raise FailPage("Invalid action")
+    minimum = element['float_min']
+    maximum = element['float_max']
+    newval = fvalue + step
+    if maximum > minimum:
+        if newval > maximum:
+            newval = maximum
+    if newval < minimum:
+        newval = minimum
+    # set newval in the widget
+
+    # get elements sorted by label
+    elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
+    enumber = len(elements)
+
+    # hide or not the up down arrow keys
+    up_hide = []
+    down_hide = []
+    # up down keys need to identify the element, and the current requested value
+    up_getfield2 = []
+    down_getfield2 = []
+    inputdict = {}
+
+    for index in range(enumber):
+        if index == elementindex:
+            # This element is being changed
+            if newval >= maximum:
+                up_hide.append(True)
+            else:
+                up_hide.append(False)
+            if newval <= minimum:
+                down_hide.append(True)
+            else:
+                down_hide.append(False)
+            up_getfield2.append(str(newval))  ######### this should be formatted
+            down_getfield2.append(str(newval))  ######### this should be formatted
+            inputdict[_safekey(elementname)] = str(newval) ######### this should be formatted
+        else:
+            # This element is unchanged
+            up_hide.append(None)
+            down_hide.append(None)
+            up_getfield2.append(None)
+            down_getfield2.append(None)
+            # elements[index] gives a dictionary of the element at this index position, sorted by label
+            # and ['name'] gives it by name. Setting the inputdict value to None means no change
+            inputdict[_safekey(elements[index]['name'])] = None
+ 
+    skicall.page_data[propertyindex,'nvinputtable', 'inputdict'] = inputdict
+    skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
+    skicall.page_data[propertyindex,'nvinputtable', 'up_getfield2'] = up_getfield2
+    skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
+    skicall.page_data[propertyindex,'nvinputtable', 'down_getfield2'] = down_getfield2
+    
+
+
+
+def down_number(skicall):
+    "An arrow down has been pressed to decrement a numeric value on the page only - but not yet to be submitted"
+    if skicall.ident_data:
+        devicename = skicall.call_data["device"]
+    else:
+        raise FailPage("Unknown device")
+
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+
+    received_data = skicall.submit_dict['received_data']
+
+    if len(received_data) != 2:
+        raise FailPage("Unknown property")
+
+    # example of  received_data
+    #
+    # {
+    # ('property_10', 'nvinputtable', 'down_getfield1'): XXXXXXXXXXX,  safekey of propertyname, element index, elementname
+    # ('property_10', 'nvinputtable', 'down_getfield2'): current value
+    # }
+
+    getfield1 = ''
+    getfield2 = ''
+    propertyindex = ''
+
+    for key, value in received_data.items():
+        if (len(key) != 3) or (key[1] != 'nvinputtable'):
+            raise FailPage("Unknown property")
+        if key[2] == 'down_getfield1':
+            getfield1 = value
+        elif key[2] == 'down_getfield2':
+            getfield2 = value
+        else:
+            raise FailPage("Unknown element/value")
+        if propertyindex:
+            if propertyindex != key[0]:
+                raise FailPage("Unknown element/value")
+        else:
+            propertyindex = key[0]
+
+    if (not getfield1) or (not getfield2):
+        raise FailPage("Unknown element/value")
+    parts = _fromsafekey(getfield1).split("\n")
+    if len(parts) != 3:
+        raise FailPage("Unknown element/value")
+    propertyname = parts[0]
+    try:
+        elementindex = int(parts[1])
+    except:
+        raise FailPage("Unknown element/value")
+    elementname = parts[2]
+
+    print(f"device : {devicename}")
+    print(f"property : {propertyname}")
+    print(f"element : {elementname}")
+    print(f"value : {getfield2}")
+
+    # convert numeric value to float
+    fvalue = tools.number_to_float(getfield2)
+
+    # get element properties -  a dictionary of element attributes for the given element, property and device
+    element =  tools.elements_dict(rconn, redisserver, elementname, propertyname, devicename)
+    if not element:
+        raise FailPage("Unknown element/value")
+    # get step and minimum
+    step = element['float_step']
+    if not step:
+        raise FailPage("Invalid action")
+    minimum = element['float_min']
+    maximum = element['float_max']
+    newval = fvalue - step
+    if maximum > minimum:
+        if newval > maximum:
+            newval = maximum
+    if newval < minimum:
+        newval = minimum
+    # set newval in the widget
+
+    # get elements sorted by label
+    elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
+    enumber = len(elements)
+
+    # hide or not the up down arrow keys
+    up_hide = []
+    down_hide = []
+    # up down keys need to identify the element, and the current requested value
+    up_getfield2 = []
+    down_getfield2 = []
+    inputdict = {}
+
+    for index in range(enumber):
+        if index == elementindex:
+            # This element is being changed
+            if newval >= maximum:
+                up_hide.append(True)
+            else:
+                up_hide.append(False)
+            if newval <= minimum:
+                down_hide.append(True)
+            else:
+                down_hide.append(False)
+            up_getfield2.append(str(newval))  ######### this should be formatted
+            down_getfield2.append(str(newval))  ######### this should be formatted
+            inputdict[_safekey(elementname)] = str(newval) ######### this should be formatted
+        else:
+            # This element is unchanged
+            up_hide.append(None)
+            down_hide.append(None)
+            up_getfield2.append(None)
+            down_getfield2.append(None)
+            # elements[index] gives a dictionary of the element attributes at this index position, sorted by label
+            # and ['name'] gives it by name. Setting the inputdict value to None means no change
+            inputdict[_safekey(elements[index]['name'])] = None
+ 
+    skicall.page_data[propertyindex,'nvinputtable', 'inputdict'] = inputdict
+    skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
+    skicall.page_data[propertyindex,'nvinputtable', 'up_getfield2'] = up_getfield2
+    skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
+    skicall.page_data[propertyindex,'nvinputtable', 'down_getfield2'] = down_getfield2
+    
+
+
+    
+
+    
+
+
+
+    

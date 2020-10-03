@@ -12,8 +12,7 @@ from .setvalues import set_state
 
 
 def _safekey(key):
-    """When setting a widgfield with a dictionary, it is necessary to have a safe dictionary key, this creates
-       a base64 encoded key from a given key"""
+    """Provides a base64 encoded key from a given key"""
     b64binarydata = urlsafe_b64encode(key.encode('utf-8')).rstrip(b"=")  # removes final '=' padding
     return b64binarydata.decode('ascii')
 
@@ -286,17 +285,59 @@ def _show_numbervector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'nvinputtable', 'show'] = True
         col1 = []
         col2 = []
+        # hide or not the up down arrow keys
+        up_hide = []
+        down_hide = []
+        # up down keys need to identify the element, and the current requested value
+        up_getfield1 = []
+        up_getfield2 = []
+        down_getfield1 = []
+        down_getfield2 = []
+
+
         inputdict = {}
         maxsize = 0
-        for eld in element_list:
+        for elindex, eld in enumerate(element_list):
+            # elindex will be used to get the number of the element as sorted on the table
+            # and will be sent with the arrows get field
             col1.append(eld['label'] + ":")
             col2.append(eld['formatted_number'])
             inputdict[_safekey(eld['name'])] = eld['formatted_number']
+            # make 1st getfield a combo of propertyname, element index, element name
+            getfield1 = _safekey(ad['name'] + "\n" + str(elindex) + "\n" + eld['name'])
+            up_getfield1.append(getfield1)
+            up_getfield2.append(eld['formatted_number'])
+            down_getfield1.append(getfield1)
+            down_getfield2.append(eld['formatted_number'])
+            if eld['step'] == '0':
+                # no steps
+                up_hide.append(True)
+                down_hide.append(True)
+            elif eld['float_number'] <= eld['float_min']:
+                # at the minimum, hide the down arrow
+                up_hide.append(False)
+                down_hide.append(True)
+            elif (eld['max'] != eld['min']) and (eld['float_number'] >= eld['float_max']):
+                # at the maximum, hide the up arrow
+                up_hide.append(True)
+                down_hide.append(False)
+            else:
+                # steps are not zero and value is between min and max, so show arrows
+                up_hide.append(False)
+                down_hide.append(False)
+
         if len(eld['formatted_number']) > maxsize:
             maxsize = len(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
         skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
         skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+        skicall.page_data['property_'+str(index),'nvinputtable', 'up_hide'] = up_hide
+        skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield1'] = up_getfield1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield2'] = up_getfield2
+        skicall.page_data['property_'+str(index),'nvinputtable', 'down_hide'] = down_hide
+        skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield1'] = down_getfield1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield2'] = down_getfield2
+
         # make the size of the input field match the values set in it
         if maxsize > 30:
             maxsize = 30
@@ -310,7 +351,8 @@ def _show_numbervector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'setnumber', 'sectionindex'] = index
     else:
         # permission is ro
-        # display label : value in a table
+        # display label : value in a table, no form as this table is not submitted
+        skicall.page_data['property_'+str(index),'nvelements', 'show'] = True
         col1 = []
         col2 = []
         for eld in element_list:
@@ -718,12 +760,18 @@ def check_for_device_change(skicall):
             elif ad['perm'] == "rw":
                 # permission is rw
                 col2 = []
+                up_getfield2 = []
+                down_getfield2 = []
                 inputdict = {}
                 for eld in element_list:
                     col2.append(eld['formatted_number'])
+                    up_getfield2.append(eld['formatted_number'])
+                    down_getfield2.append(eld['formatted_number'])
                     inputdict[_safekey(eld['name'])] = eld['formatted_number']
                 skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
                 skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+                skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield2'] = up_getfield2
+                skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield2'] = down_getfield2
             else:
                 # permission is ro
                 col2 = []
@@ -733,8 +781,6 @@ def check_for_device_change(skicall):
         # and since the page has been updated, update the timestamp
         # in call_data so the end_call function can insert it into ident_data
         skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
-
-
 
 
 

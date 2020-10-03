@@ -142,6 +142,7 @@ def properties(rconn, redisserver, device):
 
 def elements(rconn, redisserver, name, device):
     """Returns a list of element names for the given property and device
+    sorted by element names
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
@@ -204,7 +205,14 @@ def elements_dict(rconn, redisserver, elementname, name, device):
     eldict = rconn.hgetall(elkey)
     if not eldict:
         return {}
-    return {k.decode("utf-8"):v.decode("utf-8") for k,v in eldict.items()}
+    result = {}
+    for k,v in eldict.items():
+        key = k.decode("utf-8")
+        value = v.decode("utf-8")
+        if key.startswith("float_"):
+            value = float(value)
+        result[key] = value
+    return result
 
 
 # Two functions to help sort elements by the element label
@@ -481,6 +489,46 @@ def clearredis(rconn, redisserver):
                 rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )
 
 
+def number_to_float(value):
+    """The INDI spec allows a number of different number formats, given any, this returns a float
+
+    :param value: A number string of a float, integer or sexagesimal
+    :type value: String
+    :return:  The number as a float
+    :rtype: Float
+    """
+    # negative is True, if the value is negative
+    negative = value.startswith("-")
+    if negative:
+        value = value.lstrip("-")
+    # Is the number provided in sexagesimal form?
+    if " " in value:
+        parts = value.split(" ")
+    elif ":" in value:
+        parts = value.split(":")
+    elif ";" in value:
+        parts = value.split(";")
+    else:
+        # not sexagesimal
+        parts = [value, "0", "0"]
+    # Any missing parts should have zero
+    if len(parts) == 2:
+        # assume seconds are missing, set to zero
+        parts.append("0")
+    assert len(parts) == 3
+    number_strings = list(x if x else "0" for x in parts)
+    # convert strings to integers or floats
+    number_list = []
+    for part in number_strings:
+        try:
+            num = int(part)
+        except ValueError:
+            num = float(part)
+        number_list.append(num)
+    floatvalue = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
+    if negative:
+        floatvalue = -1 * floatvalue
+    return floatvalue
 
 
 

@@ -42,7 +42,7 @@ if application is None:
     sys.exit(1)
 
 # add skiadmin during development
-# application = indiwsgi.add_skiadmin(application)
+application = indiwsgi.add_skiadmin(application)
 
 # serve the application with the python waitress web server
 webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})

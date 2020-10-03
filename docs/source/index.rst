@@ -3,6 +3,8 @@
 indiredis - an INDI Client
 ==========================
 
+Status: In development, numeric 'step' handling still being written, Blobs still to be done.
+
 .. toctree::
    :maxdepth: 2
 

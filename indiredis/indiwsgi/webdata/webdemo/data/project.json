@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "5.0.1",
+"skipole": "5.0.2",
 "specialpages": {
 "changegroup": 8,
 "checkupdates": 5,
@@ -538,7 +538,7 @@
 "even_class": "",
 "header_class": "w3-theme-d2",
 "odd_class": "",
-"show": true,
+"show": false,
 "title1": "",
 "title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
@@ -585,13 +585,27 @@
 [
 "Widget",
 {
-"class": "inputtables.InputTable1",
+"class": "inputtables.InputTable3",
 "name": "nvinputtable",
 "brief": "Table of input fields",
 "fields": {
 "col1": [],
+"col1_class": "",
 "col2": [],
+"col2_class": "",
+"col3_class": "w3-right-align",
+"col4_class": "w3-left-align",
+"col4_style": "",
+"down_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-border w3-border-black",
+"down_getfield1": [],
+"down_getfield2": [],
+"down_hide": [],
+"down_json_ident": "13",
+"down_link_ident": "no_javascript",
+"down_style": "",
 "header_class": "w3-theme-d2",
+"input_class": "",
+"input_style": "",
 "inputdict": {},
 "maxlength": "",
 "row_classes": [],
@@ -600,6 +614,14 @@
 "title1": "",
 "title2": "",
 "title3": "",
+"title4": "",
+"up_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-border w3-border-black",
+"up_getfield1": [],
+"up_getfield2": [],
+"up_hide": [],
+"up_json_ident": "12",
+"up_link_ident": "no_javascript",
+"up_style": "margin-right:2px;",
 "widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
@@ -2912,6 +2934,48 @@
 "class": "NoOperation",
 "original_args": {
 "target_ident": 2050
+},
+"original_fields": {}
+}
+},
+"numberdown": {
+"ident": 13,
+"brief": "decreases a number by the required step value",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"down_number"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
+"numberup": {
+"ident": 12,
+"brief": "Increase a number by step",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"up_number"
+],
+"target_ident": "general_json"
 },
 "original_fields": {}
 }
