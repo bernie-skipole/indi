@@ -566,4 +566,15 @@ SKIPOLE.inputtables.InputTable3.prototype.eventfunc = function (e) {
 
     };
 
+SKIPOLE.inputtables.InputTable3.prototype.setnumber = function (e, data) {
 
+    // data is the index,
+    // get the data input
+
+var inputtag = $(cells[2]).find('input');
+var getf3 = inputtag.val()
+
+// set this into the two get fields
+
+
+    };

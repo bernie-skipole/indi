@@ -22,6 +22,11 @@ Reading values
 
 .. autofunction:: indiredis.tools.property_elements
 
+.. autofunction:: indiredis.tools.number_to_float
+
+.. autofunction:: indiredis.tools.format_number
+
+
 Reading logs
 ^^^^^^^^^^^^
 
