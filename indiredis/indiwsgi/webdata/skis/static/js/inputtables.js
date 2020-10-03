@@ -333,6 +333,16 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
     var col1 = this.fieldarg_in_result('col1', result, fieldlist);
     var col2 = this.fieldarg_in_result('col2', result, fieldlist);
 
+    var up_getfield1 = this.fieldarg_in_result('up_getfield1', result, fieldlist);
+    var up_getfield2 = this.fieldarg_in_result('up_getfield2', result, fieldlist);
+    var down_getfield1 = this.fieldarg_in_result('down_getfield1', result, fieldlist);
+    var down_getfield2 = this.fieldarg_in_result('down_getfield2', result, fieldlist);
+    var getfield3 = this.fieldarg_in_result('getfield3', result, fieldlist);
+
+    if (getfield3 === undefined) {
+        getfield3 = {};
+        }
+
     var row_classes = this.fieldarg_in_result('row_classes', result, fieldlist);
     var up_hide = this.fieldarg_in_result('up_hide', result, fieldlist);
     var down_hide = this.fieldarg_in_result('down_hide', result, fieldlist);
@@ -353,6 +363,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
             }
         else {
             // for each row
+
             // set its class
             if (row_classes && row_classes.length) {
                 if (row_classes[index] !== null) {
@@ -371,10 +382,46 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     }
                  }
 
+            var inputtag = $(cells[2]).find('input');
+
+            // set the input field equal to values given in getfield3
+            if (getfield3[index] === undefined) {
+                var getf3 = null;
+                }
+            else {
+                 var getf3 = getfield3[index];
+                 }
+
+            if (inputtag) {
+
+                if (getf3 !== null) {
+                    inputtag.val(getf3);
+                    }
+
+                // however if inputdict given, this overrides values given in getf3
+                if (keysonly && keysonly.length) {
+                    let rowkey = keysonly[index];
+                    if (rowkey) {
+                        // set name attribute and val attribute for each input field
+                        if (keysvals[rowkey] !== null) {
+                            inputtag.prop('name', self.formname('inputdict') + "-" + rowkey);
+                            inputtag.val(keysvals[rowkey]);
+                            }
+                        }
+                     }
+
+                // getf3 for the arrows, this should be the value from the input_dict
+                getf3 = inputtag.val()
+                }
+            else {
+                  getf3 = null;
+                 }
+
+
             let a_link = $(cells[3]).find("a");
             let up_link = $(a_link[0]);
             // up_getfield1
-            let up_getfield1 = self.fieldarg_in_result('up_getfield1', result, fieldlist);
+
             if (up_getfield1 && up_getfield1.length) {
                 if (up_getfield1[index] !== null) {
                     let href = up_link.attr('href');
@@ -383,7 +430,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     }
                 }
             // up_getfield2
-            let up_getfield2 = self.fieldarg_in_result('up_getfield2', result, fieldlist);
+
             if (up_getfield2 && up_getfield2.length) {
                 if (up_getfield2[index] !== null) {
                     let href = up_link.attr('href');
@@ -391,6 +438,17 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     up_link.attr('href', url);
                     }
                 }
+
+
+            // getfield3
+            if (getf3 !== null) {
+                let href = up_link.attr('href');
+                let url = self.setgetfield(href, 'getfield3', getf3);
+                up_link.attr('href', url);
+                }
+
+
+
             // up_hide
             if (up_hide && up_hide.length) {
                 if (up_hide[index] !== null) {
@@ -405,7 +463,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
 
             let down_link = $(a_link[1]);
             // down_getfield1
-            let down_getfield1 = self.fieldarg_in_result('down_getfield1', result, fieldlist);
+
             if (down_getfield1 && down_getfield1.length) {
                 if (down_getfield1[index] !== null) {
                     let href = down_link.attr('href');
@@ -414,7 +472,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     }
                 }
             // down_getfield2
-            let down_getfield2 = self.fieldarg_in_result('down_getfield2', result, fieldlist);
+
             if (down_getfield2 && down_getfield2.length) {
                 if (down_getfield2[index] !== null) {
                     let href = down_link.attr('href');
@@ -422,6 +480,14 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     down_link.attr('href', url);
                     }
                 }
+
+            // getfield3
+            if (getf3 !== null) {
+                let href = down_link.attr('href');
+                let url = self.setgetfield(href, 'getfield3', getf3);
+                down_link.attr('href', url);
+                }
+
             // down_hide
             if (down_hide && down_hide.length) {
                 if (down_hide[index] !== null) {
@@ -434,17 +500,6 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                     }
                 }
 
-            if (keysonly && keysonly.length) {
-                let rowkey = keysonly[index];
-                if (rowkey) {
-                    // set name attribute and val attribute for each input field
-                    if (keysvals[rowkey] !== null) {
-                        let inputtag = $(cells[2]).find('input');
-                        inputtag.prop('name', self.formname('inputdict') + "-" + rowkey);
-                        inputtag.val(keysvals[rowkey]);
-                        }
-                    }
-                 }
              index=index+1;
             }
         })

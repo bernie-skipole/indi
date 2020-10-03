@@ -238,11 +238,11 @@ def up_number(skicall):
     #
     # {
     # ('property_10', 'nvinputtable', 'up_getfield1'): XXXXXXXXXXX,  safekey of propertyname, element index, elementname
-    # ('property_10', 'nvinputtable', 'up_getfield2'): current value
+    # ('property_10', 'nvinputtable', 'getfield3'): current value
     # }
 
     getfield1 = ''
-    getfield2 = ''
+    getfield3 = ''
     propertyindex = ''
 
     for key, value in received_data.items():
@@ -250,8 +250,8 @@ def up_number(skicall):
             raise FailPage("Unknown property")
         if key[2] == 'up_getfield1':
             getfield1 = value
-        elif key[2] == 'up_getfield2':
-            getfield2 = value
+        elif key[2] == 'getfield3':
+            getfield3 = value
         else:
             raise FailPage("Unknown element/value")
         if propertyindex:
@@ -260,7 +260,7 @@ def up_number(skicall):
         else:
             propertyindex = key[0]
 
-    if (not getfield1) or (not getfield2):
+    if (not getfield1) or (not getfield3):
         raise FailPage("Unknown element/value")
     parts = _fromsafekey(getfield1).split("\n")
     if len(parts) != 3:
@@ -272,13 +272,8 @@ def up_number(skicall):
         raise FailPage("Unknown element/value")
     elementname = parts[2]
 
-    print(f"device : {devicename}")
-    print(f"property : {propertyname}")
-    print(f"element : {elementname}")
-    print(f"value : {getfield2}")
-
     # convert numeric value to float
-    fvalue = tools.number_to_float(getfield2)
+    fvalue = tools.number_to_float(getfield3)
 
     # get element properties -  a dictionary of element attributes for the given element, property and device
     element =  tools.elements_dict(rconn, redisserver, elementname, propertyname, devicename)
@@ -296,7 +291,8 @@ def up_number(skicall):
             newval = maximum
     if newval < minimum:
         newval = minimum
-    # set newval in the widget
+    # get newval as a formatted string
+    formatted_value = tools.format_number(newval, element['format'])
 
     # get elements sorted by label
     elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
@@ -306,9 +302,8 @@ def up_number(skicall):
     up_hide = []
     down_hide = []
     # up down keys need to identify the element, and the current requested value
-    up_getfield2 = []
-    down_getfield2 = []
     inputdict = {}
+    getfield3values = []
 
     for index in range(enumber):
         if index == elementindex:
@@ -321,24 +316,21 @@ def up_number(skicall):
                 down_hide.append(True)
             else:
                 down_hide.append(False)
-            up_getfield2.append(str(newval))  ######### this should be formatted
-            down_getfield2.append(str(newval))  ######### this should be formatted
-            inputdict[_safekey(elementname)] = str(newval) ######### this should be formatted
+            getfield3values.append(formatted_value)
+            inputdict[_safekey(elementname)] = formatted_value
         else:
             # This element is unchanged
             up_hide.append(None)
             down_hide.append(None)
-            up_getfield2.append(None)
-            down_getfield2.append(None)
+            getfield3values.append(None)
             # elements[index] gives a dictionary of the element at this index position, sorted by label
             # and ['name'] gives it by name. Setting the inputdict value to None means no change
             inputdict[_safekey(elements[index]['name'])] = None
  
     skicall.page_data[propertyindex,'nvinputtable', 'inputdict'] = inputdict
     skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
-    skicall.page_data[propertyindex,'nvinputtable', 'up_getfield2'] = up_getfield2
     skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
-    skicall.page_data[propertyindex,'nvinputtable', 'down_getfield2'] = down_getfield2
+    skicall.page_data[propertyindex,'nvinputtable', 'getfield3'] = getfield3values
     
 
 
@@ -362,11 +354,11 @@ def down_number(skicall):
     #
     # {
     # ('property_10', 'nvinputtable', 'down_getfield1'): XXXXXXXXXXX,  safekey of propertyname, element index, elementname
-    # ('property_10', 'nvinputtable', 'down_getfield2'): current value
+    # ('property_10', 'nvinputtable', 'getfield3'): current value
     # }
 
     getfield1 = ''
-    getfield2 = ''
+    getfield3 = ''
     propertyindex = ''
 
     for key, value in received_data.items():
@@ -374,8 +366,8 @@ def down_number(skicall):
             raise FailPage("Unknown property")
         if key[2] == 'down_getfield1':
             getfield1 = value
-        elif key[2] == 'down_getfield2':
-            getfield2 = value
+        elif key[2] == 'getfield3':
+            getfield3 = value
         else:
             raise FailPage("Unknown element/value")
         if propertyindex:
@@ -384,7 +376,7 @@ def down_number(skicall):
         else:
             propertyindex = key[0]
 
-    if (not getfield1) or (not getfield2):
+    if (not getfield1) or (not getfield3):
         raise FailPage("Unknown element/value")
     parts = _fromsafekey(getfield1).split("\n")
     if len(parts) != 3:
@@ -396,13 +388,8 @@ def down_number(skicall):
         raise FailPage("Unknown element/value")
     elementname = parts[2]
 
-    print(f"device : {devicename}")
-    print(f"property : {propertyname}")
-    print(f"element : {elementname}")
-    print(f"value : {getfield2}")
-
     # convert numeric value to float
-    fvalue = tools.number_to_float(getfield2)
+    fvalue = tools.number_to_float(getfield3)
 
     # get element properties -  a dictionary of element attributes for the given element, property and device
     element =  tools.elements_dict(rconn, redisserver, elementname, propertyname, devicename)
@@ -420,56 +407,35 @@ def down_number(skicall):
             newval = maximum
     if newval < minimum:
         newval = minimum
-    # set newval in the widget
+    # get newval as a formatted string
+    formatted_value = tools.format_number(newval, element['format'])
 
-    # get elements sorted by label
-    elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
-    enumber = len(elements)
+    # get number of elements
+    enumber = len(tools.elements(rconn, redisserver, propertyname, devicename))
 
-    # hide or not the up down arrow keys
-    up_hide = []
-    down_hide = []
-    # up down keys need to identify the element, and the current requested value
-    up_getfield2 = []
-    down_getfield2 = []
-    inputdict = {}
+    # hide or not the up down arrow keys, create lists with the right number of entries
+    up_hide = [None] * enumber
+    down_hide = [None] * enumber
+    getfield3values = [None] * enumber
 
-    for index in range(enumber):
-        if index == elementindex:
-            # This element is being changed
-            if newval >= maximum:
-                up_hide.append(True)
-            else:
-                up_hide.append(False)
-            if newval <= minimum:
-                down_hide.append(True)
-            else:
-                down_hide.append(False)
-            up_getfield2.append(str(newval))  ######### this should be formatted
-            down_getfield2.append(str(newval))  ######### this should be formatted
-            inputdict[_safekey(elementname)] = str(newval) ######### this should be formatted
-        else:
-            # This element is unchanged
-            up_hide.append(None)
-            down_hide.append(None)
-            up_getfield2.append(None)
-            down_getfield2.append(None)
-            # elements[index] gives a dictionary of the element attributes at this index position, sorted by label
-            # and ['name'] gives it by name. Setting the inputdict value to None means no change
-            inputdict[_safekey(elements[index]['name'])] = None
- 
-    skicall.page_data[propertyindex,'nvinputtable', 'inputdict'] = inputdict
+    # set this element to change, all others remain at None
+    if newval >= maximum:
+        up_hide[elementindex] = True
+    else:
+        up_hide[elementindex] = False
+    if newval <= minimum:
+        down_hide[elementindex] = True
+    else:
+        down_hide[elementindex] = False
+    getfield3values[elementindex] = formatted_value
+
     skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
-    skicall.page_data[propertyindex,'nvinputtable', 'up_getfield2'] = up_getfield2
     skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
-    skicall.page_data[propertyindex,'nvinputtable', 'down_getfield2'] = down_getfield2
+    skicall.page_data[propertyindex,'nvinputtable', 'getfield3'] = getfield3values
     
 
 
     
 
     
-
-
-
     

@@ -288,11 +288,9 @@ def _show_numbervector(skicall, index, ad):
         # hide or not the up down arrow keys
         up_hide = []
         down_hide = []
-        # up down keys need to identify the element, and the current requested value
+        # up down keys need to identify the element
         up_getfield1 = []
-        up_getfield2 = []
         down_getfield1 = []
-        down_getfield2 = []
 
 
         inputdict = {}
@@ -306,9 +304,7 @@ def _show_numbervector(skicall, index, ad):
             # make 1st getfield a combo of propertyname, element index, element name
             getfield1 = _safekey(ad['name'] + "\n" + str(elindex) + "\n" + eld['name'])
             up_getfield1.append(getfield1)
-            up_getfield2.append(eld['formatted_number'])
             down_getfield1.append(getfield1)
-            down_getfield2.append(eld['formatted_number'])
             if eld['step'] == '0':
                 # no steps
                 up_hide.append(True)
@@ -333,10 +329,8 @@ def _show_numbervector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
         skicall.page_data['property_'+str(index),'nvinputtable', 'up_hide'] = up_hide
         skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield1'] = up_getfield1
-        skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield2'] = up_getfield2
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_hide'] = down_hide
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield1'] = down_getfield1
-        skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield2'] = down_getfield2
 
         # make the size of the input field match the values set in it
         if maxsize > 30:
@@ -760,18 +754,12 @@ def check_for_device_change(skicall):
             elif ad['perm'] == "rw":
                 # permission is rw
                 col2 = []
-                up_getfield2 = []
-                down_getfield2 = []
                 inputdict = {}
                 for eld in element_list:
                     col2.append(eld['formatted_number'])
-                    up_getfield2.append(eld['formatted_number'])
-                    down_getfield2.append(eld['formatted_number'])
                     inputdict[_safekey(eld['name'])] = eld['formatted_number']
                 skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
                 skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
-                skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield2'] = up_getfield2
-                skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield2'] = down_getfield2
             else:
                 # permission is ro
                 col2 = []

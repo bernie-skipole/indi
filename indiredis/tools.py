@@ -36,7 +36,7 @@ import xml.etree.ElementTree as ET
 
 from datetime import datetime
 
-import re, json
+import re, json, math
 
 REDIS_AVAILABLE = True
 try:
@@ -529,6 +529,72 @@ def number_to_float(value):
     if negative:
         floatvalue = -1 * floatvalue
     return floatvalue
+
+
+def format_number(value, indi_format):
+    """This takes a float, and returns a formatted string
+
+    :param value: A float to be formatted
+    :type value: Float
+    :param indi_format: An INDI number format string
+    :type indi_format: String
+    :return:  The number formatted accordingly
+    :rtype: String
+    """
+    if (not indi_format.startswith("%")) or (not indi_format.endswith("m")):
+        return indi_format % value
+    # sexagesimal format
+    if value<0:
+        negative = True
+        value = abs(value)
+    else:
+        negative = False
+    # number list will be degrees, minutes, seconds
+    number_list = [0,0,0]
+    if isinstance(value, int):
+        number_list[0] = value
+    else:
+        # get integer part and fraction part
+        fractdegrees, degrees = math.modf(value)
+        number_list[0] = int(degrees)
+        mins = 60*fractdegrees
+        fractmins, mins = math.modf(mins)
+        number_list[1] = int(mins)
+        number_list[2] = 60*fractmins
+
+    # so number list is a valid degrees, minutes, seconds
+    # degrees
+    if negative:
+        number = f"-{number_list[0]}:"
+    else:
+        number = f"{number_list[0]}:"
+    # format string is of the form  %<w>.<f>m
+    w,f = indi_format.split(".")
+    w = w.lstrip("%")
+    f = f.rstrip("m")
+    if (f == "3") or (f == "5"):
+        # no seconds, so create minutes value
+        minutes = float(number_list[1]) + number_list[2]/60.0
+        if f == "5":
+            number += f"{minutes:04.1f}"
+        else:
+            number += f"{minutes:02.0f}"
+    else:
+        number += f"{number_list[1]:02d}:"
+        seconds = float(number_list[2])
+        if f == "6":
+            number += f"{seconds:02.0f}"
+        elif f == "8":
+            number += f"{seconds:04.1f}"
+        else:
+            number += f"{seconds:05.2f}"
+
+    # w is the overall length of the string, prepend with spaces to make the length up to w
+    w = int(w)
+    l = len(number)
+    if w>l:
+        number = " "*(w-l) + number
+    return number
 
 
 
