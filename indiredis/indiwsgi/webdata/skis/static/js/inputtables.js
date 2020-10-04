@@ -411,7 +411,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                      }
 
                 // getf3 for the arrows, this should be the value from the input_dict
-                getf3 = inputtag.val()
+                getf3 = inputtag.val();
                 }
             else {
                   getf3 = null;
@@ -566,15 +566,24 @@ SKIPOLE.inputtables.InputTable3.prototype.eventfunc = function (e) {
 
     };
 
-SKIPOLE.inputtables.InputTable3.prototype.setnumber = function (e, data) {
+SKIPOLE.inputtables.InputTable3.prototype.setnewnumber = function (val, rownumber) {
+    // val is the new value set in the input field, which is now to
+    // be put into the getfield3 fields of the arrow links
+    // rownumber is the row on the table affected
 
-    // data is the index,
-    // get the data input
+    let rows = this.widg.find('tr');
+    let cells = $(rows[rownumber]).children();
+    let a_link = $(cells[3]).find("a");
 
-var inputtag = $(cells[2]).find('input');
-var getf3 = inputtag.val()
+    let up_link = $(a_link[0]);
+    let uphref = up_link.attr('href');
+    let upurl = this.setgetfield(uphref, 'getfield3', val);
+    up_link.attr('href', upurl);
 
-// set this into the two get fields
-
-
+    let down_link = $(a_link[1]);
+    let downhref = down_link.attr('href');
+    let downurl = this.setgetfield(downhref, 'getfield3', val);
+    down_link.attr('href', downurl);
     };
+
+

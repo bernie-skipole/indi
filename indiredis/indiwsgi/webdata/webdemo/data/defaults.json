@@ -181,6 +181,15 @@
 "header_class": "w3-theme-d3",
 "widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
 },
+"InputTable3": {
+"col3_class": "w3-right-align",
+"col4_class": "w3-left-align",
+"down_class": "w3-button w3-padding-small w3-small w3-theme-l2 w3-border w3-border-black",
+"header_class": "w3-theme-d2",
+"up_class": "w3-button w3-padding-small w3-small w3-theme-l2 w3-border w3-border-black",
+"up_style": "margin-right:2px;",
+"widget_class": "w3-table w3-bordered w3-centered"
+},
 "InputTable5": {
 "button1_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-margin-left",
 "button2_class": "w3-button w3-padding-small w3-small w3-theme-dark w3-margin-left",
