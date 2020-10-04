@@ -6,10 +6,10 @@ import threading, os, sys
 
 
 ############ these lines only required during development ###########
-skipole_package_location = "/home/bernard/git/skipole"
-
-if skipole_package_location not in sys.path:
-    sys.path.insert(0,skipole_package_location)
+#skipole_package_location = "/home/bernard/git/skipole"
+#
+#if skipole_package_location not in sys.path:
+#    sys.path.insert(0,skipole_package_location)
 #####################################################################
 
 ####### indiserver should be running in a separate process, for example, in another terminal, run:
@@ -42,7 +42,7 @@ if application is None:
     sys.exit(1)
 
 # add skiadmin during development
-application = indiwsgi.add_skiadmin(application)
+#application = indiwsgi.add_skiadmin(application)
 
 # serve the application with the python waitress web server
 webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
