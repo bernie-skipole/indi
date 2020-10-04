@@ -49,7 +49,7 @@ indiwsgi
 
 This module requires Python3 packages skipole and redis, available from Pypi.
 
-The function to create the wsgi application is:
+The function which creates the wsgi application:
 
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
 
