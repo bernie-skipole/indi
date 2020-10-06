@@ -23,7 +23,6 @@ from indiredis import inditoredis, indi_server, redis_server, indiwsgi
 
 from waitress import serve
 
-
 # define the hosts/ports where servers are listenning, these functions return named tuples
 # which are required as arguments to inditoredis() and to indiwsgi.make_wsgi_app()
 
@@ -31,12 +30,11 @@ indi_host = indi_server(host='localhost', port=7624)
 redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
                           to_indi_channel='to_indi', from_indi_channel='from_indi')
 
+# Set a directory of your choice where blobs will be stored
+BLOBS = '/home/bernard/indiblobs'
 
-
-
-
-# create a wsgi application, which requires the redis_host tuple
-application = indiwsgi.make_wsgi_app(redis_host)
+# create a wsgi application
+application = indiwsgi.make_wsgi_app(redis_host, blob_folder=BLOBS)
 if application is None:
     print("Are you sure the skipole framework is installed?")
     sys.exit(1)
@@ -50,6 +48,6 @@ webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127
 webapp.start()
 
 # and start inditoredis
-inditoredis(indi_host, redis_host)
+inditoredis(indi_host, redis_host, blob_folder=BLOBS)
 
 

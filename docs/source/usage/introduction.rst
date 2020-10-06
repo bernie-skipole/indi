@@ -64,7 +64,15 @@ For example, your Python script to import and run this service could be::
 
     # blocking call which runs the service, communicating between indiserver and redis
 
-    inditoredis(indi_host, redis_host)
+    inditoredis(indi_host, redis_host, blob_folder='/home/bernard/indiblobs')
+
+    # Set the blob_folder to a directory of your choice
+
+Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument. As devices are learnt by the client, subdirectories are created with the device names, so with the above example, you will find a directory::
+
+    /home/bernard/indiblobs/device1
+
+holding BLOBs from device1.
 
 indiredis.indiwsgi
 ^^^^^^^^^^^^^^^^^^
@@ -122,9 +130,10 @@ Example Python script running at the redis server::
 
     # blocking call which runs the service, communicating between mqtt and redis
 
-    mqtttoredis(mqtt_host, redis_host)
+    mqtttoredis(mqtt_host, redis_host, blob_folder='/home/bernard/indiblobs')
 
-Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
+    # Set the blob_folder to a directory of your choice
+    # and substitute your own MQTT server ip address for 10.34.167.1
 
 indiredis.tools
 ^^^^^^^^^^^^^^^

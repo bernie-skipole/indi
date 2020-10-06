@@ -13,7 +13,9 @@ redis_host = redis_server(host='localhost', port=6379, db=0, password='', keypre
 
 # blocking call which runs the service, communicating between mqtt and redis
 
-mqtttoredis(mqtt_host, redis_host)
+mqtttoredis(mqtt_host, redis_host, blob_folder='/home/bernard/indiblobs')
+
+# Set the blob_folder to a directory of your choice
 
 
 

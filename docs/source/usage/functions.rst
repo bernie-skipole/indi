@@ -33,7 +33,9 @@ So a minimal script using defaults to run inditoredis could be::
 
     # blocking call which runs the service, communicating between indiserver and redis
 
-    inditoredis(indi_host, redis_host)
+    inditoredis(indi_host, redis_host, blob_folder='/home/bernard/indiblobs')
+
+    # Set the blob_folder to a directory of your choice
 
 The two functions below work together to provide communications via an MQTT server.
 
@@ -84,8 +86,8 @@ In terminal three, run the following web service::
 
     redis_host = redis_server(host='localhost', port=6379)
 
-    # create a wsgi application, which requires the redis_host tuple
-    application = indiwsgi.make_wsgi_app(redis_host)
+    # create a wsgi application, which requires the redis_host tuple and a blob_folder
+    application = indiwsgi.make_wsgi_app(redis_host, blob_folder='/home/bernard/indiblobs')
     if application is None:
         print("Are you sure the skipole framework is installed?")
         sys.exit(1)
@@ -118,8 +120,11 @@ can be run in separate threads from a single script::
     indi_host = indi_server(host='localhost', port=7624)
     redis_host = redis_server(host='localhost', port=6379)
 
-    # create a wsgi application, which requires the redis_host tuple
-    application = indiwsgi.make_wsgi_app(redis_host)
+    # Set a directory of your choice where blobs will be stored
+    BLOBS = '/home/bernard/indiblobs'
+
+    # create a wsgi application
+    application = indiwsgi.make_wsgi_app(redis_host, blob_folder=BLOBS)
     if application is None:
         print("Are you sure the skipole framework is installed?")
         sys.exit(1)
@@ -130,7 +135,7 @@ can be run in separate threads from a single script::
     webapp.start()
 
     # and start inditoredis
-    inditoredis(indi_host, redis_host)
+    inditoredis(indi_host, redis_host, blob_folder=BLOBS)
 
 
 You will still need indiserver to be running first - either started in another terminal, or as a service. On

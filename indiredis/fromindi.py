@@ -19,6 +19,8 @@ from datetime import datetime
 
 from base64 import standard_b64decode, standard_b64encode
 
+from . import tools
+
 
 # All xml data received should be contained in one of the following tags
 TAGS = (b'defTextVector',
@@ -601,153 +603,26 @@ class NumberElement(ParentElement):
         else:
             self.value = child.text.strip()       # remove any newlines around the xml text
 
-
     def formatted_number(self):
         """Returns the string of the number using the format value"""
-        # Calls self._sexagesimal or self._printf to create the formatted string
-        # convert the number to a formatted string
-        if self.format.startswith("%") and self.format.endswith("m"):
-            return self._sexagesimal()
-        else:
-            return self._printf()
-
+        floatvalue = self.float_number()
+        return tools.format_number(floatvalue, self.format)
 
     def float_number(self):
         """Returns the float of the number value"""
-        negative, number_list = self._parse_number(self.value)
-        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
-        if negative:
-            value = -1 * value
-        return value
+        return tools.number_to_float(self.value)
 
     def float_min(self):
         "Returns the float of the min value"
-        negative, number_list = self._parse_number(self.min)
-        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
-        if negative:
-            value = -1 * value
-        return value
+        return tools.number_to_float(self.min)
 
     def float_max(self):
         "Returns the float of the max value"
-        negative, number_list = self._parse_number(self.max)
-        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
-        if negative:
-            value = -1 * value
-        return value
+        return tools.number_to_float(self.max)
 
     def float_step(self):
         "Returns the float of the step value"
-        negative, number_list = self._parse_number(self.step)
-        value = number_list[0] + (number_list[1]/60) + (number_list[2]/360)
-        if negative:
-            value = -1 * value
-        return value
-
-
-    def _parse_number(self, value):
-        """Splits the value into a negative flag and three sexagesimal parts
-           Returns negative,number_list where negative is True if the number is negative
-           and number list is an item of three numbers, number_list[0] is degrees
-           number_list[1] is minutes, number_list[2] is seconds. Any of the three values could be
-           a float or integer
-           """
-        # negative is True, if the value is negative
-        negative = value.startswith("-")
-        if negative:
-            value = value.lstrip("-")
-        # Is the number provided in sexagesimal form?
-        if " " in value:
-            parts = value.split(" ")
-        elif ":" in value:
-            parts = value.split(":")
-        elif ";" in value:
-            parts = value.split(";")
-        else:
-            # not sexagesimal
-            parts = [value, "0", "0"]
-        # Any missing parts should have zero
-        if len(parts) == 2:
-            # assume seconds are missing, set to zero
-            parts.append("0")
-        assert len(parts) == 3
-        number_strings = list(x if x else "0" for x in parts)
-        # convert strings to integers or floats
-        number_list = []
-        for part in number_strings:
-            try:
-                num = int(part)
-            except ValueError:
-                num = float(part)
-            number_list.append(num)
-        return negative, number_list
-
-
-    def _sexagesimal(self):
-        "Create string of the number according to the given format"
-        negative, number_list = self._parse_number(self.value)
-        # degrees and minutes should be integers
-        if not isinstance(number_list[0], int):
-            # its a float, so get integer part and fraction part
-            fractdegrees, degrees = math.modf(number_list[0])
-            number_list[0] = int(degrees)
-            number_list[1] += 60*fractdegrees
-        if not isinstance(number_list[1], int):
-            # its a float, so get integer part and fraction part
-            fractminutes, minutes = math.modf(number_list[1])
-            number_list[1] = int(minutes)
-            number_list[2] += 60*fractminutes
-        # Ensure minutes and seconds are less than 60
-        minutes = 0        
-        while number_list[2] >= 60:
-            number_list[2] -= 60
-            minutes += 1
-        number_list[1] += minutes
-        degrees = 0
-        while number_list[1] >= 60:
-            number_list[1] -= 60
-            degrees += 1
-        number_list[0] += degrees
-        # so number list is a valid degrees, minutes, seconds
-        # degrees
-        if negative:
-            number = f"-{number_list[0]}:"
-        else:
-            number = f"{number_list[0]}:"
-        # format string is of the form  %<w>.<f>m
-        w,f = self.format.split(".")
-        w = w.lstrip("%")
-        f = f.rstrip("m")
-        if (f == "3") or (f == "5"):
-            # no seconds, so create minutes value
-            minutes = float(number_list[1]) + number_list[2]/60.0
-            if f == "5":
-                number += f"{minutes:04.1f}"
-            else:
-                number += f"{minutes:02.0f}"
-        else:
-            number += f"{number_list[1]:02d}:"
-            seconds = float(number_list[2])
-            if f == "6":
-                number += f"{seconds:02.0f}"
-            elif f == "8":
-                number += f"{seconds:04.1f}"
-            else:
-                number += f"{seconds:05.2f}"
-
-        # w is the overall length of the string, prepend with spaces to make the length up to w
-        w = int(w)
-        l = len(number)
-        if w>l:
-            number = " "*(w-l) + number
-        return number
-
-
-    def _printf(self):
-        "Create string of the number according to the given format"
-        value = self.float_number()
-        return self.format % value
-
+        return tools.number_to_float(self.step)
 
     def __str__(self):
         "Returns the formatted number, equivalent to self.formatted_number()"

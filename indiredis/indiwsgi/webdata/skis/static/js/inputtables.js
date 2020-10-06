@@ -392,7 +392,7 @@ SKIPOLE.inputtables.InputTable3.prototype.setvalues = function (fieldlist, resul
                  var getf3 = getfield3[index];
                  }
 
-            if (inputtag) {
+            if (inputtag && inputtag.length) {
 
                 if (getf3 !== null) {
                     inputtag.val(getf3);

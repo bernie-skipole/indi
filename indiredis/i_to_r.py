@@ -108,7 +108,7 @@ async def _indiconnection(loop, rconn, indiserver):
     await asyncio.gather(sent, received)
 
 
-def inditoredis(indiserver, redisserver, log_lengths={}):
+def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     """Blocking call that provides the indiserver - redis conversion
 
     :param indiserver: Named Tuple providing the indiserver parameters
@@ -117,6 +117,8 @@ def inditoredis(indiserver, redisserver, log_lengths={}):
     :type redisserver: namedtuple
     :param log_lengths: provides number of logs to store
     :type log_lengths: dictionary
+    :param blob_folder: Folder where Blobs will be stored
+    :type blob_folder: String
     """
 
 

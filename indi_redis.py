@@ -12,9 +12,10 @@ indi_host = indi_server(host='localhost', port=7624)
 redis_host = redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_',
                           to_indi_channel='to_indi', from_indi_channel='from_indi')
 
-
 # blocking call which runs the service, communicating between indiserver and redis
 
-inditoredis(indi_host, redis_host)
+inditoredis(indi_host, redis_host, blob_folder='/home/bernard/indiblobs')
+
+# Set the blob_folder to a directory of your choice
 
 

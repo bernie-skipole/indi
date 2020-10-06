@@ -74,12 +74,14 @@ def end_call(page_ident, page_type, skicall):
     
 
 
-def make_wsgi_app(redisserver):
+def make_wsgi_app(redisserver, blob_folder=''):
     """Create a wsgi application which can be served by a WSGI compatable web server.
     Reads and writes to redis stores created by indittoredis
 
     :param redisserver: Named Tuple providing the redis server parameters
     :type redisserver: namedtuple
+    :param blob_folder: Folder where Blobs will be stored
+    :type blob_folder: String
     :return: A WSGI callable application
     :rtype: skipole.WSGIApplication
     """
@@ -89,7 +91,7 @@ def make_wsgi_app(redisserver):
 
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)
-    proj_data = {"rconn":rconn, "redisserver":redisserver}
+    proj_data = {"rconn":rconn, "redisserver":redisserver, "blob_folder":blob_folder}
     application = WSGIApplication(project=PROJECT,
                                   projectfiles=PROJECTFILES,
                                   proj_data=proj_data,

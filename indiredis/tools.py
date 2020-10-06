@@ -481,12 +481,16 @@ def clearredis(rconn, redisserver):
         rconn.delete( _key(redisserver, "logdata", "devicemessages", device) )
         property_list = properties(rconn, redisserver, device)
         rconn.delete( _key(redisserver, "properties", device) )
+        rconn.delete( _key(redisserver, "logdata", "properties", device) )
         for name in property_list:
             rconn.delete( _key(redisserver, "attributes", name, device) )
+           rconn.delete( _key(redisserver, "logdata", "attributes", name, device) )
             elements_list = elements(rconn, redisserver, name, device)
             rconn.delete( _key(redisserver, "elements", name, device) )
+            rconn.delete( _key(redisserver, "logdata", "elements", name, device) )
             for elementname in elements_list:
                 rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )
+                rconn.delete( _key(redisserver, "logdata", "elementattributes", elementname, name, device) )
 
 
 def number_to_float(value):
@@ -502,7 +506,9 @@ def number_to_float(value):
     if negative:
         value = value.lstrip("-")
     # Is the number provided in sexagesimal form?
-    if " " in value:
+    if value == "":
+        parts = [0, 0, 0]
+    elif " " in value:
         parts = value.split(" ")
     elif ":" in value:
         parts = value.split(":")

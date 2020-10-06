@@ -80,7 +80,7 @@ class _SenderToMQTT():
         # is published, and the data is discarded
 
 
-def mqtttoredis(mqttserver, redisserver, log_lengths={}):
+def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
     """Blocking call that provides the mqtt - redis connection
 
     :param mqttserver: Named Tuple providing the mqtt server parameters
@@ -89,6 +89,8 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}):
     :type redisserver: namedtuple
     :param log_lengths: provides number of logs to store
     :type log_lengths: dictionary
+    :param blob_folder: Folder where Blobs will be stored
+    :type blob_folder: String
     """
 
 

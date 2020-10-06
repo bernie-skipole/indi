@@ -22,11 +22,6 @@ Reading values
 
 .. autofunction:: indiredis.tools.property_elements
 
-.. autofunction:: indiredis.tools.number_to_float
-
-.. autofunction:: indiredis.tools.format_number
-
-
 Reading logs
 ^^^^^^^^^^^^
 
@@ -51,6 +46,18 @@ which then transmits the xml on to indisserver.
 
 .. autofunction:: indiredis.tools.newnumbervector
 
+Utilities
+^^^^^^^^^
+
+.. autofunction:: indiredis.tools.number_to_float
+
+.. autofunction:: indiredis.tools.format_number
+
 .. autofunction:: indiredis.tools.clearredis
+
+The clearredis function is called when inditoredis is started, and deletes all current redis keys, so if you wish to store logs you must implement your own process to copy data from the redis store.
+
+clearredis does not delete the BLOBs folders or contents.
+
 
 
