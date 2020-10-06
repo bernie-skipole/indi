@@ -98,6 +98,8 @@ _LOGLENGTHS = {
                 'blobvector':5
               }
 
+_BLOBFOLDER = ""
+
 
 
 def receive_from_indiserver(data, rconn):
@@ -158,9 +160,9 @@ def receive_from_indiserver(data, rconn):
 
 
 
-def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):
+def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths, blob_folder):
     "Sets the redis key prefix and pubsub channels"
-    global _KEYPREFIX, _TO_INDI_CHANNEL, _FROM_INDI_CHANNEL, _LOGLENGTHS
+    global _KEYPREFIX, _TO_INDI_CHANNEL, _FROM_INDI_CHANNEL, _LOGLENGTHS, _BLOBFOLDER
 
     if key_prefix:
         _KEYPREFIX = key_prefix
@@ -183,6 +185,10 @@ def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths):
             else:
                 new_log_lengths[key]=value
         _LOGLENGTHS.update(new_log_lengths)
+    if blob_folder:
+        _BLOBFOLDER = blob_folder
+    else:
+        _BLOBFOLDER = ""
 
 
 def get_to_indi_channel():

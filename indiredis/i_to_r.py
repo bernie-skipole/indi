@@ -6,7 +6,7 @@
 
    """
 
-import sys, collections, threading, asyncio
+import os, sys, collections, threading, asyncio
 
 from time import sleep
 
@@ -30,20 +30,6 @@ _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
 
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
-
-
-def _open_redis(redisserver):
-    "Opens a redis connection"
-    try:
-        # create a connection to redis
-        rconn = redis.StrictRedis(host=redisserver.host,
-                                  port=redisserver.port,
-                                  db=redisserver.db,
-                                  password=redisserver.password,
-                                  socket_timeout=5)
-    except Exception:
-        return
-    return rconn
 
 
 async def _txtoindi(writer):
@@ -134,10 +120,15 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     # time to start up
     sleep(2)
 
+    # check if the blob_folder exists
+    if not os.path.isdir(blob_folder):
+        # if not, create it
+        os.mkdir(blob_folder)
+
     # set up the redis server
-    rconn = _open_redis(redisserver)
-    # set the prefix to use for redis keys
-    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths)
+    rconn = tools.open_redis(redisserver)
+    # set the fromindi parameters
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths, blob_folder)
 
     # on startup, clear all redis keys
     tools.clearredis(rconn, redisserver)

@@ -6,7 +6,7 @@
 
    """
 
-import sys, threading
+import os, sys, threading
 
 from time import sleep
 
@@ -93,7 +93,6 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
     :type blob_folder: String
     """
 
-
     if not MQTT_AVAILABLE:
         print("Error - Unable to import the Python paho.mqtt.client package")
         sys.exit(1)
@@ -108,10 +107,15 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
     # time to start up
     sleep(2)
 
+    # check if the blob_folder exists
+    if not os.path.isdir(blob_folder):
+        # if not, create it
+        os.mkdir(blob_folder)
+
     # set up the redis server
-    rconn = _open_redis(redisserver)
-    # set the prefix to use for redis keys
-    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths)
+    rconn = tools.open_redis(redisserver)
+    # set the fromindi parameters
+    fromindi.setup_redis(redisserver.keyprefix, redisserver.to_indi_channel, redisserver.from_indi_channel, log_lengths, blob_folder)
 
     # on startup, clear all redis keys
     tools.clearredis(rconn, redisserver)
