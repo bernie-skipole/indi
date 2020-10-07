@@ -252,7 +252,7 @@ class ParentProperty():
         "Set up the object from set... element"
         self.device = device    # name of Device
         self.name = name        # name of Property
-        self.status = False     # read status, will be set to True if items read from redis are ok
+        self._status = False     # read status, will be set to True if items read from redis are ok
         # read attributes from redis
         attribs = rconn.hgetall( key('attributes', name, device) )
         strattribs = {key.decode("utf-8"):value.decode("utf-8") for key,value in attribs.items()}
@@ -322,6 +322,9 @@ class ParentProperty():
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
+        # save updated elements
+        for element in self.elements.values():
+            element.write(rconn, self.device, self.name)
         # save list of element names
         # get list of element names sorted by label
         elementlist = list(self.elements.keys())
@@ -434,13 +437,16 @@ class ParentProperty():
         # create an object of this class
         obj = cls()
         obj.setup_from_redis(rconn, device, name)
-        if not obj.status:
+        if not obj._status:
             return
         return obj
 
 
     def update(self, rconn, vector):
         "Update the object attributes to redis"
+        for child in vector:
+            element = self.elements[child.get("name")]
+            element.update(rconn, self.device, self.name, child)
         # alter self according to the values to be set
         state = vector.get("state")     # set state of Property; Idle, OK, Busy or Alert, no change if absent
         if state:
@@ -522,7 +528,7 @@ class ParentElement():
 
     def setup_from_redis(self, rconn, device, name, element_name):
         self.name = element_name.decode("utf-8")
-        self.status = False     # read status, will be set to True if items read from redis are ok
+        self._status = False     # read status, will be set to True if items read from redis are ok
         attribs = rconn.hgetall(key('elementattributes', self.name, name, device))
         strattribs = {key.decode("utf-8"):value.decode("utf-8") for key,value in attribs.items()}
         if not strattribs:
@@ -530,6 +536,25 @@ class ParentElement():
             return
         self.label = strattribs["label"]
         self._strattribs = strattribs
+
+    def write(self, rconn, device, name):
+        "Writes element attributes to redis"
+        # create dictionary of non-private attributes
+        attribs = {key:val for key,val in self.__dict__.items() if not key.startswith("_")}
+        rconn.hmset(key('elementattributes',self.name, name, device), attribs)
+
+    def update(self, rconn, device, name, child):
+        "update the element, from a vector child, and write to redis"
+        self.set_value(child)   # change value to that given by the xml child
+        self.write(rconn, device, name)
+
+    def set_value(self, child):
+        if (child is None) or (not child.text):
+            self.value = ""
+        else:
+            self.value = child.text.strip()       # remove any newlines around the xml text
+
+
 
 
 
@@ -550,7 +575,6 @@ class TextVector(ParentProperty):
             element.setup_from_def(child)
             self.elements[element.name] = element
 
-
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
@@ -563,28 +587,15 @@ class TextVector(ParentProperty):
         for element_name in elements:
             element = TextElement()
             element.setup_from_redis(rconn, device, name, element_name)
-            if not element.status:
+            if not element._status:
                 # failure to read the element
                 return
             self.elements[element.name] = element
-        self.status = True     # read status set to True, redis read successful
-
-
-
-    def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.elements.values():
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().write(rconn)
-
+        self._status = True     # read status set to True, redis read successful
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
         self.timeout = vector.get("timeout", default = 0)
-        for child in vector:
-            element = self.elements[child.get("name")]
-            element.set_value(child)   # change its value to that given by the xml child
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
 
 
@@ -599,13 +610,7 @@ class TextElement(ParentElement):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
         self.value = self._strattribs["value"]
-        self.status = True
-
-    def set_value(self, child):
-        if (child is None) or (not child.text):
-            self.value = ""
-        else:
-            self.value = child.text.strip()       # remove any newlines around the xml text
+        self._status = True
 
     def __str__(self):
         return self.value
@@ -639,40 +644,16 @@ class NumberVector(ParentProperty):
         for element_name in elements:
             element = NumberElement()
             element.setup_from_redis(rconn, device, name, element_name)
-            if not element.status:
+            if not element._status:
                 # failure to read the element
                 return
             self.elements[element.name] = element
-        self.status = True     # read status set to True, redis read successful
-
-
-    def write(self, rconn):
-        """Saves name, label, format, min, max, step, value, formatted_number, float_number, float_min
-           float_max, float_step in 'elementattributes:<elementname>:<propertyname>:<devicename>'"""
-        for element in self.elements.values():
-            mapping = {key:value for key,value in element.__dict__.items()}
-            mapping["formatted_number"] = element.formatted_number()
-            mapping["float_number"] = element.float_number()
-            mapping["float_min"] = element.float_min()
-            mapping["float_max"] = element.float_max()
-            mapping["float_step"] = element.float_step()
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
-        super().write(rconn)
+        self._status = True     # read status set to True, redis read successful
 
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
         self.timeout = vector.get("timeout", default = 0)
-        for child in vector:
-            element = self.elements[child.get("name")]
-            element.set_value(child)   # change its value to that given by the xml child
-            mapping = {key:value for key,value in element.__dict__.items()}
-            mapping["formatted_number"] = element.formatted_number()
-            mapping["float_number"] = element.float_number()
-            mapping["float_min"] = element.float_min()
-            mapping["float_max"] = element.float_max()
-            mapping["float_step"] = element.float_step()
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), mapping)
         super().update(rconn, vector)
 
 
@@ -698,14 +679,20 @@ class NumberElement(ParentElement):
         self.max = self._strattribs["max"]
         self.step = self._strattribs["step"]
         self.value = self._strattribs["value"]
-        self.status = True
+        self._status = True
 
 
-    def set_value(self, child):
-        if child.text is None:
-            self.value = ""
-        else:
-            self.value = child.text.strip()       # remove any newlines around the xml text
+    def write(self, rconn, device, name):
+        "Writes element attributes to redis"
+        # create dictionary of non-private attributes
+        attribs = {key:val for key,val in self.__dict__.items() if not key.startswith("_")}
+        attribs["formatted_number"] = self.formatted_number()
+        attribs["float_number"] = self.float_number()
+        attribs["float_min"] = self.float_min()
+        attribs["float_max"] = self.float_max()
+        attribs["float_step"] = self.float_step()
+        rconn.hmset(key('elementattributes',self.name, name, device), attribs)
+
 
     def formatted_number(self):
         """Returns the string of the number using the format value"""
@@ -761,32 +748,16 @@ class SwitchVector(ParentProperty):
         for element_name in elements:
             element = SwitchElement()
             element.setup_from_redis(rconn, device, name, element_name)
-            if not element.status:
+            if not element._status:
                 # failure to read the element
                 return
             self.elements[element.name] = element
-        self.status = True     # read status set to True, redis read successful
-
-
-
-
-    def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.elements.values():
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().write(rconn)
-
+        self._status = True     # read status set to True, redis read successful
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
         self.timeout = vector.get("timeout", default = 0)
-        for child in vector:
-            element = self.elements[child.get("name")]
-            element.set_value(child)   # change its value to that given by the xml child
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
-
-
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only or Read-Write"
@@ -810,14 +781,7 @@ class SwitchElement(ParentElement):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
         self.value = self._strattribs["value"]
-        self.status = True
-
-
-    def set_value(self, child):
-        if child.text is None:
-            self.value = ""
-        else:
-            self.value = child.text.strip()       # remove any newlines around the xml text
+        self._status = True
 
 
     def __str__(self):
@@ -849,27 +813,12 @@ class LightVector(ParentProperty):
         for element_name in elements:
             element = LightElement()
             element.setup_from_redis(rconn, device, name, element_name)
-            if not element.status:
+            if not element._status:
                 # failure to read the element
                 return
             self.elements[element.name] = element
-        self.status = True     # read status set to True, redis read successful
+        self._status = True     # read status set to True, redis read successful
 
-
-    def update(self, rconn, vector):
-        "Update the object attributes and changed elements to redis"
-        for child in vector:
-            element = self.elements[child.get("name")]
-            element.set_value(child)   # change its value to that given by the xml child
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().update(rconn, vector)
-
-
-    def write(self, rconn):
-        "Saves name, label, value in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.elements.values():
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().write(rconn)
 
 
 class LightElement(ParentElement):
@@ -884,14 +833,7 @@ class LightElement(ParentElement):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
         self.value = self._strattribs["value"]
-        self.status = True
-
-
-    def set_value(self, child):
-        if child.text is None:
-            self.value = ""
-        else:
-            self.value = child.text.strip()       # remove any newlines around the xml text
+        self._status = True
 
     def __str__(self):
         return self.value
@@ -928,32 +870,18 @@ class BLOBVector(ParentProperty):
         for element_name in elements:
             element = BLOBElement()
             element.setup_from_redis(rconn, device, name, element_name)
-            if not element.status:
+            if not element._status:
                 # failure to read the element
                 return
             self.elements[element.name] = element
-        self.status = True     # read status set to True, redis read successful
+        self._status = True     # read status set to True, redis read successful
 
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
         self.timeout = vector.get("timeout", default = 0)
-        for child in vector:
-            element = self.elements[child.get("name")]
-            element.size = child.get("size")     # number of bytes in decoded and uncompressed BLOB
-            element.format = child.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
-            # If child.text, save standard_b64decode(child.text) to a file
-            # and set the new filepath attribute of the element
-            element.set_file(self.device, self.name, child)
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
         super().update(rconn, vector)
 
-
-    def write(self, rconn):
-        "Saves attributes in 'elementattributes:<elementname>:<propertyname>:<devicename>'"
-        for element in self.elements.values():
-            rconn.hmset(key('elementattributes',element.name, self.name, self.device), element.__dict__)
-        super().write(rconn)
 
     def __str__(self):
         "Creates a string of labels"
@@ -983,7 +911,20 @@ class BLOBElement(ParentElement):
         self.size = self._strattribs["size"]
         self.format = self._strattribs["format"]
         self.filepath = self._strattribs["filepath"]
-        self.status = True
+        self._status = True
+
+    def update(self, rconn, device, name, child):
+        "update the element, from a vector child, and write to redis"
+        self.size = child.get("size")     # number of bytes in decoded and uncompressed BLOB
+        self.format = child.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
+        # If child.text, save standard_b64decode(child.text) to a file
+        # and set the new filepath attribute of the element
+        self.set_file(device, name, child)
+        self.write(rconn, device, name)
+
+    def set_value(self, child):
+        "value is not used for a Blob"
+        return
 
 
     def set_file(self, devicename, propertyname, child):
