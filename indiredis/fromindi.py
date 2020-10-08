@@ -146,23 +146,26 @@ def receive_from_indiserver(data, rconn):
         delprop.log(rconn, timestamp)
     elif root.tag == "setTextVector":
         text_vector = TextVector.update_from_setvector(rconn, root)
-        text_vector.log(rconn, timestamp)
+        if text_vector is not None:
+            text_vector.log(rconn, timestamp)
     elif root.tag == "setNumberVector":
         number_vector = NumberVector.update_from_setvector(rconn, root)
-        number_vector.log(rconn, timestamp)
+        if number_vector is not None:
+            number_vector.log(rconn, timestamp)
     elif root.tag == "setSwitchVector":
         switch_vector = SwitchVector.update_from_setvector(rconn, root)
-        switch_vector.log(rconn, timestamp)
+        if switch_vector is not None:
+            switch_vector.log(rconn, timestamp)
     elif root.tag == "setLightVector":
         light_vector = LightVector.update_from_setvector(rconn, root)
-        light_vector.log(rconn, timestamp)
+        if light_vector is not None:
+            light_vector.log(rconn, timestamp)
     elif root.tag == "setBLOBVector":
         blob_vector = BLOBVector.update_from_setvector(rconn, root)
-        blob_vector.log(rconn, timestamp)
+        if blob_vector is not None:
+            blob_vector.log(rconn, timestamp)
     # and publishes the data received
     rconn.publish(_FROM_INDI_CHANNEL, data)
-
-
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths, blob_folder):
@@ -254,18 +257,16 @@ class ParentProperty():
         self.name = name        # name of Property
         self._status = False     # read status, will be set to True if items read from redis are ok
         # read attributes from redis
-        attribs = rconn.hgetall( key('attributes', name, device) )
-        strattribs = {key.decode("utf-8"):value.decode("utf-8") for key,value in attribs.items()}
-        if not strattribs:
-            self._strattribs = None
+        self._strattribs = self.get_attributes(rconn)
+        # this should be a dictionary of attributes, if not found, it will be an empty dictionary
+        if not self._strattribs:
+            # returns with an empty self._strattribs
             return
-        self.state = strattribs["state"]
-        self.label = strattribs["label"]
-        self.group = strattribs["group"]
-        self.timestamp = strattribs["timestamp"]
-        self.message = strattribs["message"]
-        self._strattribs = strattribs
-
+        self.state = self._strattribs["state"]
+        self.label = self._strattribs["label"]
+        self.group = self._strattribs["group"]
+        self.timestamp = self._strattribs["timestamp"]
+        self.message = self._strattribs["message"]
 
     def _set_permission(self, permission):
         "Sets the possible permissions, Read-Only, Write-Only or Read-Write"
@@ -274,9 +275,8 @@ class ParentProperty():
         else:
             self.perm = 'ro'
 
-
-    @classmethod
-    def get_devices(cls, rconn):
+    @staticmethod
+    def get_devices(rconn):
         "Return a set of device names as saved in redis"
         deviceset = rconn.smembers(key('devices'))
         if not deviceset:
@@ -320,7 +320,7 @@ class ParentProperty():
         rconn.sadd(key('devices'), self.device)                 # add device to 'devices'
         rconn.sadd(key('properties', self.device), self.name)   # add property name to 'properties:<devicename>'
         # Saves the instance attributes to redis, apart from self.elements
-        mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
+        mapping = {key:value for key,value in self.__dict__.items() if (key != "elements") and (not key.startswith("_"))}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
         # save updated elements
         for element in self.elements.values():
@@ -454,7 +454,7 @@ class ParentProperty():
         self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
         self.message = vector.get("message", default = "")
         # Saves the instance attributes to redis, apart from self.elements
-        mapping = {key:value for key,value in self.__dict__.items() if key != "elements"}
+        mapping = {key:value for key,value in self.__dict__.items() if (key != "elements") and (not key.startswith("_"))}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
 
 
@@ -529,19 +529,26 @@ class ParentElement():
     def setup_from_redis(self, rconn, device, name, element_name):
         self.name = element_name.decode("utf-8")
         self._status = False     # read status, will be set to True if items read from redis are ok
-        attribs = rconn.hgetall(key('elementattributes', self.name, name, device))
-        strattribs = {key.decode("utf-8"):value.decode("utf-8") for key,value in attribs.items()}
-        if not strattribs:
-            self._strattribs = None
+        self._strattribs = self.get_attributes(rconn, device, name)
+        if not self._strattribs:
             return
-        self.label = strattribs["label"]
-        self._strattribs = strattribs
+        self.label = self._strattribs["label"]
+
+
+    def get_attributes(self, rconn, device, name):
+        "Returns a dictionary of attributes for this element, given property name and device as saved in redis"
+        attdict = rconn.hgetall(key('elementattributes', self.name, name, device))
+        if not attdict:
+            return {}
+        return {k.decode("utf-8"):v.decode("utf-8") for k,v in attdict.items()}
+
 
     def write(self, rconn, device, name):
         "Writes element attributes to redis"
         # create dictionary of non-private attributes
         attribs = {key:val for key,val in self.__dict__.items() if not key.startswith("_")}
-        rconn.hmset(key('elementattributes',self.name, name, device), attribs)
+        if attribs:
+            rconn.hmset(key('elementattributes',self.name, name, device), attribs)
 
     def update(self, rconn, device, name, child):
         "update the element, from a vector child, and write to redis"
@@ -553,9 +560,6 @@ class ParentElement():
             self.value = ""
         else:
             self.value = child.text.strip()       # remove any newlines around the xml text
-
-
-
 
 
 
@@ -578,12 +582,16 @@ class TextVector(ParentProperty):
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         # the super call has set self._strattribs
         self.perm = self._strattribs["perm"]
         self.timeout = self._strattribs["timeout"]
-
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
+        if not elements:
+            return
         for element_name in elements:
             element = TextElement()
             element.setup_from_redis(rconn, device, name, element_name)
@@ -609,6 +617,9 @@ class TextElement(ParentElement):
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         self.value = self._strattribs["value"]
         self._status = True
 
@@ -636,11 +647,16 @@ class NumberVector(ParentProperty):
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         # the super call has set self._strattribs
         self.perm = self._strattribs["perm"]
         self.timeout = self._strattribs["timeout"]
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
+        if not elements:
+            return
         for element_name in elements:
             element = NumberElement()
             element.setup_from_redis(rconn, device, name, element_name)
@@ -674,6 +690,9 @@ class NumberElement(ParentElement):
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         self.format = self._strattribs["format"]
         self.min = self._strattribs["min"]
         self.max = self._strattribs["max"]
@@ -739,12 +758,17 @@ class SwitchVector(ParentProperty):
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         # the super call has set self._strattribs
         self.perm = self._strattribs["perm"]
         self.rule = self._strattribs["rule"]
         self.timeout = self._strattribs["timeout"]
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
+        if not elements:
+            return
         for element_name in elements:
             element = SwitchElement()
             element.setup_from_redis(rconn, device, name, element_name)
@@ -780,6 +804,9 @@ class SwitchElement(ParentElement):
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         self.value = self._strattribs["value"]
         self._status = True
 
@@ -806,10 +833,15 @@ class LightVector(ParentProperty):
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         # the super call has set self._strattribs
         self.perm = 'ro'
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
+        if not elements:
+            return
         for element_name in elements:
             element = LightElement()
             element.setup_from_redis(rconn, device, name, element_name)
@@ -832,6 +864,9 @@ class LightElement(ParentElement):
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         self.value = self._strattribs["value"]
         self._status = True
 
@@ -862,11 +897,16 @@ class BLOBVector(ParentProperty):
     def setup_from_redis(self, rconn, device, name):
         "Set up the object from set... element"
         super().setup_from_redis(rconn, device, name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         # the super call has set self._strattribs
         self.perm = self._strattribs["perm"]
         self.timeout = self._strattribs["timeout"]
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
+        if not elements:
+            return
         for element_name in elements:
             element = BLOBElement()
             element.setup_from_redis(rconn, device, name, element_name)
@@ -898,7 +938,7 @@ class BLOBElement(ParentElement):
 
 
     def setup_from_def(self, child):
-        "value is a binary value"
+        "Set up element from xml"
         self.size =  child.get("size", default = "")     # number of bytes in decoded and uncompressed BLOB
         self.format =  child.get("format", default = "") # format as a file suffix, eg: .z, .fits, .fits.z
         self.filepath = ""
@@ -908,6 +948,9 @@ class BLOBElement(ParentElement):
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
         super().setup_from_redis(rconn, device, name, element_name)
+        if not self._strattribs:
+            # failed to read attributes
+            return
         self.size = self._strattribs["size"]
         self.format = self._strattribs["format"]
         self.filepath = self._strattribs["filepath"]
