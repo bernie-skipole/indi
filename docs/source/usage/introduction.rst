@@ -68,11 +68,7 @@ For example, your Python script to import and run this service could be::
 
     # Set the blob_folder to a directory of your choice
 
-Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument. As devices are learnt by the client, subdirectories are created with the device names, so with the above example, you will find a directory::
-
-    /home/bernard/indiblobs/device1
-
-holding BLOBs from device1.
+Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument.
 
 indiredis.indiwsgi
 ^^^^^^^^^^^^^^^^^^

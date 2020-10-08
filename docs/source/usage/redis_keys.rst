@@ -128,12 +128,13 @@ For the SwitchVector, an added value is:
 Element Attributes
 ^^^^^^^^^^^^^^^^^^
 
-The keys elementattributes:<elementname>:<propertyname>:<devicename> hold a hash table of attributes of the element. For all elements this is:
+The keys elementattributes:<elementname>:<propertyname>:<devicename> hold a hash table of attributes of the element. For all elements apart from Blob elements this is:
 
     * name : name of the element
     * label : GUI label for the element
     * value : the actual value of the element, i.e. the text for an element of a TextVector
 
+A Blob element has name and label, but not value.
 
 For a number element of a NumberVector, additional fields are:
 
@@ -149,10 +150,13 @@ For a number element of a NumberVector, additional fields are:
 
 Note: as the INDI specification allows various formats for the number value, and for min, max and step values, as well as storing the originals, float values are also stored for each value.
 
-A Blob element has value decoded from base64, but not uncompressed, and additional fields:
+If receiving Blobs are enabled, Blob elements have fields:
 
+    * name : name of the element
+    * label : GUI label for the element
     * format : format as a file suffix, eg: .z, .fits, .fits.z
     * size : number of bytes in decoded and uncompressed BLOB
+    * filepath : path of the file where the Blob has been saved.
 
 
 Redis pubsub

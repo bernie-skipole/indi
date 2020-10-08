@@ -937,20 +937,11 @@ class BLOBElement(ParentElement):
             return
         timenow = datetime.utcnow()
         filename =  timenow.strftime("%Y%m%d%H%M%S_%f") + self.format
-        # check if the parent folders exists
+        # check if the _BLOBFOLDER exists
         if not os.path.isdir(_BLOBFOLDER):
             # if not, create it
             os.mkdir(_BLOBFOLDER)
-        devicefolder = os.path.join(_BLOBFOLDER, devicename)
-        if not os.path.isdir(devicefolder):
-            os.mkdir(devicefolder)
-        propertyfolder = os.path.join(devicefolder, propertyname)
-        if not os.path.isdir(propertyfolder):
-            os.mkdir(propertyfolder)
-        elementfolder = os.path.join(propertyfolder, self.name)
-        if not os.path.isdir(elementfolder):
-            os.mkdir(elementfolder)
-        self.filepath = os.path.join(elementfolder, filename)
+        self.filepath = os.path.join(_BLOBFOLDER, filename)
         with open(self.filepath, 'wb') as f:
             f.write(standard_b64decode(child.text))
 
