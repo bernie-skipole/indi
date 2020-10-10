@@ -550,7 +550,7 @@ def _show_blobvector(skicall, index, ad):
     # list the elements
     contents = []
     for eld in element_list:
-        contents.append(eld['label'] + " : " + eld['value'])
+        contents.append(eld['label'] + " : " + eld['filepath'])
     skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
 
 

@@ -5,6 +5,7 @@
 "version": "0.0.1",
 "skipole": "5.0.3",
 "specialpages": {
+"blobs": 14,
 "changegroup": 8,
 "checkupdates": 5,
 "favicon": 3002,
@@ -2127,6 +2128,324 @@
 "restricted": true,
 "folders": {},
 "pages": {
+"blobs": {
+"ident": 4002,
+"brief": "Blob management page",
+"TemplatePage": {
+"show_backcol": false,
+"last_scroll": true,
+"interval": 0,
+"interval_target": null,
+"catch_to_html": null,
+"lang": "en",
+"backcol": "#ffffff",
+"default_error_widget": [
+"",
+"top_error"
+]
+},
+"head": [
+"Part",
+{
+"tag_name": "head",
+"brief": "The head section of the page",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The charset meta declaration",
+"show": true,
+"attribs": {
+"charset": "utf-8"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The viewport meta declaration",
+"show": true,
+"attribs": {
+"content": "width=device-width, initial-scale=1",
+"name": "viewport"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "title",
+"brief": "The page title element",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Page 4002"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_css",
+"show": true,
+"attribs": {
+"href": "{w3_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_theme_ski_css",
+"show": true,
+"attribs": {
+"href": "{w3_theme_ski_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to jquery_core",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{jquery_core}"
+},
+"parts": []
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to skipole_js",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{skipole_js}"
+},
+"parts": []
+}
+]
+]
+}
+],
+"body": [
+"Part",
+{
+"tag_name": "body",
+"brief": "The body section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-theme-d1"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "containing div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Row of top title and buttons",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Left div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-twothird"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "message",
+"brief": "Shows system message",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "headers.HeaderText2",
+"name": "devicename",
+"brief": "Displays the device name",
+"fields": {
+"clear_error": false,
+"error_class": "w3-panel w3-red",
+"h_class": "",
+"h_style": "text-shadow:1px 1px 0 #444",
+"large_text": "",
+"p_class": "",
+"p_style": "",
+"show": true,
+"show_error": "",
+"small_text": "",
+"widget_class": "w3-container w3-blue",
+"widget_style": ""
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "About enabling blobs",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"TextBlock",
+{
+"textref": "blobs",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": true,
+"linebreaks": true
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Right div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-third"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Home link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-button w3-block w3-theme-d4",
+"href": "{home}",
+"style": "width:15em; margin:2px;"
+},
+"parts": [
+[
+"Text",
+"Devices"
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "getprops",
+"brief": "Calls getproperties",
+"fields": {
+"button_text": "Device Properties",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": true,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "getproperties",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": "width:15em; margin:2px;"
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "properties header",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"BLOB Properties:"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Horizontal rule",
+"show": true
+}
+]
+]
+}
+]
+]
+}
+]
+},
 "devices": {
 "ident": 4001,
 "brief": "Lists devices",
@@ -2751,7 +3070,7 @@
 "get_field3": "",
 "get_field4": "",
 "hide": false,
-"link_ident": "getproperties",
+"link_ident": "blobs",
 "show": true,
 "show_error": "",
 "target": "",
@@ -2872,6 +3191,26 @@
 }
 },
 "pages": {
+"blobs": {
+"ident": 14,
+"brief": "Fills blobs page",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"fail_ident": 4003,
+"submit_list": [
+"webcode",
+"blobs",
+"setup"
+],
+"target_ident": 4002
+},
+"original_fields": {}
+}
+},
 "changegroup": {
 "ident": 8,
 "brief": "Changes displayed group",
@@ -2943,7 +3282,8 @@
 "class": "SubmitData",
 "original_args": {
 "allowed_callers": [
-4003
+4003,
+4002
 ],
 "fail_ident": "home",
 "submit_list": [
