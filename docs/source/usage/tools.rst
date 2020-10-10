@@ -46,6 +46,8 @@ which then transmits the xml on to indisserver.
 
 .. autofunction:: indiredis.tools.newnumbervector
 
+.. autofunction:: indiredis.tools.enableblob
+
 Utilities
 ^^^^^^^^^
 
@@ -57,7 +59,7 @@ Utilities
 
 The clearredis function is called when inditoredis is started, and deletes all current redis keys, so if you wish to store logs you must implement your own process to copy data from the redis store.
 
-clearredis does not delete the BLOBs folders or contents.
+clearredis does not delete the BLOBs folder or contents.
 
 
 

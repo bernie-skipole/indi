@@ -380,7 +380,6 @@ def newswitchvector(rconn, redisserver, name, device, values, timestamp=None):
     return nsvstring
 
 
-
 def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
     """Sends a newTextVector request, returns the xml string sent, or None on failure.
     Values should be a dictionary of element names : text values.
@@ -461,6 +460,56 @@ def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
     except:
         nnvstring = None
     return nnvstring
+
+
+# Command to control whether setBLOBs should be sent to this channel from a given Device. They can
+# be turned off completely by setting Never (the default), allowed to be intermixed with other INDI
+# commands by setting Also or made the only command by setting Only.
+# <!ELEMENT enableBLOB %BLOBenable >
+# <!ATTLIST enableBLOB
+# device %nameValue; #REQUIRED        name of Device
+# name %nameValue; #IMPLIED           name of BLOB Property, or all if absent
+
+# BLOBenable is one of Never|Also|Only
+
+
+def enableblob(rconn, redisserver, name, device, instruction):
+    """Sends an enableBLOB instruction, returns the xml string sent, or None on failure.
+    instruction should be one of Never, Also or Only.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
+    :param name: Property name, if empty applies to all properties
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :param instruction: One of Never, Also or Only
+    :type instruction: String
+    :return:  A string of the xml published, or None on failure
+    :rtype: String
+    """
+    eb = ET.Element('enableBLOB')
+    eb.set("device", device)
+    if name:
+        eb.set("name", name)
+    instruction = instruction.lower().strip()
+    if instruction == "never":
+        eb.text = "Never"
+    elif instruction == "also":
+        eb.text = "Also"
+    elif instruction == "only":
+        eb.text = "Only"
+    else:
+        return
+    ebstring = ET.tostring(eb)
+    try:
+        rconn.publish(redisserver.to_indi_channel, ebstring)
+    except:
+        ebstring = None
+    return ebstring
+
         
     
 def clearredis(rconn, redisserver):
