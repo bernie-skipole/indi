@@ -107,13 +107,12 @@ def make_wsgi_app(redisserver, blob_folder=''):
 
 
 ######## add skiadmin during development
-#from skipole import skiadmin, set_debug
+from skipole import skiadmin, set_debug
 #
-#def add_skiadmin(application):
-#    set_debug(True)
-#    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
-#    application.add_project(skiadmin_application, url='/skiadmin')
-#    return application
-
+def add_skiadmin(application):
+    set_debug(True)
+    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+    application.add_project(skiadmin_application, url='/skiadmin')
+    return application
 
 

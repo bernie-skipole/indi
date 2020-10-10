@@ -91,7 +91,7 @@
 "show": true,
 "show_error": "",
 "target": "",
-"widget_class": "",
+"widget_class": "w3-button w3-block w3-blue",
 "widget_style": ""
 }
 }
@@ -2265,7 +2265,7 @@
 "show": true,
 "hide_if_empty": false,
 "attribs": {
-"class": "w3-theme"
+"class": "w3-theme-d1"
 },
 "parts": [
 [
@@ -2276,17 +2276,44 @@
 "show": true,
 "hide_if_empty": false,
 "attribs": {
-"class": "w3-container"
+"style": "max-width: 60em; margin: auto;"
 },
 "parts": [
 [
-"SectionPlaceHolder",
+"Part",
 {
-"brief": "Shows site header",
-"section_name": "header",
-"placename": "header",
-"multiplier": 0,
-"mtag": "div"
+"tag_name": "div",
+"brief": "container",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-theme-d1"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "site header",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "Site description",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"INDI Client demonstrator"
+]
+]
+}
+]
+]
 }
 ],
 [
@@ -2309,7 +2336,7 @@
 "show": true,
 "show_error": "",
 "target": "",
-"widget_class": "w3-button w3-block w3-theme-d4 w3-right",
+"widget_class": "w3-button w3-block w3-theme-d4",
 "widget_style": "width:20em;"
 }
 }
@@ -2360,14 +2387,6 @@
 [
 "Text",
 "Devices:"
-],
-[
-"ClosedPart",
-{
-"tag_name": "hr",
-"brief": "Horizontal rule",
-"show": true
-}
 ]
 ]
 }
@@ -2401,6 +2420,9 @@
 "placename": "footer",
 "multiplier": 0,
 "mtag": "div"
+}
+]
+]
 }
 ]
 ]
@@ -2548,7 +2570,7 @@
 "show": true,
 "hide_if_empty": false,
 "attribs": {
-"class": "w3-theme"
+"class": "w3-theme-d1"
 },
 "parts": [
 [
@@ -2575,33 +2597,25 @@
 [
 "Part",
 {
-"tag_name": "a",
-"brief": "Home link",
+"tag_name": "div",
+"brief": "Row of top title and buttons",
 "show": true,
 "hide_if_empty": false,
 "attribs": {
-"class": "w3-button w3-block w3-theme-d4 w3-right",
-"href": "{home}",
-"style": "width:20em; margin-top:10px;"
+"class": "w3-row"
 },
 "parts": [
 [
-"Text",
-"Devices"
-]
-]
-}
-],
-[
-"SectionPlaceHolder",
+"Part",
 {
-"brief": "Shows site header",
-"section_name": "header",
-"placename": "header",
-"multiplier": 0,
-"mtag": "div"
-}
-],
+"tag_name": "div",
+"brief": "Left div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-twothird"
+},
+"parts": [
 [
 "Widget",
 {
@@ -2624,31 +2638,6 @@
 [
 "Widget",
 {
-"class": "links.ButtonLink1",
-"name": "getprops",
-"brief": "Calls getproperties",
-"fields": {
-"button_text": "Refresh Properties",
-"clear_error": false,
-"error_class": "w3-button w3-block w3-theme-action",
-"force_ident": true,
-"get_field1": "",
-"get_field2": "",
-"get_field3": "",
-"get_field4": "",
-"hide": false,
-"link_ident": "getproperties",
-"show": true,
-"show_error": "",
-"target": "",
-"widget_class": "w3-button w3-block w3-theme-d4 w3-right",
-"widget_style": "width:20em;"
-}
-}
-],
-[
-"Widget",
-{
 "class": "headers.HeaderText2",
 "name": "devicename",
 "brief": "Displays the device name",
@@ -2656,14 +2645,14 @@
 "clear_error": false,
 "error_class": "w3-panel w3-red",
 "h_class": "",
-"h_style": "",
+"h_style": "text-shadow:1px 1px 0 #444",
 "large_text": "",
 "p_class": "",
 "p_style": "",
 "show": true,
 "show_error": "",
 "small_text": "",
-"widget_class": "",
+"widget_class": "w3-container w3-blue",
 "widget_style": ""
 }
 }
@@ -2685,6 +2674,111 @@
 "widget_class": "w3-section",
 "widget_style": ""
 }
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "Right div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-third"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Home link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-button w3-block w3-theme-d4",
+"href": "{home}",
+"style": "width:15em; margin:2px;"
+},
+"parts": [
+[
+"Text",
+"Devices"
+]
+]
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "getprops",
+"brief": "Calls getproperties",
+"fields": {
+"button_text": "Refresh Properties",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": true,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "getproperties",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": "width:15em; margin:2px;"
+}
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "blobs",
+"brief": "Calls blobpage",
+"fields": {
+"button_text": "BLOB Management",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": true,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "getproperties",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": "width:15em; margin:2px;"
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "h2",
+"brief": "properties header",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Properties:"
+]
+]
 }
 ],
 [
@@ -2716,21 +2810,6 @@
 "widget_class": "w3-modal",
 "widget_style": ""
 }
-}
-],
-[
-"Part",
-{
-"tag_name": "h2",
-"brief": "properties header",
-"show": true,
-"hide_if_empty": false,
-"parts": [
-[
-"Text",
-"Properties:"
-]
-]
 }
 ],
 [

@@ -76,14 +76,17 @@ if __name__ == "__main__":
         print("Are you sure the skipole framework is installed?")
         sys.exit(3)
 
-    # add skiadmin during development
-    #application = indiwsgi.add_skiadmin(application)
+    # add skiadmin during development, and run serve in this thread
+    application = indiwsgi.add_skiadmin(application)
+    serve(application, host = "127.0.0.1", port=8000)
+
+    # comment out lines below during development
 
     # serve the application with the python waitress web server
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+#    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
     # and start it
-    webapp.start()
+#    webapp.start()
 
     # and start inditoredis
-    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=blob_folder)
+#    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=blob_folder)
 
