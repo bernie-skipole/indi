@@ -535,10 +535,11 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'blobvector', 'show'] = True
-    # list the attributes, group, state, perm, timeout, timestamp
+    # list the attributes perm, timeout, timestamp, blobs
     skicall.page_data['property_'+str(index),'bvproperties', 'contents'] = [ "Perm: " + ad['perm'],
                                                                              "Timeout: " + ad['timeout'],
-                                                                             "Timestamp: " + ad['timestamp'] ]
+                                                                             "Timestamp: " + ad['timestamp'],
+                                                                             "Receive BLOB's: " + ad['blobs'] ]
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
 

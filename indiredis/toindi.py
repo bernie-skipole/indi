@@ -33,7 +33,10 @@ _INDI_VERSION = "1.7"
 #    shall henceforth consider the Property state to be Busy
 #
 # So this indredis package sets the state to Busy in the hash table 'attributes:<propertyname>:<devicename>'
-# but does not publish a setXXXVector alert, as this is not from the indiserver
+
+# If enableBLOB is sent, the Busy flag is not set (as it is not clear if this is a 'property')
+# however the redis property blobs attribute is set to Enabled or Disabled
+
 
 
 class SenderLoop():
@@ -52,6 +55,22 @@ class SenderLoop():
         self.keyprefix = redisserver.keyprefix
 
 
+    def __call__(self):
+        "Create the redis pubsub loop"
+        ps = self.rconn.pubsub(ignore_subscribe_messages=True)
+
+        # subscribe with handler
+        ps.subscribe(**{self.channel:self._handle})
+
+        # any data received via the to_indi_channel will be sent to
+        # the _handle method
+
+        # blocks and listens to redis
+        while True:
+            message = ps.get_message()
+            sleep(0.1)
+
+
     def _handle(self, message):
         "data published by the client, to be sent to indiserver"
         # an message is published by the client, giving the command
@@ -65,6 +84,8 @@ class SenderLoop():
             self._set_busy(root)
         elif root.tag == "newBLOBVector":
             self._set_busy(root)
+        elif root.tag == "enableBLOB":
+            self._set_blob_state(root)
         # and transmit the xml data via the sender object
         if data is not None:
             self.sender.append(data)
@@ -72,10 +93,11 @@ class SenderLoop():
 
     def _set_busy(self, vector):
         "Set the property to Busy"
-        attribs = vector.attrib
         # Required properties
-        device = attribs.get("device")    # name of Device
-        name = attribs.get("name")    # name of property
+        device = vector.get("device")    # name of Device
+        name = vector.get("name")    # name of property
+        if (device is None) or (name is None):
+            return
         if self.keyprefix:
             key = self.keyprefix + ":" + "devices"
         else:
@@ -97,24 +119,57 @@ class SenderLoop():
         self.rconn.hset(key, "state", "Busy")
 
 
-
-    def __call__(self):
-        "Create the redis pubsub loop"
-        ps = self.rconn.pubsub(ignore_subscribe_messages=True)
-
-        # subscribe with handler
-        ps.subscribe(**{self.channel:self._handle})
-
-        # any data received via the to_indi_channel will be sent to
-        # the _handle method
-
-        # blocks and listens to redis
-        while True:
-            message = ps.get_message()
-            sleep(0.1)
-
-
-
-
-
+    def _set_blob_state(self, vector):
+        "Sets blobs enabled or disabled"
+        # if instruction is Never, this disables the property blobs attribute
+        # however Also and Only enables it
+        device = vector.get("device")    # name of Device
+        if device is None:
+            return
+        instruction = vector.text
+        if instruction not in ("Never", "Also", "Only"):
+            return
+        name = vector.get("name")    # name of property, could be None
+        if self.keyprefix:
+            key = self.keyprefix + ":" + "devices"
+        else:
+            key = "devices"
+        if not self.rconn.sismember(key, device):
+            # device not recognised
+            return
+        # it is a known device, get all properties
+        if self.keyprefix:
+            key = self.keyprefix + ":properties:" + device
+        else:
+            key = "properties:" + device
+        propertyset = rconn.smembers(key)
+        if not propertyset:
+            return
+        propertylist = list(p.decode("utf-8") for p in propertyset)
+        if name is None:
+            # set blob status in all blob vectors
+            for propertyname in propertylist:
+                if self.keyprefix:
+                    key = self.keyprefix + ":attributes:" + propertyname + ":" + device
+                else:
+                    key = "attributes:" + propertyname + ":" + device
+                blob_status = self.rconn.hget(key, "blobs")
+                if blob_status is None:
+                    # not a blobvector
+                    continue
+                if instruction == "Never":
+                    self.rconn.hset(key, "blobs", "Disabled")
+                else:
+                    self.rconn.hset(key, "blobs", "Enabled")
+        elif name in propertylist:
+            # set blob status for just this property
+            if self.keyprefix:
+                key = self.keyprefix + ":attributes:" + name + ":" + device
+            else:
+                key = "attributes:" + name + ":" + device
+            if instruction == "Never":
+                self.rconn.hset(key, "blobs", "Disabled")
+            else:
+                self.rconn.hset(key, "blobs", "Enabled")
+        
 

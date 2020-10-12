@@ -112,28 +112,28 @@ def receive_from_indiserver(data, rconn):
     root = ET.fromstring(data)
 
     if root.tag == "defTextVector":
-        text_vector = TextVector()         # create a TextVector object
-        text_vector.setup_from_def(root)         # store the received data in a TextVector object
-        text_vector.write(rconn)           # call the write method to store data in redis
+        text_vector = TextVector()                      # create a TextVector object
+        text_vector.setup_from_def(rconn, root)         # store the received data in a TextVector object
+        text_vector.write(rconn)                        # call the write method to store data in redis
         text_vector.log(rconn, timestamp)
     elif root.tag == "defNumberVector":
         number_vector = NumberVector()
-        number_vector.setup_from_def(root)
+        number_vector.setup_from_def(rconn, root)
         number_vector.write(rconn)
         number_vector.log(rconn, timestamp)
     elif root.tag == "defSwitchVector":
         switch_vector = SwitchVector()
-        switch_vector.setup_from_def(root)
+        switch_vector.setup_from_def(rconn, root)
         switch_vector.write(rconn)
         switch_vector.log(rconn, timestamp)
     elif root.tag == "defLightVector":
         light_vector = LightVector()
-        light_vector.setup_from_def(root)
+        light_vector.setup_from_def(rconn, root)
         light_vector.write(rconn)
         light_vector.log(rconn, timestamp)
     elif root.tag == "defBLOBVector":
         blob_vector = BLOBVector()
-        blob_vector.setup_from_def(root)
+        blob_vector.setup_from_def(rconn, root)
         blob_vector.write(rconn)
         blob_vector.log(rconn, timestamp)
     elif root.tag == "message":
@@ -230,7 +230,7 @@ class ParentProperty():
         self.elements = {}
 
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
         self.device = vector.get("device")    # name of Device
         self.name = vector.get("name")        # name of Property
@@ -568,9 +568,9 @@ class ParentElement():
 class TextVector(ParentProperty):
 
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
-        super().setup_from_def(vector)
+        super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
@@ -633,9 +633,9 @@ class TextElement(ParentElement):
 class NumberVector(ParentProperty):
 
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
-        super().setup_from_def(vector)
+        super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
         self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
@@ -743,13 +743,14 @@ class NumberElement(ParentElement):
 
 class SwitchVector(ParentProperty):
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
-        super().setup_from_def(vector)
+        super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
         self.rule = vector.get("rule")                      # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
         self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+
         for child in vector:
             element = SwitchElement()
             element.setup_from_def(child)
@@ -821,9 +822,9 @@ class SwitchElement(ParentElement):
 class LightVector(ParentProperty):
 
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
-        super().setup_from_def(vector)
+        super().setup_from_def(rconn, vector)
         self.perm = 'ro'                      # permission always Read-Only
         for child in vector:
             element = LightElement()
@@ -880,12 +881,19 @@ class LightElement(ParentElement):
 
 class BLOBVector(ParentProperty):
 
-    def setup_from_def(self, vector):
+    def setup_from_def(self, rconn, vector):
         "Set up the object from def... element"
-        super().setup_from_def(vector)
+        super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
         self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+        # as default blobs are disabled, check if this device is already known
+        # in redis and if blobs were previously enabled
+        attribs = self.get_attributes(rconn)
+        if attribs and attribs['blobs'] == "Enabled":
+            self.blobs = "Enabled"
+        else:
+            self.blobs = "Disabled"
         for child in vector:
             element = BLOBElement()
             element.setup_from_def(child)
@@ -903,6 +911,7 @@ class BLOBVector(ParentProperty):
         # the super call has set self._strattribs
         self.perm = self._strattribs["perm"]
         self.timeout = self._strattribs["timeout"]
+        self.blobs = self._strattribs["blobs"]
         # read the elements
         elements = rconn.smembers(key('elements', name, device))
         if not elements:
@@ -920,6 +929,8 @@ class BLOBVector(ParentProperty):
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
         self.timeout = vector.get("timeout", default = 0)
+        # as this is only called when a setBLOBVector is received, it must mean that blobs are enabled
+        self.blobs = "Enabled"
         super().update(rconn, vector)
 
 

@@ -123,6 +123,12 @@ All properties, apart from LightVector also have:
 For the SwitchVector, an added value is:
 
     * rule : one of OneOfMany, AtMostOne, AnyOfMany
+
+For the BlobsVector, an added value is:
+
+    * blobs : one of Enabled, Disabled
+
+Enabled means that, for this property, setBLOBVector tags containing BLOB data may arrive on this connection, Disabled means they should not be received, though it is still possible for BLOBS to arrive via some other process.
     
 
 Element Attributes
