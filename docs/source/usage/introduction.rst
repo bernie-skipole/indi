@@ -1,6 +1,10 @@
 Introduction
 ============
 
+
+The indiredis package
+^^^^^^^^^^^^^^^^^^^^^
+
 Python INDI client package. With option of MQTT transmission.
 
 INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
@@ -14,7 +18,16 @@ See https://indilib.org/ for these components.
 This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
 other direction; can read data published to redis and send it in INDI XML format to indiserver.
 
-This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage. An example web service is provided.
+This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage.
+
+An example web service is provided, assuming you have all the dependencies loaded, including a redis server and indiserver operating on
+your localhost, you can use::
+
+    python3 -m indiredis path/to/blobfolder
+
+This runs the script __main__.py within indiredis, and serves the client at localhost:8000
+
+The blob_folder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored.
 
 indiredis code is developed at https://github.com/bernie-skipole/indi
 
@@ -45,35 +58,17 @@ sudo -H pip3 install paho-mqtt
 
 Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an MQTT server (apt-get install mosquitto)
 
-The indiredis package provides functions which can be used by your own script:
+The indiredis package provides the following which can be used by your own script:
 
-indiredis.inditoredis
-^^^^^^^^^^^^^^^^^^^^^
+**indiredis.inditoredis**
 
 Converts directly between indiserver (port 7624) and redis, converting indi XML to redis key-value storage.
 
-For example, your Python script to import and run this service could be::
+For an example of usage, see :ref:`inditoredis`.
 
-    from indiredis import inditoredis, indi_server, redis_server
+**indiredis.indiwsgi.make_wsgi_app**
 
-    # define the hosts/ports where servers are listenning, these functions return named tuples
-    # which are required as arguments to inditoredis().
-
-    indi_host = indi_server(host='localhost', port=7624)
-    redis_host = redis_server(host='localhost', port=6379)
-
-    # blocking call which runs the service, communicating between indiserver and redis
-
-    inditoredis(indi_host, redis_host, blob_folder='/home/bernard/indiblobs')
-
-    # Set the blob_folder to a directory of your choice
-
-Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument.
-
-indiredis.indiwsgi
-^^^^^^^^^^^^^^^^^^
-
-Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided which creates a Python WSGI application that can provide a demonstration web service. It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
+Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that can provide a demonstration web service. It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
 
 WSGI - https://wsgi.readthedocs.io/en/latest/what.html
 
@@ -86,61 +81,36 @@ An example of creating the wsgi application, and running it with waitress is giv
 As an alternative to the inditoredis function, two further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from the indiserver port 7624 to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service.
 
 
-indiredis.inditomqtt
-^^^^^^^^^^^^^^^^^^^^
+**indiredis.inditomqtt**
 
 Intended to be run on a device with indiserver, appropriate drivers and attached instruments.
 
 Receives/transmitts XML data between indiserver on port 7624 and an MQTT server which ultimately sends data to the remote web/gui server.
 
-Example Python script running on the machine with the connected instruments::
+For an example of usage, see :ref:`inditomqtt`.
 
-    from indiredis import inditomqtt, indi_server, mqtt_server
 
-    # define the hosts/ports where servers are listenning, these functions return named tuples.
-
-    indi_host = indi_server(host='localhost', port=7624)
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
-
-    # blocking call which runs the service, communicating between indiserver and mqtt
-
-    inditomqtt(indi_host, mqtt_host)
-
-Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
-
-indiredis.mqtttoredis
-^^^^^^^^^^^^^^^^^^^^^
+**indiredis.mqtttoredis**
 
 Intended to be run on the same server running a redis service, typically with the gui or web service which can read/write to redis.
 
 Receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
 
-Example Python script running at the redis server::
+For an example of usage, see :ref:`mqtttoredis`.
 
-    from indiredis import mqtttoredis, mqtt_server, redis_server
 
-    # define the hosts/ports where servers are listenning, these functions return named tuples.
+**indiredis.tools**
 
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
-    redis_host = redis_server(host='localhost', port=6379)
-
-    # blocking call which runs the service, communicating between mqtt and redis
-
-    mqtttoredis(mqtt_host, redis_host, blob_folder='/home/bernard/indiblobs')
-
-    # Set the blob_folder to a directory of your choice
-    # and substitute your own MQTT server ip address for 10.34.167.1
-
-indiredis.tools
-^^^^^^^^^^^^^^^
 The tools module contains a set of Python functions, which your gui may use if convenient. These read the indi devices and properties from redis, returning Python lists and dictionaries, and provides functions to transmit indi commands by publishing to redis.
+
+The tools functions are described at :ref:`tools`.
 
 redis - why?
 ^^^^^^^^^^^^
 
 redis is used as:
 
-More than one web process or thread may be running, redis makes data visible to all processes.
+More than one web process or thread may be running, redis makes data from a single connection visible to all processes.
 
 As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes a notification on the from_indi_channel, which can alert a subscribing GUI application that a value has changed.
 
@@ -164,7 +134,7 @@ A disadvantage may be a loss of throughput and response times. An extra layer of
 Security
 ^^^^^^^^
 
-Only open communications is defined in this package, security and authentication is not considered. Transmission between servers could pass over an encrypted VPN or SSH tunnel. Any such implementation is not described here.
+Only open communications are defined in this package, security and authentication are not considered.
 
 The web service provided here does not apply any authentication.
 

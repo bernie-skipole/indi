@@ -17,6 +17,13 @@ associated servers.
 
 The tuples created by the above functions are then used as parameters for the following functions.
 
+.. _inditoredis:
+
+indiredis.inditoredis
+^^^^^^^^^^^^^^^^^^^^^
+
+Converts directly between indiserver (port 7624) and redis, converting indi XML to redis key-value storage.
+
 .. autofunction:: indiredis.inditoredis
 
 For further information on the log_lengths parameter see :ref:`log_lengths`.
@@ -37,11 +44,62 @@ So a minimal script using defaults to run inditoredis could be::
 
     # Set the blob_folder to a directory of your choice
 
+Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument.
+
 The two functions below work together to provide communications via an MQTT server.
+
+.. _inditomqtt:
+
+indiredis.inditomqtt
+^^^^^^^^^^^^^^^^^^^^
+
+Intended to be run on a device with indiserver, appropriate drivers and attached instruments.
+
+Receives/transmitts XML data between indiserver on port 7624 and an MQTT server which ultimately sends data to the remote web/gui server.
 
 .. autofunction:: indiredis.inditomqtt
 
+Example Python script running on the machine with indiserver and the connected instruments::
+
+    from indiredis import inditomqtt, indi_server, mqtt_server
+
+    # define the hosts/ports where servers are listenning, these functions return named tuples.
+
+    indi_host = indi_server(host='localhost', port=7624)
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+
+    # blocking call which runs the service, communicating between indiserver and mqtt
+
+    inditomqtt(indi_host, mqtt_host)
+
+Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
+
+.. _mqtttoredis:
+
+indiredis.mqtttoredis
+^^^^^^^^^^^^^^^^^^^^^
+
+Intended to be run on the same server running a redis service, typically with the gui or web service which can read/write to redis.
+
+Receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
+
 .. autofunction:: indiredis.mqtttoredis
+
+Example Python script running at the redis server::
+
+    from indiredis import mqtttoredis, mqtt_server, redis_server
+
+    # define the hosts/ports where servers are listenning, these functions return named tuples.
+
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+    redis_host = redis_server(host='localhost', port=6379)
+
+    # blocking call which runs the service, communicating between mqtt and redis
+
+    mqtttoredis(mqtt_host, redis_host, blob_folder='/path/to/blob_folder')
+
+    # Set the blob_folder to a directory of your choice
+    # and substitute your own MQTT server ip address for 10.34.167.1
 
 .. _web_client:
 
@@ -79,7 +137,7 @@ Open three terminals.
 
 In terminal one, run indiserver with the simulated instruments::
 
-    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide
+    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide indi_simulator_gps
 
 In terminal two, run inditoredis using the minimal script described above.
 
