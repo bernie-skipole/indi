@@ -9,8 +9,8 @@ Status: In development, Blobs still to be done.
    :maxdepth: 2
 
    usage/introduction
-   usage/redis_keys
    usage/functions.rst
+   usage/redis_keys
    usage/tools.rst
 
 

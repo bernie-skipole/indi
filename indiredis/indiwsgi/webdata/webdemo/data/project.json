@@ -2185,7 +2185,7 @@
 "parts": [
 [
 "Text",
-"Page 4002"
+"Blob folder"
 ]
 ]
 }
@@ -2290,44 +2290,22 @@
 },
 "parts": [
 [
-"Widget",
+"Part",
 {
-"class": "paras.DivPara",
-"name": "message",
-"brief": "Shows system message",
-"fields": {
-"clear_error": false,
-"error_class": "w3-red",
-"para_class": "",
-"para_text": "",
-"pre_line": true,
+"tag_name": "h2",
+"brief": "Page heading",
 "show": true,
-"show_error": "",
-"widget_class": "w3-section",
-"widget_style": ""
-}
-}
-],
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-blue",
+"style": "text-shadow:1px 1px 0 #444"
+},
+"parts": [
 [
-"Widget",
-{
-"class": "headers.HeaderText2",
-"name": "devicename",
-"brief": "Displays the device name",
-"fields": {
-"clear_error": false,
-"error_class": "w3-panel w3-red",
-"h_class": "",
-"h_style": "text-shadow:1px 1px 0 #444",
-"large_text": "",
-"p_class": "",
-"p_style": "",
-"show": true,
-"show_error": "",
-"small_text": "",
-"widget_class": "w3-container w3-blue",
-"widget_style": ""
-}
+"Text",
+"Binary Large Objects"
+]
+]
 }
 ],
 [
@@ -2420,13 +2398,13 @@
 "Part",
 {
 "tag_name": "h2",
-"brief": "properties header",
+"brief": "folder heading",
 "show": true,
 "hide_if_empty": false,
 "parts": [
 [
 "Text",
-"BLOB Properties:"
+"BLOB Files:"
 ]
 ]
 }
@@ -2437,6 +2415,55 @@
 "tag_name": "hr",
 "brief": "Horizontal rule",
 "show": true
+}
+],
+[
+"Widget",
+{
+"class": "paras.DivPara",
+"name": "nothingfound",
+"brief": "Shown if no files found",
+"fields": {
+"clear_error": false,
+"error_class": "w3-red",
+"para_class": "",
+"para_text": "No BLOB files have been found.",
+"pre_line": true,
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "links container",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "max-width: 60em; margin: auto;"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "headers.NavButtons2",
+"name": "bloblinks",
+"brief": "List of links for downloading blobs",
+"fields": {
+"button_class": "w3-bar-item w3-button w3-padding-16",
+"button_style": "",
+"nav_links": [],
+"show": true,
+"widget_class": "w3-bar-block w3-black",
+"widget_style": ""
+}
+}
+]
+]
 }
 ]
 ]
@@ -3061,7 +3088,7 @@
 "name": "blobs",
 "brief": "Calls blobpage",
 "fields": {
-"button_text": "BLOB Management",
+"button_text": "BLOB Folder",
 "clear_error": false,
 "error_class": "w3-button w3-block w3-theme-action",
 "force_ident": true,

@@ -13,25 +13,16 @@ Though INDI is used for astronomical instruments, it can also be used for any in
 
 This project provides a client, not drivers, nor indiserver. It is assumed that indiserver is installed and running, together with appropriate drivers and connected instruments.
 
-See https://indilib.org/ for these components.
+See https://indilib.org/ for further information on indiserver.
 
 This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
-other direction; can read data published to redis and send it in INDI XML format to indiserver.
+other direction; can read data published to redis and send it in INDI XML format to indiserver. A web client is also included which uses these functions.
 
-This is done to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage.
-
-An example web service is provided, assuming you have all the dependencies loaded, including a redis server and indiserver operating on
-your localhost, you can use::
-
-    python3 -m indiredis path/to/blobfolder
-
-This runs the script __main__.py within indiredis, and serves the client at localhost:8000
-
-The blob_folder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored.
+The aim is to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage.
 
 indiredis code is developed at https://github.com/bernie-skipole/indi
 
-Two options are provided :
+indiredis consists of functions which provide two options:
 
 The data can be parsed and transferred between indiserver and redis.
 
@@ -58,6 +49,19 @@ sudo -H pip3 install paho-mqtt
 
 Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an MQTT server (apt-get install mosquitto)
 
+You will also need indiserver, (apt-get install indi-bin) with connected instruments and drivers. For testing, you could use the simulated instruments provided with indiserver. In a terminal run::
+
+    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide indi_simulator_gps
+
+Assuming you have all the dependencies loaded, including a redis server operating on your localhost, in another terminal you can use::
+
+    python3 -m indiredis path/to/blobfolder
+
+This runs the script __main__.py within indiredis, and serves the client at localhost:8000
+
+The path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored.
+
+
 The indiredis package provides the following which can be used by your own script:
 
 **indiredis.inditoredis**
@@ -68,11 +72,13 @@ For an example of usage, see :ref:`inditoredis`.
 
 **indiredis.indiwsgi.make_wsgi_app**
 
-Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that can provide a demonstration web service. It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
+Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that provides a demonstration web service.
+
+It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
 
 WSGI - https://wsgi.readthedocs.io/en/latest/what.html
 
-WSGI is a specification that describes how a web server communicates with web applications. indiwsgi is such an application, and produces html and javascript code which is then served by a web server that understands wsgi.
+WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which is then served by a web server that understands wsgi.
 
 indiwsgi requires the 'skipole' Python framework, available from Pypi, and a wsgi web server, such as 'waitress' also available from Pypi.
 
@@ -112,11 +118,11 @@ redis is used as:
 
 More than one web process or thread may be running, redis makes data from a single connection visible to all processes.
 
-As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes a notification on the from_indi_channel, which can alert a subscribing GUI application that a value has changed.
+As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes the XML data on the from_indi_channel, which could be used to alert a subscribing GUI application that a value has changed.
 
 When the gui wishes to send data, it can publish it on the to_indi_channel, where it will be picked up by this indiredis service, and sent to indiserver.
 
-Redis key/value storage and publication is extremely easy, most web frameworks already use it.
+Redis key/value storage and publication is extremely easy, many web frameworks already use it.
 
 mqtt - why?
 ^^^^^^^^^^^
