@@ -26,6 +26,13 @@ PROJECT = 'webdemo'
 
 def start_call(called_ident, skicall):
     "When a call is initially received this function is called."
+    if called_ident is None:
+        # Force url not found if no called_ident, except if getting a file from blobs
+        if skicall.path.startswith("/blobs/"):
+            # call a responder which returns a file
+            return "get_blob"
+        return
+
     if skicall.ident_data:
         # if ident_data exists, it should be a timestamp and
         # optionally the device name and property group to be displayed
@@ -107,12 +114,12 @@ def make_wsgi_app(redisserver, blob_folder=''):
 
 
 ######## add skiadmin during development
-from skipole import skiadmin, set_debug
+#from skipole import skiadmin, set_debug
 #
-def add_skiadmin(application):
-    set_debug(True)
-    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
-    application.add_project(skiadmin_application, url='/skiadmin')
-    return application
+#def add_skiadmin(application):
+#    set_debug(True)
+#    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+#    application.add_project(skiadmin_application, url='/skiadmin')
+#    return application
 
 
