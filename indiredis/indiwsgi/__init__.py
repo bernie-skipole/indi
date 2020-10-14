@@ -107,7 +107,7 @@ def make_wsgi_app(redisserver, blob_folder=''):
                                   end_call=end_call,
                                   url="/")
 
-    skis_application = skis.makeapp(PROJECTFILES)
+    skis_application = skis.makeapp()
     application.add_project(skis_application, url='/lib')
     return application
 
@@ -118,7 +118,7 @@ def make_wsgi_app(redisserver, blob_folder=''):
 #
 #def add_skiadmin(application):
 #    set_debug(True)
-#    skiadmin_application = skiadmin.makeapp(PROJECTFILES, editedprojname=PROJECT)
+#    skiadmin_application = skiadmin.makeapp(editedprojname=PROJECT)
 #    application.add_project(skiadmin_application, url='/skiadmin')
 #    return application
 

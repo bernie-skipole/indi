@@ -5,16 +5,15 @@
 #
 #
 
+
+import sys, os, threading
+
 ############ these lines only required during development ###########
 #skipole_package_location = "/home/bernard/git/skipole"
 #
 #if skipole_package_location not in sys.path:
 #    sys.path.insert(0,skipole_package_location)
 #####################################################################
-
-
-
-import sys, os, threading
 
 from . import inditoredis, indi_server, redis_server, indiwsgi
 
@@ -77,8 +76,8 @@ if __name__ == "__main__":
         sys.exit(3)
 
     # add skiadmin during development, and run serve in this thread
-    # application = indiwsgi.add_skiadmin(application)
-    # serve(application, host = "127.0.0.1", port=8000)
+    #application = indiwsgi.add_skiadmin(application)
+    #serve(application, host = "127.0.0.1", port=8000)
 
     # comment out lines below during development
 
