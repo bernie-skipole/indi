@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "5.0.3",
+"skipole": "5.0.5",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
