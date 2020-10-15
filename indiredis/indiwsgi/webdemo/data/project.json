@@ -10,7 +10,7 @@
 "checkupdates": 5,
 "favicon": 3002,
 "general_json": 2070,
-"get_blob": 15,
+"get_blob": 2040,
 "getdevices": 2,
 "getproperties": 4,
 "home": 1,
@@ -1148,6 +1148,22 @@
 "restricted": true,
 "folders": {},
 "pages": {
+"blobs": {
+"ident": 2040,
+"brief": "Iterator to serve a blob",
+"RespondPage": {
+"class": "SubmitIterator",
+"original_args": {
+"fail_ident": "blobfolder",
+"submit_list": [
+"webcode",
+"blobs",
+"get_blob"
+]
+},
+"original_fields": {}
+}
+},
 "general_json": {
 "ident": 2070,
 "brief": "General purpose JSON file",
@@ -3235,22 +3251,6 @@
 "setup"
 ],
 "target_ident": 4002
-},
-"original_fields": {}
-}
-},
-"blobs": {
-"ident": 15,
-"brief": "interator to return a blob",
-"RespondPage": {
-"class": "SubmitIterator",
-"original_args": {
-"fail_ident": "blobfolder",
-"submit_list": [
-"webcode",
-"blobs",
-"get_blob"
-]
 },
 "original_fields": {}
 }
