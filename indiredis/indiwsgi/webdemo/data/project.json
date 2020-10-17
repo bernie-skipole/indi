@@ -1026,6 +1026,46 @@
 "widget_style": ""
 }
 }
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "div holding enable button",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-right",
+"style": "width:8em; margin-top:15px; margin-bottom:15px;"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "links.JSONButtonLink",
+"name": "enableblob",
+"brief": "Enables Blob receive",
+"fields": {
+"button_text": "Enable",
+"button_wait_text": "Please wait...",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"get_field1": "",
+"get_field2": "",
+"hide": false,
+"json_ident": "",
+"link_ident": "no_javascript",
+"local_storage": "",
+"session_storage": "",
+"show": true,
+"show_error": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": ""
+}
+}
+]
+]
+}
 ]
 ]
 }
