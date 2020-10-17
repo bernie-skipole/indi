@@ -183,7 +183,7 @@ def refreshproperties(skicall):
             _show_switchvector(skicall, index, ad)
         elif ad['vector'] == "LightVector":
             _show_lightvector(skicall, index, ad)
-        elif ad['vector'] == "BlobVector":
+        elif ad['vector'] == "BLOBVector":
             _show_blobvector(skicall, index, ad)
         else:
             skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
