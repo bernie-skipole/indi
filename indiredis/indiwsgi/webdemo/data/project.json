@@ -954,22 +954,41 @@
 "Part",
 {
 "tag_name": "div",
+"brief": "Holds content as row",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-cell-row"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
 "brief": "Container of BlobVector attributes",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-blue w3-cell w3-mobile",
+"style": "width:30%"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
-"name": "bvproperties",
-"brief": "Blob Vector properties",
+"class": "tables.TwoColTable1",
+"name": "bvtable",
+"brief": "Table of blob vector attributes",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
 "show": true,
-"widget_class": "",
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
 }
@@ -984,21 +1003,31 @@
 "brief": "Container of Blob Elements",
 "show": true,
 "hide_if_empty": false,
+"attribs": {
+"class": "w3-container w3-pale-yellow w3-cell w3-mobile"
+},
 "parts": [
 [
 "Widget",
 {
-"class": "lists.UList1",
+"class": "tables.TwoColTable1",
 "name": "bvelements",
-"brief": "Blob Vector elements",
+"brief": "Table of blob vector elements",
 "fields": {
-"contents": [],
+"col1": [],
+"col2": [],
 "even_class": "",
+"header_class": "w3-theme-d2",
 "odd_class": "",
-"show": true,
-"widget_class": "",
+"show": false,
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
+}
+]
+]
 }
 ]
 ]

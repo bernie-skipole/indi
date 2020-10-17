@@ -535,11 +535,11 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'large_text'] = ad['label']
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'blobvector', 'show'] = True
-    # list the attributes perm, timeout, timestamp, blobs
-    skicall.page_data['property_'+str(index),'bvproperties', 'contents'] = [ "Perm: " + ad['perm'],
-                                                                             "Timeout: " + ad['timeout'],
-                                                                             "Timestamp: " + ad['timestamp'],
-                                                                             "Receive BLOB's: " + ad['blobs'] ]
+
+    # list the attributes, group, state, perm, timeout, timestamp
+    skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:", "Receive BLOB's:"]
+    skicall.page_data['property_'+str(index),'bvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp'], ad['blobs']]
+
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
 
@@ -548,11 +548,23 @@ def _show_blobvector(skicall, index, ad):
     element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
     if not element_list:
         return
-    # list the elements
-    contents = []
-    for eld in element_list:
-        contents.append(eld['label'] + " : " + eld['filepath'])
-    skicall.page_data['property_'+str(index),'bvelements', 'contents'] = contents
+    # permission is one of ro, wo, rw
+    if ad['perm'] == "xx":   # wo
+        pass                               ########## still to do
+    elif ad['perm'] == "yy": #rw
+        pass                               ########## still to do
+    else:
+        # permission is ro
+        # display label : filepath in a table
+        skicall.page_data['property_'+str(index),'bvelements', 'show'] = True
+        col1 = []
+        col2 = []
+        for eld in element_list:
+            col1.append(eld['label'] + ":")
+            col2.append(eld['filepath'])
+        skicall.page_data['property_'+str(index),'bvelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'bvelements', 'col2'] = col2
+
 
 
 
