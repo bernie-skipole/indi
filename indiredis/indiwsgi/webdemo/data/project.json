@@ -1053,7 +1053,7 @@
 "get_field1": "",
 "get_field2": "",
 "hide": false,
-"json_ident": "",
+"json_ident": "5040",
 "link_ident": "no_javascript",
 "local_storage": "",
 "session_storage": "",
@@ -1202,6 +1202,27 @@
 "webcode",
 "setvalues",
 "set_text"
+],
+"target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
+"toggleblob": {
+"ident": 5040,
+"brief": "Toggles enable blob",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"toggle_blob"
 ],
 "target_ident": "general_json"
 },
@@ -3548,6 +3569,26 @@
 "refreshproperties"
 ],
 "target_ident": 4003
+},
+"original_fields": {}
+}
+},
+"toggleblob": {
+"ident": 15,
+"brief": "Toggles Blob between enable or disable",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"fail_ident": "general_json",
+"submit_list": [
+"webcode",
+"setvalues",
+"toggle_blob"
+],
+"target_ident": "general_json"
 },
 "original_fields": {}
 }

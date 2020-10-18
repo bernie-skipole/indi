@@ -434,8 +434,58 @@ def down_number(skicall):
     skicall.page_data[propertyindex,'nvinputtable', 'getfield3'] = getfield3values
     
 
-
     
+def toggle_blob(skicall):
+    "toggles a blob vector between enabled, disabled"
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    if skicall.ident_data:
+        devicename = skicall.call_data["device"]
+    else:
+        raise FailPage("Unknown device")
+    received_data = skicall.submit_dict['received_data']
 
-    
+    # example of  received_data
+    #
+    # {
+    # ('property_4', 'enableblob', 'get_field1'): XXXXXXXXXXX,  safekey of propertyname, Enable or Disable
+    # }
+
+    if len(received_data) != 1:
+        raise FailPage("Invalid data")
+    # get the key, value from the dictionary
+    key,data = next(iter(received_data.items()))
+
+    if (len(key) != 3) or (key[1] != 'enableblob'):
+        raise FailPage("Invalid data")
+    if key[2] == 'get_field1':
+        data = value
+    else:
+        raise FailPage("Invalid data")
+    propertyindex = key[0]
+
+    if not data:
+        raise FailPage("Invalid data")
+    parts = _fromsafekey(data).split("\n")
+    if len(parts) != 2:
+        raise FailPage("Invalid data")
+    propertyname, instruction = parts
+
+    if (instruction != "Enable") and (instruction != "Disable"):
+        raise FailPage("Invalid data")
+
+    if instruction == "Disable":
+         # Instruction is to disable, so publish never to disable
+        data_sent = tools.enableblob(rconn, redisserver, propertyname, devicename, "never")
+        skicall.call_data["status"] = f"BLOB's can no longer be received for {propertyname} via the indiserver port"
+        # set button text to "Enable"
+        skicall.page_data[propertyindex, 'enableblob', 'button_text'] = "Enable"
+        skicall.page_data[propertyindex, 'enableblob', 'get_field1'] = _safekey(propertyname + "\nEnable")
+    else:
+        # toggle to enabled
+        data_sent = tools.enableblob(rconn, redisserver, propertyname, devicename, "also")
+        skicall.call_data["status"] = f"BLOB's can now be received for {propertyname} via the indiserver port"
+        # set button text to "Disable"
+        skicall.page_data[propertyindex, 'enableblob', 'button_text'] = "Disable"
+        skicall.page_data[propertyindex, 'enableblob', 'get_field1'] = _safekey(propertyname + "\nDisable")
     

@@ -543,6 +543,18 @@ def _show_blobvector(skicall, index, ad):
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
 
+    # set the enableblob button
+    if ad['blobs'] == "Enabled":
+        # make get_field1 a combo of propertyname, Disable
+        get_field1 = _safekey(ad['name'] + "\nDisable")
+        skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Disable"
+        skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
+    else:
+        # make get_field1 a combo of propertyname, Enable
+        get_field1 = _safekey(ad['name'] + "\nEnable")
+        skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Enable"
+        skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
+
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
