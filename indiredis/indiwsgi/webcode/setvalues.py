@@ -458,9 +458,7 @@ def toggle_blob(skicall):
 
     if (len(key) != 3) or (key[1] != 'enableblob'):
         raise FailPage("Invalid data")
-    if key[2] == 'get_field1':
-        data = value
-    else:
+    if key[2] != 'get_field1':
         raise FailPage("Invalid data")
     propertyindex = key[0]
 

@@ -50,7 +50,10 @@ async def _rxfromindi(reader, loop, rconn):
     messagetagnumber = None
     while True:
         # get blocks of data from the indiserver
-        data = await reader.readuntil(separator=b'>')
+        try:
+            data = await reader.readuntil(separator=b'>')
+        except asyncio.LimitOverrunError:
+            data = await reader.read(n=32000)
         if not message:
             # data is expected to start with <tag, first strip any newlines
             data = data.strip()
