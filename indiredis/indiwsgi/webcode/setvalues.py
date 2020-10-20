@@ -479,6 +479,7 @@ def toggle_blob(skicall):
         # set button text to "Enable"
         skicall.page_data[propertyindex, 'enableblob', 'button_text'] = "Enable"
         skicall.page_data[propertyindex, 'enableblob', 'get_field1'] = _safekey(propertyname + "\nEnable")
+        skicall.page_data[propertyindex,'bvtable', 'col2'] = [ None, None, None, "Disabled"]
     else:
         # toggle to enabled
         data_sent = tools.enableblob(rconn, redisserver, propertyname, devicename, "also")
@@ -486,4 +487,5 @@ def toggle_blob(skicall):
         # set button text to "Disable"
         skicall.page_data[propertyindex, 'enableblob', 'button_text'] = "Disable"
         skicall.page_data[propertyindex, 'enableblob', 'get_field1'] = _safekey(propertyname + "\nDisable")
+        skicall.page_data[propertyindex,'bvtable', 'col2'] = [ None, None, None, "Enabled"]
     

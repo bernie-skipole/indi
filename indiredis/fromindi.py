@@ -992,10 +992,10 @@ class BLOBElement(ParentElement):
         timenow = datetime.utcnow()
         filename =  timenow.strftime("%Y%m%d%H%M%S_%f") + self.format
         # check if the _BLOBFOLDER exists
-        if not os.path.isdir(_BLOBFOLDER):
+        if not _BLOBFOLDER.exists():
             # if not, create it
-            os.mkdir(_BLOBFOLDER)
-        self.filepath = os.path.join(_BLOBFOLDER, filename)
+            _BLOBFOLDER.mkdir(parents=True)
+        self.filepath = str(_BLOBFOLDER / filename)
         with open(self.filepath, 'wb') as f:
             f.write(standard_b64decode(child.text))
 

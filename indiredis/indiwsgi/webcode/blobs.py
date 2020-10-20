@@ -36,7 +36,7 @@ def setup(skicall):
         skicall.page_data['nothingfound', 'show'] = True
         skicall.page_data['bloblinks', 'show'] = False
         return
-    blobfiles = [f for f in listdir(blob_folder) if isfile(join(blob_folder, f))]
+    blobfiles = [f.name for f in blob_folder.iterdir() if f.is_file()]
     if not blobfiles:
         skicall.page_data['nothingfound', 'show'] = True
         skicall.page_data['bloblinks', 'show'] = False

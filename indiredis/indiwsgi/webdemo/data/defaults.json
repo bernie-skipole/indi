@@ -324,6 +324,11 @@
 "odd_class": "w3-theme-d2",
 "widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
 },
+"Table1_Links": {
+"header_class": "w3-theme-d3",
+"odd_class": "w3-theme-d2",
+"widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
+},
 "Table2_Button": {
 "header_class": "w3-theme-d3",
 "odd_class": "w3-theme-d2",

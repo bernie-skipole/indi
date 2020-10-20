@@ -6,7 +6,7 @@ This module provides a WSGI web application as an example of such a GUI. This ca
 """ 
 
 
-import os, sys
+import os, sys, pathlib
 
 from datetime import datetime
 
@@ -16,6 +16,7 @@ try:
     from skipole import WSGIApplication, use_submit_list
     from skipole import skis
 except:
+    raise
     SKIPOLE_AVAILABLE = False
 
 from .. import tools
@@ -29,8 +30,18 @@ def start_call(called_ident, skicall):
     if called_ident is None:
         # Force url not found if no called_ident, except if getting a file from blobs
         if skicall.path.startswith("/blobs/"):
+            path = pathlib.Path(skicall.path)
+            # there should be three elements / blobs and filename
+            if len(path.parts) != 3:
+                return
+            skicall.page_data['mimetype'] = "application/octet-stream"
+            blob_folder = skicall.proj_data["blob_folder"]
+            if not blob_folder:
+                return
+            # blob_folder is a pathlib.Path object
+            return blob_folder / path.name
             # call a responder which returns a file
-            return "get_blob"
+            #return "get_blob"
         return
 
     if skicall.ident_data:
@@ -95,6 +106,8 @@ def make_wsgi_app(redisserver, blob_folder=''):
     if not SKIPOLE_AVAILABLE:
         return
 
+    if blob_folder:
+        blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
 
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)

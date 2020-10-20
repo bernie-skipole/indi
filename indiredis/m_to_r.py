@@ -6,7 +6,7 @@
 
    """
 
-import os, sys, threading
+import os, sys, threading, pathlib
 
 from time import sleep
 
@@ -107,10 +107,20 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
     # time to start up
     sleep(2)
 
+    if blob_folder:
+        blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
+    else:
+        print("Error - a blob_folder must be given")
+        sys.exit(2)
+
     # check if the blob_folder exists
-    if not os.path.isdir(blob_folder):
+    if not blob_folder.exists():
         # if not, create it
-        os.mkdir(blob_folder)
+        blob_folder.mkdir(parents=True)
+
+    if not blob_folder.is_dir():
+        print("Error - blob_folder already exists and is not a directory")
+        sys.exit(3)
 
     # set up the redis server
     rconn = tools.open_redis(redisserver)
