@@ -2464,8 +2464,8 @@
 "Widget",
 {
 "class": "links.ButtonLink1",
-"name": "getprops",
-"brief": "Calls getproperties",
+"name": "backtoproperties",
+"brief": "Calls refreshproperties",
 "fields": {
 "button_text": "Device Properties",
 "clear_error": false,
@@ -2476,7 +2476,7 @@
 "get_field3": "",
 "get_field4": "",
 "hide": false,
-"link_ident": "getproperties",
+"link_ident": "refreshproperties",
 "show": true,
 "show_error": "",
 "target": "",
@@ -3406,8 +3406,7 @@
 "class": "SubmitData",
 "original_args": {
 "allowed_callers": [
-4003,
-4002
+4003
 ],
 "fail_ident": "home",
 "submit_list": [
@@ -3550,7 +3549,8 @@
 "class": "SubmitData",
 "original_args": {
 "allowed_callers": [
-4003
+4003,
+4002
 ],
 "fail_ident": "home",
 "submit_list": [

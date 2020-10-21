@@ -24,10 +24,10 @@ should enable you to view and control the connected instruments.
 import sys, os, threading
 
 ############ these lines only required during development ###########
-skipole_package_location = "/home/bernard/git/skipole"
-
-if skipole_package_location not in sys.path:
-    sys.path.insert(0,skipole_package_location)
+#skipole_package_location = "/home/bernard/git/skipole"
+#
+#if skipole_package_location not in sys.path:
+#    sys.path.insert(0,skipole_package_location)
 #####################################################################
 
 from . import inditoredis, indi_server, redis_server, indiwsgi
@@ -76,15 +76,15 @@ if __name__ == "__main__":
 
     # add skiadmin during development, and run serve in this thread
     application = indiwsgi.add_skiadmin(application)
-    #serve(application, host = "127.0.0.1", port=8000)
+    serve(application, host = "127.0.0.1", port=8000)
 
     # comment out lines below during development
 
     # serve the application with the python waitress web server
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    # webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
     # and start it
-    webapp.start()
+    # webapp.start()
 
     # and start inditoredis
-    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=blob_folder)
+    # inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=blob_folder)
 
