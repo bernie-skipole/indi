@@ -16,7 +16,6 @@ try:
     from skipole import WSGIApplication, use_submit_list
     from skipole import skis
 except:
-    raise
     SKIPOLE_AVAILABLE = False
 
 from .. import tools

@@ -136,7 +136,7 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
 
     if not blob_folder.is_dir():
         print("Error - blob_folder already exists and is not a directory")
-        sys.exit(2)
+        sys.exit(3)
 
     # set up the redis server
     rconn = tools.open_redis(redisserver)
