@@ -1,5 +1,5 @@
 
-
+import pathlib
 from datetime import datetime
 from time import sleep
 from base64 import urlsafe_b64encode
@@ -571,13 +571,15 @@ def _show_blobvector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'bvelements', 'show'] = True
         col1 = []
         col2 = []
+        col2_links = []
         for eld in element_list:
+            path = pathlib.Path(eld['filepath'])
             col1.append(eld['label'] + ":")
-            col2.append(eld['filepath'])
+            col2.append(path.name)
+            col2_links.append(f"/blobs/{path.name}")
         skicall.page_data['property_'+str(index),'bvelements', 'col1'] = col1
         skicall.page_data['property_'+str(index),'bvelements', 'col2'] = col2
-
-
+        skicall.page_data['property_'+str(index),'bvelements', 'col2_links'] = col2_links
 
 
 def _check_logs(skicall, *args):

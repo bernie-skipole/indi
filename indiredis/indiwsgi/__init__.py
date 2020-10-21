@@ -27,7 +27,7 @@ PROJECT = 'webdemo'
 def start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if called_ident is None:
-        # Force url not found if no called_ident, except if getting a file from blobs
+        # Return None = url not found, if no called_ident, except if getting a file from blobs
         if skicall.path.startswith("/blobs/"):
             path = pathlib.Path(skicall.path)
             # there should be three elements / blobs and filename
@@ -37,10 +37,8 @@ def start_call(called_ident, skicall):
             blob_folder = skicall.proj_data["blob_folder"]
             if not blob_folder:
                 return
-            # blob_folder is a pathlib.Path object
+            # blob_folder is a pathlib.Path object, returning this serves the file from the blob_folder
             return blob_folder / path.name
-            # call a responder which returns a file
-            #return "get_blob"
         return
 
     if skicall.ident_data:

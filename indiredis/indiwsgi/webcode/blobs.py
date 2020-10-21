@@ -58,35 +58,5 @@ def setup(skicall):
     skicall.page_data['bloblinks', 'nav_links'] = bloblinks
 
 
-def get_blob(skicall):
-    "Called by SubmitIterator responder to return a blob"
-
-    urlpath = skicall.path
-
-    blob_folder = skicall.proj_data["blob_folder"]
-    if not blob_folder:
-        raise FailPage("File not found")
-    blobfiles = [f for f in listdir(blob_folder) if isfile(join(blob_folder, f))]
-    if not blobfiles:
-        raise FailPage("File not found")
-
-    # get required server path
-    path = None
-    if urlpath.startswith("/blobs/"):
-        filename = urlpath[7:]
-        if filename not in blobfiles:
-            raise FailPage("File not found")
-        path = join(blob_folder, filename)
-        if not isfile(path):
-            raise FailPage("File not found")
-        with open(path, 'rb') as f:
-            file_data = f.read()
-        skicall.page_data['mimetype'] = "application/octet-stream"
-        skicall.page_data['content-length'] = str(len(file_data))
-        return (file_data,)
-    raise FailPage("File not found")
-
-
-
 
 

@@ -13,7 +13,7 @@ ready for reading by the web server."""
 
 import xml.etree.ElementTree as ET
 
-import os, math, json
+import os, math, json, pathlib
 
 from datetime import datetime
 
@@ -990,15 +990,23 @@ class BLOBElement(ParentElement):
             # no new file, do not alter the current filepath
             return
         timenow = datetime.utcnow()
-        filename =  timenow.strftime("%Y%m%d%H%M%S_%f") + self.format
         # check if the _BLOBFOLDER exists
         if not _BLOBFOLDER.exists():
             # if not, create it
             _BLOBFOLDER.mkdir(parents=True)
-        self.filepath = str(_BLOBFOLDER / filename)
-        with open(self.filepath, 'wb') as f:
-            f.write(standard_b64decode(child.text))
-
+        filename =  timenow.strftime("%Y%m%d%H%M%S") + self.format
+        counter = 0
+        while True:
+            filepath = _BLOBFOLDER / filename
+            if filepath.exists():
+                # append a digit to the filename
+                counter += 1
+                filename = timenow.strftime("%Y%m%d%H%M%S_") + str(counter) + self.format
+            else:
+                # filepath does not exist, so a new file with this filepath can be created
+                break
+        filepath.write_bytes(standard_b64decode(child.text))
+        self.filepath = str(filepath)
 
     def __str__(self):
         return ""

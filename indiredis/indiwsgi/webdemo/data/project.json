@@ -3,14 +3,13 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "5.0.5",
+"skipole": "5.0.6",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
 "checkupdates": 5,
 "favicon": 3002,
 "general_json": 2070,
-"get_blob": 2040,
 "getdevices": 2,
 "getproperties": 4,
 "home": 1,
@@ -1010,16 +1009,23 @@
 [
 "Widget",
 {
-"class": "tables.TwoColTable1",
+"class": "links.Table1_Links",
 "name": "bvelements",
 "brief": "Table of blob vector elements",
 "fields": {
 "col1": [],
+"col1_class": "",
 "col2": [],
+"col2_class": "",
+"col2_getfields": [],
+"col2_links": [],
 "even_class": "",
+"force_ident": false,
 "header_class": "w3-theme-d2",
+"link_class": "",
+"link_style": "",
 "odd_class": "",
-"show": false,
+"show": true,
 "title1": "",
 "title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
@@ -1238,22 +1244,6 @@
 "restricted": true,
 "folders": {},
 "pages": {
-"blobs": {
-"ident": 2040,
-"brief": "Iterator to serve a blob",
-"RespondPage": {
-"class": "SubmitIterator",
-"original_args": {
-"fail_ident": "blobfolder",
-"submit_list": [
-"webcode",
-"blobs",
-"get_blob"
-]
-},
-"original_fields": {}
-}
-},
 "general_json": {
 "ident": 2070,
 "brief": "General purpose JSON file",
