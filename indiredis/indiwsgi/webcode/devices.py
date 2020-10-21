@@ -573,13 +573,16 @@ def _show_blobvector(skicall, index, ad):
         col2 = []
         col2_links = []
         for eld in element_list:
-            path = pathlib.Path(eld['filepath'])
             col1.append(eld['label'] + ":")
-            col2.append(path.name)
-            col2_links.append(f"/blobs/{path.name}")
+            if eld['filepath']:
+                path = pathlib.Path(eld['filepath'])
+                col2.append(path.name)
+                col2_links.append(f"/blobs/{path.name}")
         skicall.page_data['property_'+str(index),'bvelements', 'col1'] = col1
-        skicall.page_data['property_'+str(index),'bvelements', 'col2'] = col2
-        skicall.page_data['property_'+str(index),'bvelements', 'col2_links'] = col2_links
+        if col2:
+            skicall.page_data['property_'+str(index),'bvelements', 'col2'] = col2
+        if col2_links:
+            skicall.page_data['property_'+str(index),'bvelements', 'col2_links'] = col2_links
 
 
 def _check_logs(skicall, *args):
