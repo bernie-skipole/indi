@@ -59,6 +59,12 @@ Assuming you have all the dependencies loaded, including a redis server operatin
 
 This runs the script __main__.py within indiredis, and serves the client at localhost:8000
 
+Try::
+
+    python3 -m indiredis --help
+
+for usage instructions which show further available arguments. 
+
 The path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored.
 
 

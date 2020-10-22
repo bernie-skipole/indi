@@ -21,7 +21,7 @@ should enable you to view and control the connected instruments.
 """
 
 
-import sys, os, threading
+import sys, os, threading, argparse
 
 ############ these lines only required during development ###########
 #skipole_package_location = "/home/bernard/git/skipole"
@@ -42,23 +42,14 @@ if __name__ == "__main__":
 
     from waitress import serve
 
-    args = sys.argv
-
-    if len(args) == 2:
-        if args[1] == "--version":
-            print(version)
-            sys.exit(0)
-        if (args[1] == "-h") or (args[1] == "--help"):
-            print(__doc__)
-            sys.exit(0)
-        if args[1].startswith('-'):
-            print("Unrecognised option. " + __doc__)
-            sys.exit(1)
-        blob_folder = args[1]
-    else:
-        print( "Invalid input. " + __doc__)
-        sys.exit(2)
-
+    parser = argparse.ArgumentParser(usage="python3 -m indiredis [-h] [-p PORT] [--version] blobdirectorypath",
+        description="INDI client communicating to indiserver on localhost port 7624, providing instrument control via a web service.")
+    parser.add_argument("blobdirectorypath", help="Path of the directory where BLOB's will be set")
+    parser.add_argument("-p", "--port", type=int, default=8000, help="Port of the web service (default 8000).")
+    parser.add_argument("--version", action="version", version=version)
+    args = parser.parse_args()
+    blob_folder = args.blobdirectorypath
+    port = args.port
 
     # define the hosts/ports where servers are listenning, these functions return named tuples
     # which are required as arguments to inditoredis() and to indiwsgi.make_wsgi_app()
@@ -72,16 +63,16 @@ if __name__ == "__main__":
     application = indiwsgi.make_wsgi_app(redis_host, blob_folder)
     if application is None:
         print("Are you sure the skipole framework is installed?")
-        sys.exit(3)
+        sys.exit(1)
 
     # add skiadmin during development, and run serve in this thread
     application = indiwsgi.add_skiadmin(application)
-    serve(application, host = "127.0.0.1", port=8000)
+    serve(application, host = "127.0.0.1", port=port)
 
     # comment out lines below during development
 
     # serve the application with the python waitress web server
-    # webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    # webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':port})
     # and start it
     # webapp.start()
 
