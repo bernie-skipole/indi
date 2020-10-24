@@ -5,106 +5,94 @@ Introduction
 The indiredis package
 ^^^^^^^^^^^^^^^^^^^^^
 
-Python INDI client package. With option of MQTT transmission.
+This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
+other direction; can read data published to redis and send it in INDI XML format to indiserver. If the package is run, this provides instrument control via a web service. If imported, it provides tools to read/write to redis, and hence indiserver, for use by your own GUI or WEB applications.
+
+The package is a client only, it does not include indiserver or drivers.
 
 INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
 Though INDI is used for astronomical instruments, it can also be used for any instrument control if appropriate INDI drivers are available.
 
-This project provides a client, not drivers, nor indiserver. It is assumed that indiserver is installed and running, together with appropriate drivers and connected instruments.
+Your host should have a redis server running, and indiserver should also be running, together with appropriate drivers and connected instruments. For example, prior to running indiredis, in another terminal, run::
 
-See https://indilib.org/ for further information on indiserver.
+    indiserver -v indi_simulator_telescope indi_simulator_ccd
 
-This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
-other direction; can read data published to redis and send it in INDI XML format to indiserver. A web client is also included which uses these functions.
+Usage is then::
 
-The aim is to provide a web framework (or other gui) easy access to device properties and settings via redis key value storage.
+    python3 -m indiredis /path/to/blobfolder
 
-indiredis code is developed at https://github.com/bernie-skipole/indi
 
-indiredis consists of functions which provide two options:
+The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
 
-The data can be parsed and transferred between indiserver and redis.
+For further usage information, including setting ports and hosts, try::
+
+    python3 -m indiredis --help
+
+
+Dependencies
+^^^^^^^^^^^^
+
+Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver (apt-get install indi-bin).
+
+For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:
+
+sudo -H pip3 install indiredis
+
+The file requirements.txt lists the Python packages required which are available via pip, so as well as indiredis, the above command should pull in the packages: 
+
+skipole - required for the built in web service, not needed if you are making your own GUI
+
+waitress - Python web server, not needed if you are creating your own gui, or using a different web server.
+
+redis - Python redis client, needed.
+
+indiredis also features functions for transferring data between indiserver and redis via an MQTT server. If these are used, then an MQTT server (apt-get install mosquitto) is needed, and also:
+
+paho-mqtt - Python MQTT client, also available via pip, and listed in requirements.txt
+
+
+Importing indiredis
+^^^^^^^^^^^^^^^^^^^
+
+indiredis can be imported into your own scripts, rather than executed with python3 -m. This is particularly aimed at helping the developer create their own GUI's or controlling scripts, perhaps more specialised than the web client included.
+
+Two options are available:
+
+The data can be transferred between indiserver and redis.
 
 or
 
 The data can be transferred between indiserver and redis via an MQTT server.
 
-Python dependencies: The python3 "redis" client, and, if the MQTT option is required, "paho-mqtt".
-
-If the example web service is to be run, skipole (wsgi generator) and waitress (web server) are needed:
-
-For debian systems
-
-sudo apt-get install python3-pip
-
-sudo -H pip3 install skipole
-
-sudo -H pip3 install waitress
-
-sudo -H pip3 install redis
-
-sudo -H pip3 install paho-mqtt
-
-
-Server dependencies: A redis server (apt-get install redis-server), and, if the MQTT option is used, an MQTT server (apt-get install mosquitto)
-
-You will also need indiserver, (apt-get install indi-bin) with connected instruments and drivers. For testing, you could use the simulated instruments provided with indiserver. In a terminal run::
-
-    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide indi_simulator_gps
-
-Assuming you have all the dependencies loaded, including a redis server operating on your localhost, in another terminal you can use::
-
-    python3 -m indiredis path/to/blobfolder
-
-This runs the script __main__.py within indiredis, and serves the client at localhost:8000
-
-Try::
-
-    python3 -m indiredis --help
-
-for usage instructions which show further available arguments. 
-
-The path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored.
-
-
 The indiredis package provides the following which can be used by your own script:
 
-**indiredis.inditoredis**
+**indiredis.inditoredis()**
 
-Converts directly between indiserver (port 7624) and redis, converting indi XML to redis key-value storage.
+The primary function of the package which converts between indiserver and redis, providing redis key-value storage of the instrument parameters, and works with the pub/sub faciliies of redis.
 
 For an example of usage, see :ref:`inditoredis`.
 
-**indiredis.indiwsgi.make_wsgi_app**
+**indiredis.indiwsgi.make_wsgi_app()**
 
-Your own web framework could be used to write code that can read and write to a redis service. However the package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that provides a demonstration web service.
+The package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that provides the included web client.
 
-It displays connected devices and properties, and allows the user to set properties according to the Indi specification.
-
-WSGI - https://wsgi.readthedocs.io/en/latest/what.html
-
-WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which is then served by a web server that understands wsgi.
-
-indiwsgi requires the 'skipole' Python framework, available from Pypi, and a wsgi web server, such as 'waitress' also available from Pypi.
+WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the __main__.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.  
 
 An example of creating the wsgi application, and running it with waitress is given at :ref:`web_client`.
 
-As an alternative to the inditoredis function, two further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from the indiserver port 7624 to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service.
+As an alternative to the inditoredis function, two further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
-
-**indiredis.inditomqtt**
+**indiredis.inditomqtt()**
 
 Intended to be run on a device with indiserver, appropriate drivers and attached instruments.
 
-Receives/transmitts XML data between indiserver on port 7624 and an MQTT server which ultimately sends data to the remote web/gui server.
+Receives/transmitts XML data between indiserver and an MQTT server which ultimately sends data to the remote web/gui server.
 
 For an example of usage, see :ref:`inditomqtt`.
 
 
-**indiredis.mqtttoredis**
-
-Intended to be run on the same server running a redis service, typically with the gui or web service which can read/write to redis.
+**indiredis.mqtttoredis()**
 
 Receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
 

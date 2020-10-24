@@ -89,7 +89,7 @@ def end_call(page_ident, page_type, skicall):
     
 
 
-def make_wsgi_app(redisserver, blob_folder=''):
+def make_wsgi_app(redisserver, blob_folder='', url="/"):
     """Create a wsgi application which can be served by a WSGI compatable web server.
     Reads and writes to redis stores created by indittoredis
 
@@ -97,6 +97,8 @@ def make_wsgi_app(redisserver, blob_folder=''):
     :type redisserver: namedtuple
     :param blob_folder: Folder where Blobs will be stored
     :type blob_folder: String
+    :param url: URL at which the web service is served
+    :type url: String
     :return: A WSGI callable application
     :rtype: skipole.WSGIApplication
     """
@@ -115,23 +117,15 @@ def make_wsgi_app(redisserver, blob_folder=''):
                                   start_call=start_call,
                                   submit_data=submit_data,
                                   end_call=end_call,
-                                  url="/")
+                                  url=url)
+
+    if url.endswith("/"):
+        skisurl = url + "lib"
+    else:
+        skisurl = url + "/lib"
 
     skis_application = skis.makeapp()
-    application.add_project(skis_application, url='/lib')
+    application.add_project(skis_application, url=skisurl)
     return application
-
-
-
-######## add skiadmin during development
-
-if SKIPOLE_AVAILABLE:
-    from skipole import skiadmin, set_debug
-
-    def add_skiadmin(application):
-        set_debug(True)
-        skiadmin_application = skiadmin.makeapp(editedprojname=PROJECT)
-        application.add_project(skiadmin_application, url='/skiadmin')
-        return application
 
 
