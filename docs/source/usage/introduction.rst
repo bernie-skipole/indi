@@ -37,9 +37,13 @@ Server dependencies: A redis server (For debian systems; apt-get install redis-s
 
 For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:
 
-sudo -H pip3 install indiredis
+python3 -m pip install --user indiredis
 
-The file requirements.txt lists the Python packages required which are available via pip, so as well as indiredis, the above command should pull in the packages: 
+Using a virtual environment may be preferred, if you need further information on pip and virtual environments, try:
+
+https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/ 
+
+The file requirements.txt is included in the project and lists the Python packages required which are available via pip, so as well as indiredis, the above pip command should pull in the packages: 
 
 skipole - required for the built in web service, not needed if you are making your own GUI
 
