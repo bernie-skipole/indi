@@ -2,6 +2,14 @@
 References
 ==========
 
+indiredis development site:
+
+https://github.com/bernie-skipole/indi
+
+https://indiredis.readthedocs.io
+
+Further relevant sites:
+
 https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
 https://www.clearskyinstitute.com/INDI/INDI.pdf
@@ -12,11 +20,14 @@ https://github.com/indilib/indi/releases
 
 https://packages.debian.org/buster/indi-bin
 
-https://github.com/bernie-skipole/indi
+https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface
 
-https://indiredis.readthedocs.io
+https://github.com/bernie-skipole/skipole
 
-https://wsgi.readthedocs.io/en/latest/what.html
+https://docs.pylonsproject.org/projects/waitress/en/latest/
 
+https://github.com/eclipse/paho.mqtt.python
+
+https://github.com/andymccurdy/redis-py
 
 
