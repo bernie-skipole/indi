@@ -444,14 +444,15 @@ class ParentProperty():
 
     def update(self, rconn, vector):
         "Update the object attributes to redis"
+        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
+        # timestamp updated before elements updated, in case any of the elements use the timestamp (BLOBs)
         for child in vector:
             element = self.elements[child.get("name")]
-            element.update(rconn, self.device, self.name, child)
+            element.update(rconn, self.device, self.name, child, timestamp=self.timestamp)
         # alter self according to the values to be set
         state = vector.get("state")     # set state of Property; Idle, OK, Busy or Alert, no change if absent
         if state:
             self.state = state
-        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
         self.message = vector.get("message", default = "")
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if (key != "elements") and (not key.startswith("_"))}
@@ -521,7 +522,7 @@ class ParentProperty():
 class ParentElement():
     "Parent to Text, Number, Switch, Lights, Blob elements"
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         self.name = child.get("name")                       # name of the element, required value
         self.label = child.get("label", default=self.name)  # GUI label, use name by default
 
@@ -550,7 +551,7 @@ class ParentElement():
         if attribs:
             rconn.hmset(key('elementattributes',self.name, name, device), attribs)
 
-    def update(self, rconn, device, name, child):
+    def update(self, rconn, device, name, child, **kwargs):
         "update the element, from a vector child, and write to redis"
         self.set_value(child)   # change value to that given by the xml child
         self.write(rconn, device, name)
@@ -610,9 +611,9 @@ class TextVector(ParentProperty):
 class TextElement(ParentElement):
     "text elements contained in a TextVector"
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         self.set_value(child)
-        super().setup_from_def(child)
+        super().setup_from_def(child, **kwargs)
 
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
@@ -677,7 +678,7 @@ class NumberVector(ParentProperty):
 class NumberElement(ParentElement):
     "number elements contained in a NumberVector"
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         # required number attributes
         self.format = child.get("format")    # printf-style format for GUI display
         self.min = child.get("min")          # minimal value
@@ -685,7 +686,7 @@ class NumberElement(ParentElement):
         self.step = child.get("step")        # allowed increments, ignore if 0
         # get the raw self.value
         self.set_value(child)
-        super().setup_from_def(child)
+        super().setup_from_def(child, **kwargs)
 
     def setup_from_redis(self, rconn, device, name, element_name):
         "Sets up element by reading redis"
@@ -796,10 +797,10 @@ class SwitchVector(ParentProperty):
 class SwitchElement(ParentElement):
     "switch elements contained in a SwitchVector"
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         "value should be Off or On"
         self.set_value(child)
-        super().setup_from_def(child)
+        super().setup_from_def(child, **kwargs)
 
 
     def setup_from_redis(self, rconn, device, name, element_name):
@@ -857,9 +858,9 @@ class LightVector(ParentProperty):
 class LightElement(ParentElement):
     "light elements contained in a LightVector"
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         self.set_value(child)
-        super().setup_from_def(child)
+        super().setup_from_def(child, **kwargs)
 
 
     def setup_from_redis(self, rconn, device, name, element_name):
@@ -896,7 +897,7 @@ class BLOBVector(ParentProperty):
             self.blobs = "Disabled"
         for child in vector:
             element = BLOBElement(self.timestamp)
-            element.setup_from_def(child)
+            element.setup_from_def(child, timestamp=self.timestamp)
             # If child.text save standard_b64decode(child.text) to a file
             # and set the filepath attribute of the element
             element.set_file(self.device, self.name, child)
@@ -928,7 +929,6 @@ class BLOBVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        self.timeout = vector.get("timeout", default = 0)
         # as this is only called when a setBLOBVector is received, it must mean that blobs are enabled
         self.blobs = "Enabled"
         super().update(rconn, vector)
@@ -953,12 +953,14 @@ class BLOBElement(ParentElement):
         super().__init__()
         self.timestamp = timestamp
 
-    def setup_from_def(self, child):
+    def setup_from_def(self, child, **kwargs):
         "Set up element from xml"
         self.size =  child.get("size", default = "")     # number of bytes in decoded and uncompressed BLOB
         self.format =  child.get("format", default = "") # format as a file suffix, eg: .z, .fits, .fits.z
         self.filepath = ""
-        super().setup_from_def(child)
+        if 'timestamp' in kwargs:
+            self.timestamp = kwargs["timestamp"]
+        super().setup_from_def(child, **kwargs)
 
 
     def setup_from_redis(self, rconn, device, name, element_name):
@@ -970,12 +972,15 @@ class BLOBElement(ParentElement):
         self.size = self._strattribs["size"]
         self.format = self._strattribs["format"]
         self.filepath = self._strattribs["filepath"]
+        self.timestamp = self._strattribs["timestamp"]
         self._status = True
 
-    def update(self, rconn, device, name, child):
+    def update(self, rconn, device, name, child, **kwargs):
         "update the element, from a vector child, and write to redis"
         self.size = child.get("size")     # number of bytes in decoded and uncompressed BLOB
         self.format = child.get("format") # format as a file suffix, eg: .z, .fits, .fits.z
+        if 'timestamp' in kwargs:
+            self.timestamp = kwargs['timestamp']
         # If child.text, save standard_b64decode(child.text) to a file
         # and set the new filepath attribute of the element
         self.set_file(device, name, child)
@@ -998,14 +1003,15 @@ class BLOBElement(ParentElement):
         if not _BLOBFOLDER.exists():
             # if not, create it
             _BLOBFOLDER.mkdir(parents=True)
-        filename =  self.timestamp + self.format
+        # make filename safer by changing colon in the timestamp to _
+        filename =  self.timestamp.replace(":", "_") + self.format
         counter = 0
         while True:
             filepath = _BLOBFOLDER / filename
             if filepath.exists():
                 # append a digit to the filename
                 counter += 1
-                filename = self.timestamp + "_" + str(counter) + self.format
+                filename = self.timestamp.replace(":", "_") + "_" + str(counter) + self.format
             else:
                 # filepath does not exist, so a new file with this filepath can be created
                 break

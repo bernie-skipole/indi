@@ -72,18 +72,18 @@ if __name__ == "__main__":
         sys.exit(1)
 
 #    During development, serve the web admin pages by uncommenting the following
-    from skipole import skiadmin, set_debug
-    set_debug(True)
-    skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')
-    application.add_project(skiadmin_application, url='/skiadmin')
+#    from skipole import skiadmin, set_debug
+#    set_debug(True)
+#    skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')
+#    application.add_project(skiadmin_application, url='/skiadmin')
 
 #   During development - if indiredis is not being run, but just the web server in
 #   this thread, uncomment the following line, and comment out all the followinglines 
-    serve(application, host = "127.0.0.1", port=args.port)
+#    serve(application, host = "127.0.0.1", port=args.port)
  
 
 #   serve the application with the python waitress web server in another thread, and start inditoredis
-#    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':args.port})
-#    webapp.start()
-#    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':args.port})
+    webapp.start()
+    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
 

@@ -99,21 +99,21 @@ class SenderLoop():
         if (device is None) or (name is None):
             return
         if self.keyprefix:
-            key = self.keyprefix + ":" + "devices"
+            key = self.keyprefix + "devices"
         else:
             key = "devices"
         if not self.rconn.sismember(key, device):
             return
         # it is a known device
         if self.keyprefix:
-            key = self.keyprefix + ":properties:" + device
+            key = self.keyprefix + "properties:" + device
         else:
             key = "properties:" + device
         if not self.rconn.sismember(key, name):
             return
         # it is a known property, set state to Busy
         if self.keyprefix:
-            key = self.keyprefix + ":attributes:" + name + ":" + device
+            key = self.keyprefix + "attributes:" + name + ":" + device
         else:
             key = "attributes:" + name + ":" + device
         self.rconn.hset(key, "state", "Busy")
@@ -127,12 +127,11 @@ class SenderLoop():
         if device is None:
             return
         instruction = vector.text
-        print(instruction)               ########################################### check this is working
         if instruction not in ("Never", "Also", "Only"):
             return
         name = vector.get("name")    # name of property, could be None
         if self.keyprefix:
-            key = self.keyprefix + ":" + "devices"
+            key = self.keyprefix + "devices"
         else:
             key = "devices"
         if not self.rconn.sismember(key, device):
@@ -140,10 +139,10 @@ class SenderLoop():
             return
         # it is a known device, get all properties
         if self.keyprefix:
-            key = self.keyprefix + ":properties:" + device
+            key = self.keyprefix + "properties:" + device
         else:
             key = "properties:" + device
-        propertyset = rconn.smembers(key)
+        propertyset = self.rconn.smembers(key)
         if not propertyset:
             return
         propertylist = list(p.decode("utf-8") for p in propertyset)
@@ -151,7 +150,7 @@ class SenderLoop():
             # set blob status in all blob vectors
             for propertyname in propertylist:
                 if self.keyprefix:
-                    key = self.keyprefix + ":attributes:" + propertyname + ":" + device
+                    key = self.keyprefix + "attributes:" + propertyname + ":" + device
                 else:
                     key = "attributes:" + propertyname + ":" + device
                 blob_status = self.rconn.hget(key, "blobs")
@@ -165,7 +164,7 @@ class SenderLoop():
         elif name in propertylist:
             # set blob status for just this property
             if self.keyprefix:
-                key = self.keyprefix + ":attributes:" + name + ":" + device
+                key = self.keyprefix + "attributes:" + name + ":" + device
             else:
                 key = "attributes:" + name + ":" + device
             if instruction == "Never":

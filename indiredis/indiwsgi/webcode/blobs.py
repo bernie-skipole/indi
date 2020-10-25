@@ -50,7 +50,7 @@ def setup(skicall):
     # 2 : If True, ident is appended to link even if there is no get field
     # 3 : The get field data to send with the link
 
-
+    blobfiles.sort(reverse=True)
     bloblinks = []
     for bf in blobfiles:
         # create a link to blobs/blobfile
