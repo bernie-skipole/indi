@@ -895,7 +895,7 @@ class BLOBVector(ParentProperty):
         else:
             self.blobs = "Disabled"
         for child in vector:
-            element = BLOBElement()
+            element = BLOBElement(self.timestamp)
             element.setup_from_def(child)
             # If child.text save standard_b64decode(child.text) to a file
             # and set the filepath attribute of the element
@@ -917,7 +917,7 @@ class BLOBVector(ParentProperty):
         if not elements:
             return
         for element_name in elements:
-            element = BLOBElement()
+            element = BLOBElement(self.timestamp)
             element.setup_from_redis(rconn, device, name, element_name)
             if not element._status:
                 # failure to read the element
@@ -947,6 +947,11 @@ class BLOBVector(ParentProperty):
 class BLOBElement(ParentElement):
     "BLOB elements contained in a BLOBVector"
 
+
+    def __init__(self, timestamp):
+        "Adds timestamp to self, used for filenames"
+        super().__init__()
+        self.timestamp = timestamp
 
     def setup_from_def(self, child):
         "Set up element from xml"
@@ -989,19 +994,18 @@ class BLOBElement(ParentElement):
         if child.text is None:
             # no new file, do not alter the current filepath
             return
-        timenow = datetime.utcnow()
         # check if the _BLOBFOLDER exists
         if not _BLOBFOLDER.exists():
             # if not, create it
             _BLOBFOLDER.mkdir(parents=True)
-        filename =  timenow.strftime("%Y%m%d%H%M%S") + self.format
+        filename =  self.timestamp + self.format
         counter = 0
         while True:
             filepath = _BLOBFOLDER / filename
             if filepath.exists():
                 # append a digit to the filename
                 counter += 1
-                filename = timenow.strftime("%Y%m%d%H%M%S_") + str(counter) + self.format
+                filename = self.timestamp + "_" + str(counter) + self.format
             else:
                 # filepath does not exist, so a new file with this filepath can be created
                 break

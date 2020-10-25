@@ -82,7 +82,7 @@ Log Lengths
 
 When using the function inditoredis, the arguments are:
 
-inditoredis(indiserver, redisserver, log_lengths)
+inditoredis(indiserver, redisserver, log_lengths, blob_folder)
 
 The log_lengths is a dictionary, of the form::
 
@@ -163,6 +163,7 @@ If receiving Blobs are enabled, Blob elements have fields:
     * format : format as a file suffix, eg: .z, .fits, .fits.z
     * size : number of bytes in decoded and uncompressed BLOB
     * filepath : path of the file where the Blob has been saved.
+    * timestamp : The same timestamp as given in the BlobsVector
 
 
 Redis pubsub

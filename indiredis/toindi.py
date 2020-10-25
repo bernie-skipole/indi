@@ -127,6 +127,7 @@ class SenderLoop():
         if device is None:
             return
         instruction = vector.text
+        print(instruction)               ########################################### check this is working
         if instruction not in ("Never", "Also", "Only"):
             return
         name = vector.get("name")    # name of property, could be None

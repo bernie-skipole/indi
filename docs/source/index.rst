@@ -12,6 +12,7 @@ Status: In development, Blobs still to be done.
    usage/functions.rst
    usage/redis_keys
    usage/tools.rst
+   usage/references.rst
 
 
 Indices and tables
