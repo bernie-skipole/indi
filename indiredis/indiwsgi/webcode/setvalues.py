@@ -156,6 +156,9 @@ def set_switch(skicall):
     skicall.call_data["status"] = f"Change to property {propertyname} has been submitted" 
 
 
+# The Client must send all members of Number and Text vectors,
+# or may send just the members that change for other types.
+
 def set_text(skicall):
     "Responds to a submission to set a text vector"
     rconn = skicall.proj_data["rconn"]

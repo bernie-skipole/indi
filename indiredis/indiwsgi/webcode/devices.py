@@ -210,8 +210,24 @@ def _show_textvector(skicall, index, ad):
     if not element_list:
         return
     # permission is one of ro, wo, rw
-    if ad['perm'] == "xx":   # wo
-        pass                               ########## still to do
+    if ad['perm'] == "wo":
+        # permission is wo
+        # display label : "" : text input field followed by a submit button
+        skicall.page_data['property_'+str(index),'settext', 'show'] = True
+        skicall.page_data['property_'+str(index),'tvtexttable', 'show'] = True
+        col1 = []
+        col2 = []
+        inputdict = {}
+        for eld in element_list:
+            col1.append(eld['label'] + ":")
+            inputdict[_safekey(eld['name'])] = ""  # all empty values, as write only
+        skicall.page_data['property_'+str(index),'tvtexttable', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'tvtexttable', 'col2'] = col2   # all empty values
+        skicall.page_data['property_'+str(index),'tvtexttable', 'inputdict'] = inputdict
+        skicall.page_data['property_'+str(index),'tvtexttable', 'size'] = 30   # maxsize of input field
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'settext', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'settext', 'sectionindex'] = index
     elif ad['perm'] == "rw":
         # permission is rw
         # display label : value : text input field followed by a submit button
@@ -276,8 +292,46 @@ def _show_numbervector(skicall, index, ad):
     if not element_list:
         return
     # permission is one of ro, wo, rw
-    if ad['perm'] == "xx":   #wo
-        pass                               ########## still to do
+    if ad['perm'] == "wo":
+        # permission is wo
+        # display label : "" : numberinput field followed by a submit button
+        skicall.page_data['property_'+str(index),'setnumber', 'show'] = True
+        skicall.page_data['property_'+str(index),'nvinputtable', 'show'] = True
+        col1 = []
+        col2 = []
+        # hide or not the up down arrow keys
+        up_hide = []
+        down_hide = []
+        # up down keys need to identify the element
+        up_getfield1 = []
+        down_getfield1 = []
+        inputdict = {}
+        for elindex, eld in enumerate(element_list):
+            # elindex will be used to get the number of the element as sorted on the table
+            # and will be sent with the arrows get field
+            col1.append(eld['label'] + ":")
+            inputdict[_safekey(eld['name'])] = ""
+            # make 1st getfield a combo of propertyname, element index, element name
+            getfield1 = _safekey(ad['name'] + "\n" + str(elindex) + "\n" + eld['name'])
+            up_getfield1.append(getfield1)
+            down_getfield1.append(getfield1)
+            # Since no initial value is given, cannot have steps, as no starting point
+            # but they may be 'unhidden' later by json call
+            up_hide.append(True)
+            down_hide.append(True)
+        skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
+        skicall.page_data['property_'+str(index),'nvinputtable', 'up_hide'] = up_hide
+        skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield1'] = up_getfield1
+        skicall.page_data['property_'+str(index),'nvinputtable', 'down_hide'] = down_hide
+        skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield1'] = down_getfield1
+
+        skicall.page_data['property_'+str(index),'nvinputtable', 'size'] = 30    # maxsize of input field
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'setnumber', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'setnumber', 'sectionindex'] = index
+
     elif ad['perm'] == "rw":
         # permission is rw
         # display label : value : numberinput field followed by a submit button
@@ -291,8 +345,6 @@ def _show_numbervector(skicall, index, ad):
         # up down keys need to identify the element
         up_getfield1 = []
         down_getfield1 = []
-
-
         inputdict = {}
         maxsize = 0
         for elindex, eld in enumerate(element_list):

@@ -380,6 +380,9 @@ def newswitchvector(rconn, redisserver, name, device, values, timestamp=None):
     return nsvstring
 
 
+# The Client must send all members of Number and Text vectors,
+# or may send just the members that change for other types.
+
 def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
     """Sends a newTextVector request, returns the xml string sent, or None on failure.
     Values should be a dictionary of element names : text values.
@@ -400,6 +403,10 @@ def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
     :return:  A string of the xml published, or None on failure
     :rtype: String
     """
+    # get current values
+    elementlist = elements(rconn, redisserver, name, device)
+    if not elementlist:
+        return
     ntv = ET.Element('newTextVector')
     ntv.set("device", device)
     ntv.set("name", name)
@@ -407,7 +414,17 @@ def newtextvector(rconn, redisserver, name, device, values, timestamp=None):
         ntv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
     else:
         ntv.set("timestamp", timestamp.isoformat(sep='T'))
-    # set the text elements 
+    # All elements must be sent
+    # for any element not given in values, add to ntv
+    for ename in elementlist:
+        if ename in values:
+            continue
+        edict = elements_dict(rconn, redisserver, ename, name, device)
+        ot = ET.Element('oneText')
+        ot.set("name", ename)
+        ot.text = edict['value']
+        ntv.append(ot)
+    # for all those elements given in values, add to ntv
     for ename, text in values.items():
         ot = ET.Element('oneText')
         ot.set("name", ename)
@@ -441,6 +458,10 @@ def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
     :return:  A string of the xml published, or None on failure
     :rtype: String
     """
+    # get current values
+    elementlist = elements(rconn, redisserver, name, device)
+    if not elementlist:
+        return
     nnv = ET.Element('newNumberVector')
     nnv.set("device", device)
     nnv.set("name", name)
@@ -448,7 +469,17 @@ def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
         nnv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
     else:
         nnv.set("timestamp", timestamp.isoformat(sep='T'))
-    # set the number elements 
+    # All elements must be sent
+    # for any element not given in values, add to nnv
+    for ename in elementlist:
+        if ename in values:
+            continue
+        edict = elements_dict(rconn, redisserver, ename, name, device)
+        ot = ET.Element('oneNumber')
+        ot.set("name", ename)
+        ot.text = edict['value']
+        nnv.append(ot)
+    # for all those elements given in values, add to nnv
     for ename, number in values.items():
         ot = ET.Element('oneNumber')
         ot.set("name", ename)
