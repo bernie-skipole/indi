@@ -8,6 +8,8 @@ https://github.com/bernie-skipole/indi
 
 https://indiredis.readthedocs.io
 
+https://pypi.org/project/indiredis/
+
 Further relevant sites:
 
 https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface

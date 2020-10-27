@@ -30,10 +30,8 @@ For further usage information, including setting ports and hosts, try::
     python3 -m indiredis --help
 
 
-Dependencies
+Installation
 ^^^^^^^^^^^^
-
-Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver (apt-get install indi-bin).
 
 For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:
 
@@ -41,7 +39,9 @@ python3 -m pip install --user indiredis
 
 Using a virtual environment may be preferred, if you need further information on pip and virtual environments, try:
 
-https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/ 
+https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
+
+Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver (apt-get install indi-bin).
 
 The file requirements.txt is included in the project and lists the Python packages required which are available via pip, so as well as indiredis, the above pip command should pull in the packages: 
 
