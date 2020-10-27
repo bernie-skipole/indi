@@ -200,10 +200,8 @@ def _show_textvector(skicall, index, ad):
     # list the attributes, group, state, perm, timeout, timestamp
     skicall.page_data['property_'+str(index),'tvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
     skicall.page_data['property_'+str(index),'tvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
-
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
-
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
@@ -270,8 +268,6 @@ def _show_textvector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'tvelements', 'col2'] = col2
 
 
-
-
 def _show_numbervector(skicall, index, ad):
     """ad is the attribute directory of the property
        index is the section index on the web page"""
@@ -281,11 +277,8 @@ def _show_numbervector(skicall, index, ad):
     # list the attributes, group, state, perm, timeout, timestamp
     skicall.page_data['property_'+str(index),'nvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
     skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
-
-
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
-
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
@@ -294,7 +287,7 @@ def _show_numbervector(skicall, index, ad):
     # permission is one of ro, wo, rw
     if ad['perm'] == "wo":
         # permission is wo
-        # display label : "" : numberinput field followed by a submit button
+        # display label : "" : numberinput field with minimum value, followed by a submit button
         skicall.page_data['property_'+str(index),'setnumber', 'show'] = True
         skicall.page_data['property_'+str(index),'nvinputtable', 'show'] = True
         col1 = []
@@ -310,15 +303,20 @@ def _show_numbervector(skicall, index, ad):
             # elindex will be used to get the number of the element as sorted on the table
             # and will be sent with the arrows get field
             col1.append(eld['label'] + ":")
-            inputdict[_safekey(eld['name'])] = ""
+            # set the input field to the minimum value
+            inputdict[_safekey(eld['name'])] = tools.format_number(eld['float_min'], eld['format'])
             # make 1st getfield a combo of propertyname, element index, element name
             getfield1 = _safekey(ad['name'] + "\n" + str(elindex) + "\n" + eld['name'])
             up_getfield1.append(getfield1)
             down_getfield1.append(getfield1)
-            # Since no initial value is given, cannot have steps, as no starting point
-            # but they may be 'unhidden' later by json call
-            up_hide.append(True)
-            down_hide.append(True)
+            if eld['step'] == '0':
+                # no steps
+                up_hide.append(True)
+                down_hide.append(True)
+            else:
+                # set to the minimum, show up arrow, hide the down arrow
+                up_hide.append(False)
+                down_hide.append(True)
         skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
         skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
         skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
@@ -326,12 +324,10 @@ def _show_numbervector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield1'] = up_getfield1
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_hide'] = down_hide
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield1'] = down_getfield1
-
         skicall.page_data['property_'+str(index),'nvinputtable', 'size'] = 30    # maxsize of input field
         # set hidden fields on the form
         skicall.page_data['property_'+str(index),'setnumber', 'propertyname'] = ad['name']
         skicall.page_data['property_'+str(index),'setnumber', 'sectionindex'] = index
-
     elif ad['perm'] == "rw":
         # permission is rw
         # display label : value : numberinput field followed by a submit button
@@ -373,7 +369,6 @@ def _show_numbervector(skicall, index, ad):
                 # steps are not zero and value is between min and max, so show arrows
                 up_hide.append(False)
                 down_hide.append(False)
-
         if len(eld['formatted_number']) > maxsize:
             maxsize = len(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvinputtable', 'col1'] = col1
@@ -383,7 +378,6 @@ def _show_numbervector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'nvinputtable', 'up_getfield1'] = up_getfield1
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_hide'] = down_hide
         skicall.page_data['property_'+str(index),'nvinputtable', 'down_getfield1'] = down_getfield1
-
         # make the size of the input field match the values set in it
         if maxsize > 30:
             maxsize = 30
@@ -406,7 +400,6 @@ def _show_numbervector(skicall, index, ad):
             col2.append(eld['formatted_number'])
         skicall.page_data['property_'+str(index),'nvelements', 'col1'] = col1
         skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
-
 
 
 def _show_switchvector(skicall, index, ad):
