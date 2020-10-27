@@ -16,6 +16,12 @@ setuptools.setup(
     url="https://github.com/bernie-skipole/indi",
     packages=['indiredis', 'indiredis.indiwsgi', 'indiredis.indiwsgi.webcode'],
     include_package_data=True,
+    install_requires=[
+          'paho-mqtt',
+          'redis',
+          'skipole',
+          'waitress'
+      ],
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

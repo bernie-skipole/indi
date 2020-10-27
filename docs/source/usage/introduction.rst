@@ -43,7 +43,7 @@ https://packaging.python.org/guides/installing-using-pip-and-virtual-environment
 
 Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver (apt-get install indi-bin).
 
-The file requirements.txt is included in the project and lists the Python packages required which are available via pip, so as well as indiredis, the above pip command should pull in the packages: 
+The above pip command should automatically pull in the packages: 
 
 skipole - required for the built in web service, not needed if you are making your own GUI
 
@@ -51,9 +51,13 @@ waitress - Python web server, not needed if you are creating your own gui, or us
 
 redis - Python redis client, needed.
 
-indiredis also features functions for transferring data between indiserver and redis via an MQTT server. If these are used, then an MQTT server (apt-get install mosquitto) is needed, and also:
+paho-mqtt - Python MQTT client, only needed if you are using the MQTT facility.
 
-paho-mqtt - Python MQTT client, also available via pip, and listed in requirements.txt
+indiredis has functions for transferring data between indiserver and redis via an MQTT server. If these are used, then an MQTT server (apt-get install mosquitto) is needed.
+
+If you do not want the python dependencies to be automatically installed with pip, then use the --no-deps option:
+
+python3 -m pip install --user --no-deps indiredis
 
 
 Importing indiredis
