@@ -3,7 +3,8 @@
 indiredis - an INDI Client
 ==========================
 
-Status: In development, Blobs still to be done.
+Status: In development; receiving Blobs done, but sending Blobs still not done.
+All other vectors done.
 
 .. toctree::
    :maxdepth: 2

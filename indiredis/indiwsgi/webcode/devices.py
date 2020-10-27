@@ -426,8 +426,67 @@ def _show_switchvector(skicall, index, ad):
     if not element_list:
         return
     # permission is one of ro, wo, rw
-    if ad['perm'] == "xx":   #wo
-        pass                               ########## still to do
+    if ad['perm'] == "wo":
+        # permission is wo
+        if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
+            # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            eld = element_list[0]
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = [eld['label'] + ":"]
+            skicall.page_data['property_'+str(index),'svradio', 'col2'] = ["On", "Off"]
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = [eld['name'] + "_on", eld['name'] + "_off"]
+            skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = ['', '']
+        elif ad['rule'] == "OneOfMany":
+            # show radiobox, at least one should be pressed
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            col1 = []
+            radiocol = []
+            row_classes = []
+            for eld in element_list:
+                col1.append(eld['label'] + ":")
+                radiocol.append(eld['name'])
+                row_classes.append('')
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = col1
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
+            skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
+        elif ad['rule'] == "AnyOfMany":
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
+            skicall.page_data['property_'+str(index),'svcheckbox', 'show'] = True
+            col1 = []
+            checkbox_dict = {}
+            row_classes = []
+            for eld in element_list:
+                col1.append(eld['label'] + ":")
+                checkbox_dict[eld['name']] = "On"
+                row_classes.append('')
+            skicall.page_data['property_'+str(index),'svcheckbox', 'col1'] = col1
+            skicall.page_data['property_'+str(index),'svcheckbox', 'checkbox_dict'] = checkbox_dict
+            skicall.page_data['property_'+str(index),'svcheckbox', 'row_classes'] = row_classes
+        elif ad['rule'] == "AtMostOne":
+            # show radiobox, can have none pressed
+            skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
+            skicall.page_data['property_'+str(index),'svradio', 'show'] = True
+            col1 = []
+            radiocol = []
+            row_classes = []
+            for eld in element_list:
+                col1.append(eld['label'] + ":")
+                radiocol.append(eld['name'])
+                row_classes.append('')
+            # append a 'None of the above' button
+            col1.append("None of the above:")
+            radiocol.append("noneoftheabove")
+            row_classes.append('')
+            skicall.page_data['property_'+str(index),'svradio', 'col1'] = col1
+            skicall.page_data['property_'+str(index),'svradio', 'radiocol'] = radiocol
+            skicall.page_data['property_'+str(index),'svradio', 'row_classes'] = row_classes
+
+        # set hidden fields on the form
+        skicall.page_data['property_'+str(index),'setswitch', 'propertyname'] = ad['name']
+        skicall.page_data['property_'+str(index),'setswitch', 'sectionindex'] = index
+
     elif ad['perm'] == "rw":
         if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
             # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
@@ -539,7 +598,6 @@ def _show_switchvector(skicall, index, ad):
             col2.append(eld['value'])
         skicall.page_data['property_'+str(index),'svelements', 'col1'] = col1
         skicall.page_data['property_'+str(index),'svelements', 'col2'] = col2
-
 
 
 def _show_lightvector(skicall, index, ad):
