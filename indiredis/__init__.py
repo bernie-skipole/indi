@@ -34,7 +34,7 @@ RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'pass
 MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
 
 
-#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
+#mqttserver = MQTTServer('10.34.167.1', 1883, '', '', '', '')
 
 
 # Functions which return the appropriate named tuple. Provides defaults and enforces values
