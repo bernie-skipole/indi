@@ -10,7 +10,7 @@ setuptools.setup(
     version="0.0.2",
     author="Bernard Czenkusz",
     author_email="bernie@skipole.co.uk",
-    description="An INDI web client with redis storage",
+    description="INDI client storing instrument data to redis, and on receiving data published to redis, sending on to indiserver. If the package is run, it provides instrument control via a web service. If imported, it provides tools to read/write to redis, and hence indiserver, for use by your own GUI or WEB applications.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bernie-skipole/indi",
