@@ -92,6 +92,7 @@ async def _rxfromindi(reader, loop, rconn):
 async def _indiconnection(loop, rconn, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
+    print("Connected")
     sent = _txtoindi(writer)
     received = _rxfromindi(reader, loop, rconn)
     await asyncio.gather(sent, received)
@@ -153,10 +154,19 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     # and start senderloop in its thread
     run_toindi.start()
     # the senderloop will place data to transmit to indiserver in the _TO_INDI dequeue
-
     # and create a loop to txrx the indiserver port
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
-    loop.close()
+    while True:
+        try:
+            loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
+        except ConnectionRefusedError:
+            print("Connection refused, waiting 5 seconds")
+            sleep(5)
+        else:
+            loop.close()
+            break
+
+
+
 
 
