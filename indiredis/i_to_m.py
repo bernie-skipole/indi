@@ -129,7 +129,7 @@ async def _rxfromindi(reader, loop, topic, mqtt_client):
 async def _indiconnection(loop, mqtt_client, topic, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    print("Connected")
+    print(f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
     received = _rxfromindi(reader, loop, topic, mqtt_client)
     await asyncio.gather(sent, received)
@@ -183,7 +183,10 @@ def inditomqtt(indiserver, mqttserver):
         try:
             loop.run_until_complete(_indiconnection(loop, mqtt_client, mqttserver.from_indi_topic, indiserver))
         except ConnectionRefusedError:
-            print("Connection refused, waiting 5 seconds")
+            print(f"Connection refused on {indiserver.host}:{indiserver.port}, waiting 5 seconds")
+            sleep(5)
+        except asyncio.IncompleteReadError:
+            print(f"Connection failed on {indiserver.host}:{indiserver.port}, waiting 5 seconds")
             sleep(5)
         else:
             loop.close()

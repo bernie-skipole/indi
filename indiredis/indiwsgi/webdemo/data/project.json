@@ -3,7 +3,7 @@
 "default_language": "en",
 "brief": "General indiredis website",
 "version": "0.0.1",
-"skipole": "5.0.6",
+"skipole": "5.0.7",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
@@ -1814,6 +1814,45 @@
 "widget_class": "",
 "widget_style": ""
 }
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Back to home paragraph",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Back to site"
+],
+[
+"HTMLSymbol",
+{
+"text": "&nbsp;"
+}
+],
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Link to home",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"href": "{home}"
+},
+"parts": [
+[
+"Text",
+"home"
+]
+]
+}
+]
+]
 }
 ],
 [

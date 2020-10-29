@@ -24,17 +24,20 @@ def devicelist(skicall):
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     devices = tools.devices(rconn, redisserver)
-    if not devices:
-        skicall.page_data['device', 'hide'] = True
-        skicall.page_data['message', 'para_text'] = "Awaiting device information."
-        # publish getProperties
-        textsent = tools.getProperties(rconn, redisserver)
-        # print(textsent)
-        return
     # get last message
     message = tools.last_message(rconn, redisserver)
     if message:
         skicall.page_data['message', 'para_text'] = message
+    if not devices:
+        skicall.page_data['device', 'hide'] = True
+        if message:
+            skicall.page_data['message', 'para_text'] = message + "\n\nAwaiting device information."
+        else:
+            skicall.page_data['message', 'para_text'] = "Awaiting device information."
+        # publish getProperties
+        textsent = tools.getProperties(rconn, redisserver)
+        # print(textsent)
+        return
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
     for index,devicename in enumerate(devices):
@@ -766,6 +769,12 @@ def check_for_device_change(skicall):
     if not properties:
         raise FailPage("No properties for the device have been found")
     # now check logs
+
+    # check if messages has a later timestamp than this page
+    # though this is not device specific, the system messages appear on the device page
+    if _check_logs(skicall, 'messages'):
+        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
+        return
 
     # if a devicemessage has updated, refresh the page
     if _check_logs(skicall, 'devicemessages', devicename):

@@ -8,6 +8,8 @@
 
 import os, sys, collections, threading, asyncio, pathlib
 
+from datetime import datetime
+
 from time import sleep
 
 from . import toindi, fromindi, tools
@@ -92,7 +94,7 @@ async def _rxfromindi(reader, loop, rconn):
 async def _indiconnection(loop, rconn, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    print("Connected")
+    _message(rconn, f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
     received = _rxfromindi(reader, loop, rconn)
     await asyncio.gather(sent, received)
@@ -111,7 +113,6 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     :type blob_folder: String
     """
 
-
     global _TO_INDI
 
     if not REDIS_AVAILABLE:
@@ -129,6 +130,9 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     else:
         print("Error - a blob_folder must be given")
         sys.exit(2)
+
+    # startup timestamp for logs
+    timestamp = datetime.utcnow().isoformat()
 
     # check if the blob_folder exists
     if not blob_folder.exists():
@@ -160,11 +164,28 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
         try:
             loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
         except ConnectionRefusedError:
-            print("Connection refused, waiting 5 seconds")
+            _message(rconn, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...", timestamp)
+            sleep(5)
+        except asyncio.IncompleteReadError:
+            _message(rconn, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...", timestamp)
             sleep(5)
         else:
             loop.close()
             break
+
+
+def _message(rconn, message, timestamp=None):
+    "Saves a message to redis, as if a message had been received from indiserver"
+    try:
+        if timestamp is None:
+            timestamp = datetime.utcnow().isoformat()
+        message_object = fromindi.Message({'message':message, 'timestamp':timestamp})
+        message_object.write(rconn)
+        # the log timestamp is different to the timestamp of the message
+        message_object.log(rconn, datetime.utcnow().isoformat())
+        print(message)
+    except Exception:
+        raise
 
 
 

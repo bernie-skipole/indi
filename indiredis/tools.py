@@ -544,7 +544,7 @@ def enableblob(rconn, redisserver, name, device, instruction):
         
     
 def clearredis(rconn, redisserver):
-    """Deletes the redis keys, returns None.
+    """Deletes the redis keys, (not logs) returns None.
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
@@ -553,24 +553,24 @@ def clearredis(rconn, redisserver):
     """
     device_list = devices(rconn, redisserver)
     rconn.delete( _key(redisserver, "devices") )
-    rconn.delete( _key(redisserver, "logdata", "devices") )    
+    #rconn.delete( _key(redisserver, "logdata", "devices") )    
     rconn.delete( _key(redisserver, "messages") )
-    rconn.delete( _key(redisserver, "logdata", "messages") )
+    #rconn.delete( _key(redisserver, "logdata", "messages") )
     for device in device_list:
         rconn.delete( _key(redisserver, "devicemessages", device) )
-        rconn.delete( _key(redisserver, "logdata", "devicemessages", device) )
+        #rconn.delete( _key(redisserver, "logdata", "devicemessages", device) )
         property_list = properties(rconn, redisserver, device)
         rconn.delete( _key(redisserver, "properties", device) )
-        rconn.delete( _key(redisserver, "logdata", "properties", device) )
+        #rconn.delete( _key(redisserver, "logdata", "properties", device) )
         for name in property_list:
             rconn.delete( _key(redisserver, "attributes", name, device) )
-            rconn.delete( _key(redisserver, "logdata", "attributes", name, device) )
+            #rconn.delete( _key(redisserver, "logdata", "attributes", name, device) )
             elements_list = elements(rconn, redisserver, name, device)
             rconn.delete( _key(redisserver, "elements", name, device) )
-            rconn.delete( _key(redisserver, "logdata", "elements", name, device) )
+            #rconn.delete( _key(redisserver, "logdata", "elements", name, device) )
             for elementname in elements_list:
                 rconn.delete( _key(redisserver, "elementattributes", elementname, name, device) )
-                rconn.delete( _key(redisserver, "logdata", "elementattributes", elementname, name, device) )
+                #rconn.delete( _key(redisserver, "logdata", "elementattributes", elementname, name, device) )
 
 
 def number_to_float(value):

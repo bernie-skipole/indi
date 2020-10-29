@@ -245,10 +245,10 @@ class ParentProperty():
         else:
             self.state = "Alert"
         # implied properties
-        self.label = vector.get("label", default = self.name)                             # GUI label, use name by default
-        self.group = vector.get("group", default = "")                                    # Property group membership, blank by default
-        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
-        self.message = vector.get("message", default = "")
+        self.label = vector.get("label", self.name)                             # GUI label, use name by default
+        self.group = vector.get("group", "")                                    # Property group membership, blank by default
+        self.timestamp = vector.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
+        self.message = vector.get("message", "")
 
 
     def setup_from_redis(self, rconn, device, name):
@@ -444,7 +444,7 @@ class ParentProperty():
 
     def update(self, rconn, vector):
         "Update the object attributes to redis"
-        self.timestamp = vector.get("timestamp", default = datetime.utcnow().isoformat()) # moment when these data were valid
+        self.timestamp = vector.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
         # timestamp updated before elements updated, in case any of the elements use the timestamp (BLOBs)
         for child in vector:
             element = self.elements[child.get("name")]
@@ -453,7 +453,7 @@ class ParentProperty():
         state = vector.get("state")     # set state of Property; Idle, OK, Busy or Alert, no change if absent
         if state:
             self.state = state
-        self.message = vector.get("message", default = "")
+        self.message = vector.get("message", "")
         # Saves the instance attributes to redis, apart from self.elements
         mapping = {key:value for key,value in self.__dict__.items() if (key != "elements") and (not key.startswith("_"))}
         rconn.hmset(key('attributes',self.name,self.device), mapping)
@@ -524,7 +524,7 @@ class ParentElement():
 
     def setup_from_def(self, child, **kwargs):
         self.name = child.get("name")                       # name of the element, required value
-        self.label = child.get("label", default=self.name)  # GUI label, use name by default
+        self.label = child.get("label", self.name)  # GUI label, use name by default
 
 
     def setup_from_redis(self, rconn, device, name, element_name):
@@ -574,7 +574,7 @@ class TextVector(ParentProperty):
         super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
-        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = TextElement()
             element.setup_from_def(child)
@@ -604,7 +604,7 @@ class TextVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        self.timeout = vector.get("timeout", default = 0)
+        self.timeout = vector.get("timeout", 0)
         super().update(rconn, vector)
 
 
@@ -639,7 +639,7 @@ class NumberVector(ParentProperty):
         super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                 # ostensible Client controlability
-        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         for child in vector:
             element = NumberElement()
             element.setup_from_def(child)
@@ -670,7 +670,7 @@ class NumberVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        self.timeout = vector.get("timeout", default = 0)
+        self.timeout = vector.get("timeout", 0)
         super().update(rconn, vector)
 
 
@@ -750,7 +750,7 @@ class SwitchVector(ParentProperty):
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
         self.rule = vector.get("rule")                      # hint for GUI presentation (OneOfMany|AtMostOne|AnyOfMany)
-        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
 
         for child in vector:
             element = SwitchElement()
@@ -782,7 +782,7 @@ class SwitchVector(ParentProperty):
 
     def update(self, rconn, vector):
         "Update the object attributes and changed elements to redis"
-        self.timeout = vector.get("timeout", default = 0)
+        self.timeout = vector.get("timeout", 0)
         super().update(rconn, vector)
 
     def _set_permission(self, permission):
@@ -887,7 +887,7 @@ class BLOBVector(ParentProperty):
         super().setup_from_def(rconn, vector)
         perm = vector.get("perm")
         self._set_permission(perm)                          # ostensible Client controlability
-        self.timeout = vector.get("timeout", default = 0)   # worse-case time to affect, 0 default, N/A for ro
+        self.timeout = vector.get("timeout", 0)   # worse-case time to affect, 0 default, N/A for ro
         # as default blobs are disabled, check if this device is already known
         # in redis and if blobs were previously enabled
         attribs = self.get_attributes(rconn)
@@ -955,8 +955,8 @@ class BLOBElement(ParentElement):
 
     def setup_from_def(self, child, **kwargs):
         "Set up element from xml"
-        self.size =  child.get("size", default = "")     # number of bytes in decoded and uncompressed BLOB
-        self.format =  child.get("format", default = "") # format as a file suffix, eg: .z, .fits, .fits.z
+        self.size =  child.get("size", "")     # number of bytes in decoded and uncompressed BLOB
+        self.format =  child.get("format", "") # format as a file suffix, eg: .z, .fits, .fits.z
         self.filepath = ""
         if 'timestamp' in kwargs:
             self.timestamp = kwargs["timestamp"]
@@ -1030,9 +1030,9 @@ class Message():
     "a message associated with a device or entire system"
 
     def __init__(self, child):
-        self.device = child.get("device", default = "")                                  # considered to be site-wide if absent
-        self.timestamp = child.get("timestamp", default = datetime.utcnow().isoformat()) # moment when this message was generated
-        self.message = child.get("message", default = "")                                # Received message
+        self.device = child.get("device", "")                                  # considered to be site-wide if absent
+        self.timestamp = child.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.get("message", "")                                # Received message
 
 
     @classmethod
@@ -1102,9 +1102,9 @@ class delProperty():
     def __init__(self, child):
         "Delete the given property, or device if property name is None"
         self.device = child.get("device")
-        self.name = child.get("name", default = "")
-        self.timestamp = child.get("timestamp", default = datetime.utcnow().isoformat()) # moment when this message was generated
-        self.message = child.get("message", default = "")                                # Received message
+        self.name = child.get("name", "")
+        self.timestamp = child.get("timestamp", datetime.utcnow().isoformat()) # moment when this message was generated
+        self.message = child.get("message", "")                                # Received message
 
 
     def write(self, rconn):
