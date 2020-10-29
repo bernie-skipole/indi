@@ -8,9 +8,9 @@
 
 import os, sys, collections, threading, asyncio, pathlib
 
-from datetime import datetime
-
 from time import sleep
+
+from datetime import datetime
 
 from . import toindi, fromindi, tools
 
@@ -131,9 +131,6 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
         print("Error - a blob_folder must be given")
         sys.exit(2)
 
-    # startup timestamp for logs
-    timestamp = datetime.utcnow().isoformat()
-
     # check if the blob_folder exists
     if not blob_folder.exists():
         # if not, create it
@@ -164,26 +161,24 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
         try:
             loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
         except ConnectionRefusedError:
-            _message(rconn, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...", timestamp)
+            _message(rconn, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         except asyncio.IncompleteReadError:
-            _message(rconn, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...", timestamp)
+            _message(rconn, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         else:
             loop.close()
             break
 
 
-def _message(rconn, message, timestamp=None):
+def _message(rconn, message):
     "Saves a message to redis, as if a message had been received from indiserver"
     try:
-        if timestamp is None:
-            timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.utcnow().isoformat(timespec='seconds')
         message_object = fromindi.Message({'message':message, 'timestamp':timestamp})
         message_object.write(rconn)
-        # the log timestamp is different to the timestamp of the message
-        message_object.log(rconn, datetime.utcnow().isoformat())
         print(message)
+        message_object.log(rconn, timestamp)
     except Exception:
         raise
 

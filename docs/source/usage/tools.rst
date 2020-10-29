@@ -59,7 +59,7 @@ Utilities
 
 .. autofunction:: indiredis.tools.clearredis
 
-The clearredis function is called when inditoredis is started, and deletes all current redis keys, so if you wish to store logs you must implement your own process to copy data from the redis store.
+The clearredis function is called when inditoredis is started, and deletes current redis keys, but not the logdata keys.
 
 clearredis does not delete the BLOBs folder or contents.
 
