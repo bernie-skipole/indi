@@ -14,6 +14,7 @@ All other vectors done.
    usage/redis_keys
    usage/tools.rst
    usage/references.rst
+   usage/license.rst
 
 
 Indices and tables
