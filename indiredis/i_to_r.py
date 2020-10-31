@@ -174,13 +174,14 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
 def _message(rconn, message):
     "Saves a message to redis, as if a message had been received from indiserver"
     try:
+        print(message)
         timestamp = datetime.utcnow().isoformat(timespec='seconds')
         message_object = fromindi.Message({'message':message, 'timestamp':timestamp})
         message_object.write(rconn)
-        print(message)
         message_object.log(rconn, timestamp)
     except Exception:
-        raise
+        pass
+    return
 
 
 

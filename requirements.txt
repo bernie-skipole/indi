@@ -1,4 +1,4 @@
-indiredis>=0.0.3
+indiredis>=0.0.4
 paho-mqtt>=1.5.1
 redis>=3.5.3
 skipole>=5.0.7

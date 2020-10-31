@@ -9,6 +9,10 @@ import sys, collections, threading, asyncio
 
 from time import sleep
 
+from datetime import datetime
+
+import xml.etree.ElementTree as ET
+
 from . import toindi, fromindi, tools
 
 MQTT_AVAILABLE = True
@@ -126,10 +130,10 @@ async def _rxfromindi(reader, loop, topic, mqtt_client):
             messagetagnumber = None
 
 
-async def _indiconnection(loop, mqtt_client, topic, indiserver):
+async def _indiconnection(loop, topic, mqtt_client, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    print(f"Connected to {indiserver.host}:{indiserver.port}")
+    _message(topic, mqtt_client, f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
     received = _rxfromindi(reader, loop, topic, mqtt_client)
     await asyncio.gather(sent, received)
@@ -181,16 +185,30 @@ def inditomqtt(indiserver, mqttserver):
     loop = asyncio.get_event_loop()
     while True:
         try:
-            loop.run_until_complete(_indiconnection(loop, mqtt_client, mqttserver.from_indi_topic, indiserver))
+            loop.run_until_complete(_indiconnection(loop, mqttserver.from_indi_topic, mqtt_client, indiserver))
         except ConnectionRefusedError:
-            print(f"Connection refused on {indiserver.host}:{indiserver.port}, waiting 5 seconds")
+            _message(mqttserver.from_indi_topic, mqtt_client, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         except asyncio.IncompleteReadError:
-            print(f"Connection failed on {indiserver.host}:{indiserver.port}, waiting 5 seconds")
+            _message(mqttserver.from_indi_topic, mqtt_client, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         else:
             loop.close()
             break
+
+
+def _message(topic, mqtt_client, message):
+    "Print and send a message to mqtt, as if a message had been received from indiserver"
+    try:
+        print(message)
+        sendmessage = ET.Element('message')
+        sendmessage.set("message", message)
+        sendmessage.set("timestamp", datetime.utcnow().isoformat(timespec='seconds'))
+        _sendtomqtt(ET.tostring(sendmessage), topic, mqtt_client)
+    except Exception:
+        pass
+    return
+
 
 
 
