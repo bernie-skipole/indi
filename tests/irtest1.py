@@ -46,6 +46,9 @@ async def handle_data(reader, writer):
             data = await reader.readuntil(separator=b'>')
         except asyncio.LimitOverrunError:
             data = await reader.read(n=32000)
+        except asyncio.IncompleteReadError:
+            # connection possibly closed, abandon the message
+            return
         if not message:
             # data is expected to start with <tag, first strip any newlines
             data = data.strip()
@@ -73,7 +76,6 @@ async def handle_data(reader, writer):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
             await txdata(writer, message)
             # and start again, waiting for a new message
             message = b''
