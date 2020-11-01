@@ -246,7 +246,7 @@ class ParentProperty():
             self.state = "Alert"
         # implied properties
         self.label = vector.get("label", self.name)                             # GUI label, use name by default
-        self.group = vector.get("group", "")                                    # Property group membership, blank by default
+        self.group = vector.get("group", "DEFAULT GROUP")                       # Property group membership, blank by default
         self.timestamp = vector.get("timestamp", datetime.utcnow().isoformat()) # moment when these data were valid
         self.message = vector.get("message", "")
 
