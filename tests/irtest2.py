@@ -4,10 +4,10 @@
 
 This script creates a socket listenning on localhost:7624 and acts as an indi driver.
 It is used to create a response to a getProperties request, in which case it responds
-with device IRTEST1 with a text vector containing two elements.
+with device IRTEST2 with a write only blob vector.
 
 Normally this script is run from one terminal, and the indiredis client in another.
-The client should then display the device and its two text elements"""
+The client should then display the device and its blob vector"""
 
 import os, sys
 from time import sleep
@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 
 import asyncio
 
-DEVICE = "IRTEST1"
+DEVICE = "IRTEST2"
 
 # All xml data received from the client should be contained in one of the following tags
 TAGS = (b'getProperties',
@@ -87,23 +87,14 @@ async def handle_data(reader, writer):
 async def txdata(writer, message):
     "message is the message received, this coroutine now creates and sends a reply"
     print("Received: %r" % message)
-    if (message == b'<getProperties version="1.7" />') or (message == b'<getProperties device="IRTEST1" version="1.7" />') or (message == b'<getProperties version="1.7" device="IRTEST1" />'):
+    if (message == b'<getProperties version="1.7" />') or (message == b'<getProperties device="IRTEST2" version="1.7" />') or (message == b'<getProperties version="1.7" device="IRTEST2" />'):
         senddata = reply_getProperties()
     else:
         return
     print("Send: %r" % senddata)
     writer.write(senddata)
     await writer.drain()
-    # append a system message
-    systemmessage = _make_message("Message from test script irtest1.py")
-    print("Send: %r" % systemmessage)
-    writer.write(systemmessage)
-    await writer.drain()
-    # append a device message
-    devicemessage = _make_message(f"Message from device {DEVICE}", DEVICE)
-    print("Send: %r" % devicemessage)
-    writer.write(devicemessage)
-    await writer.drain()
+
 
 
 def _make_message(message, device=None):
@@ -117,23 +108,18 @@ def _make_message(message, device=None):
 
 
 def reply_getProperties():
-    "Reply with properties for device with one textvector"
-    senddata = ET.Element('defTextVector')
+    "Reply with properties for device with one blobvector"
+    senddata = ET.Element('defBLOBVector')
     senddata.set("device", DEVICE)
-    senddata.set("name", "irtest1_text")
-    senddata.set("label", "TextVector")
+    senddata.set("name", "irtest2_blob")
+    senddata.set("label", "BLOBVector")
     senddata.set("state", "Ok")
-    senddata.set("perm", "ro")
+    senddata.set("perm", "wo")
     senddata.set("timestamp", datetime.utcnow().isoformat(timespec='seconds'))
-    # add text elements
-    t1 = ET.SubElement(senddata, 'defText')
-    t1.set("name", "irtest1_text_t1")
-    t1.set("label", "TextElement T1")
-    t1.text = "This is a test string for element T1"
-    t2 = ET.SubElement(senddata, 'defText')
-    t2.set("name", "irtest1_text_t2")
-    t2.set("label", "TextElement T2")
-    t2.text = "This is a second test string for element T2"
+    # add blob elements
+    b1 = ET.SubElement(senddata, 'defBLOB')
+    b1.set("name", "irtest2_blob_b1")
+    b1.set("label", "BLOB Element B1")
     return ET.tostring(senddata)
 
 

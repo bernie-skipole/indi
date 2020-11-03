@@ -10,6 +10,8 @@ Tools
 Reading values
 ^^^^^^^^^^^^^^
 
+.. autofunction:: indiredis.tools.getproperties_timestamp
+
 .. autofunction:: indiredis.tools.last_message
 
 .. autofunction:: indiredis.tools.devices

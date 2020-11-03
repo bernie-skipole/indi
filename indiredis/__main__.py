@@ -81,7 +81,6 @@ if __name__ == "__main__":
 #   this thread, uncomment the following line, and comment out all the followinglines 
 #    serve(application, host = "127.0.0.1", port=args.port)
  
-
 #   serve the application with the python waitress web server in another thread, and start inditoredis
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':args.port})
     webapp.start()

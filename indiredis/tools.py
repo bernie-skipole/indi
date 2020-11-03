@@ -74,6 +74,28 @@ def open_redis(redisserver):
     return rconn
 
 
+def getproperties_timestamp(rconn, redisserver):
+    """Return the timestamp string when the last getProperties command was sent
+       (General getProperties - without device name)
+       Returns None if not available
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
+    :return: A string of timestamp
+    :rtype: String
+    """
+    try:
+        gtkey = _key(redisserver, "getProperties")
+        timestamp = rconn.get(gtkey)
+    except:
+        return
+    if timestamp is None:
+        return
+    return timestamp.decode("utf-8")
+
+
 def last_message(rconn, redisserver, device=""):
     """Return the last message or None if not available
 
@@ -551,6 +573,7 @@ def clearredis(rconn, redisserver):
     :param redisserver: The redis server parameters
     :type redisserver: namedtuple
     """
+    rconn.delete( _key(redisserver, "getProperties") )
     device_list = devices(rconn, redisserver)
     rconn.delete( _key(redisserver, "devices") )
     #rconn.delete( _key(redisserver, "logdata", "devices") )    

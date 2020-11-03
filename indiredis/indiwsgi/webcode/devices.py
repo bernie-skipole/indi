@@ -1,6 +1,6 @@
 
 import pathlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 from base64 import urlsafe_b64encode
 
@@ -35,8 +35,7 @@ def devicelist(skicall):
         else:
             skicall.page_data['message', 'para_text'] = "Awaiting device information."
         # publish getProperties
-        textsent = tools.getProperties(rconn, redisserver)
-        # print(textsent)
+        getProperties(skicall)
         return
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
@@ -48,7 +47,18 @@ def devicelist(skicall):
         if devicemessage:
             skicall.page_data['device_'+str(index),'devicemessage','para_text'] = devicemessage
     # set timestamp into call_data so the end_call function can insert it into ident_data
-    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T') 
+    skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
+
+    # if getProperties has not been sent in the last minute, ensure it is sent
+    lastsent = tools.getproperties_timestamp(rconn, redisserver)
+    if lastsent is None:
+        getProperties(skicall)
+    else:
+        oneminuteago = datetime.utcnow() - timedelta(minutes=1)
+        stringoneminuteago = oneminuteago.isoformat(timespec='seconds')
+        if stringoneminuteago > lastsent:
+            # lastsent is older than oneminuteago
+            getProperties(skicall)
 
 
 def propertylist(skicall):
@@ -89,7 +99,6 @@ def getProperties(skicall):
     # publish getProperties
     textsent = tools.getProperties(rconn, redisserver)
     # print(textsent)
-
 
 
 def getDeviceProperties(skicall):
@@ -642,24 +651,30 @@ def _show_blobvector(skicall, index, ad):
     skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
     skicall.page_data['property_'+str(index),'blobvector', 'show'] = True
 
-    # list the attributes, group, state, perm, timeout, timestamp
-    skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:", "Receive BLOB's:"]
-    skicall.page_data['property_'+str(index),'bvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp'], ad['blobs']]
 
     # set the state, one of Idle, OK, Busy and Alert
     set_state(skicall, index, ad)
 
-    # set the enableblob button
-    if ad['blobs'] == "Enabled":
-        # make get_field1 a combo of propertyname, Disable
-        get_field1 = _safekey(ad['name'] + "\nDisable")
-        skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Disable"
-        skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
+    # list the attributes, perm, timeout, timestamp and receive blobs status (if not write only)
+    if ad['perm'] == "wo":
+        skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
+        skicall.page_data['property_'+str(index),'bvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
+        skicall.page_data['property_'+str(index), 'enableblob', 'show'] = False   # do not show the enable blob button
     else:
-        # make get_field1 a combo of propertyname, Enable
-        get_field1 = _safekey(ad['name'] + "\nEnable")
-        skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Enable"
-        skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
+        # if ro or rw then add the Receive Blobs status, enabled or disabled
+        skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:", "Receive BLOB's:"]
+        skicall.page_data['property_'+str(index),'bvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp'], ad['blobs']]
+        # set the enableblob button
+        if ad['blobs'] == "Enabled":
+            # make get_field1 a combo of propertyname, Disable
+            get_field1 = _safekey(ad['name'] + "\nDisable")
+            skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Disable"
+            skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
+        else:
+            # make get_field1 a combo of propertyname, Enable
+            get_field1 = _safekey(ad['name'] + "\nEnable")
+            skicall.page_data['property_'+str(index), 'enableblob', 'button_text'] = "Enable"
+            skicall.page_data['property_'+str(index), 'enableblob', 'get_field1'] = get_field1
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -709,7 +724,9 @@ def _check_logs(skicall, *args):
 
 def check_for_update(skicall):
     """When updating the devices page by json, update entire page if any change has occurred
+       or if getProperties has not been sent in the last 30 seconds.
        This means check the devices log, the messages log, and for every device, the devicemessages log"""
+
     if 'timestamp' not in skicall.call_data:
         skicall.page_data['JSONtoHTML'] = 'home'
         return
@@ -734,6 +751,15 @@ def check_for_update(skicall):
             skicall.page_data['JSONtoHTML'] = 'home'
             return
     # No update has been made, so do not refresh the page
+    # if getProperties has not been sent in the last 30 seconds, ensure it is sent
+    lastsent = tools.getproperties_timestamp(rconn, redisserver)
+    if lastsent is None:
+        getProperties(skicall)
+    timethirtysecago = datetime.utcnow() - timedelta(seconds=30)
+    stringtimethirtysecago = timethirtysecago.isoformat(timespec='seconds')
+    if stringtimethirtysecago > lastsent:
+        # lastsent is older than timethirtysecago
+        getProperties(skicall)
 
  
 
@@ -764,6 +790,7 @@ def check_for_device_change(skicall):
         # device has been deleted, go to home
         skicall.page_data['JSONtoHTML'] = 'home'
         return
+
     # are properties present for this device
     properties = tools.properties(rconn, redisserver, devicename)
     if not properties:
@@ -911,6 +938,19 @@ def check_for_device_change(skicall):
         # and since the page has been updated, update the timestamp
         # in call_data so the end_call function can insert it into ident_data
         skicall.call_data["timestamp"] = datetime.utcnow().isoformat(sep='T')
+    else:
+        # no update has been needed
+        # if getProperties has not been sent in the last minute, ensure it is sent
+        lastsent = tools.getproperties_timestamp(rconn, redisserver)
+        if lastsent is None:
+            getProperties(skicall)
+        else:
+            oneminuteago = datetime.utcnow() - timedelta(minutes=1)
+            stringoneminuteago = oneminuteago.isoformat(timespec='seconds')
+            if stringoneminuteago > lastsent:
+                # lastsent is older than oneminuteago
+                getProperties(skicall)
+
 
 
 

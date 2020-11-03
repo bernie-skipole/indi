@@ -12,6 +12,8 @@
 
 from time import sleep
 
+from datetime import datetime
+
 import xml.etree.ElementTree as ET
 
 
@@ -75,6 +77,10 @@ class SenderLoop():
         "data published by the client, to be sent to indiserver"
         # an message is published by the client, giving the command
         data = message['data']
+        # if data is a getProperties set the timestamp in redis
+        if data == b'<getProperties version="1.7" />':
+            timestamp = datetime.utcnow().isoformat(timespec='seconds')
+            self.rconn.set(self.keyprefix + "getProperties", timestamp)
         root = ET.fromstring(data.decode("utf-8"))
         if root.tag == "newTextVector":
             self._set_busy(root)

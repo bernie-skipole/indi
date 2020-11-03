@@ -7,10 +7,14 @@ The < > characters used below in the key names, refers to multiple values, so ke
 
 If a key prefix is defined, then the full keynames will be "prefixproperties:device1", "prefixproperties:device2", etc.
 
-NOTE : Currently BlobVectors are still being worked on, and their usage is not yet defined.
+NOTE : BLOB's are not stored in redis, but are held in the BLOB folder given as an argument to indiredis.
 
 Stored current values
 ^^^^^^^^^^^^^^^^^^^^^
+
+**getProperties**
+
+Contains a timestamp updated whenever the client sends the general getProperties command. This timestamp is saved so that a client can resend a getProperties if one has not been sent for a period. May be useful if a client has been disconnected for a while.
 
 **devices**
 
