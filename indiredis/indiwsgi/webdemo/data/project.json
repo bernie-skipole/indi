@@ -24,6 +24,7 @@
 "set_numbervector": 5030,
 "set_switchvector": 5020,
 "set_textvector": 5010,
+"show_modalupload": 16,
 "ski_basic": "skis,ski_basic",
 "ski_checkbox": "skis,ski_checkbox",
 "ski_confirm": "skis,ski_confirm",
@@ -145,7 +146,46 @@
 "Part",
 {
 "tag_name": "p",
-"brief": "Link paragraph",
+"brief": "Indiredis link paragraph",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"INDI client created by Indiredis. Forther information available at"
+],
+[
+"HTMLSymbol",
+{
+"text": "&nbsp;"
+}
+],
+[
+"Part",
+{
+"tag_name": "a",
+"brief": "Link",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"href": "https://indiredis.readthedocs.io/en/latest/"
+},
+"parts": [
+[
+"Text",
+"readthedocs"
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Skipole link paragraph",
 "show": true,
 "hide_if_empty": false,
 "parts": [
@@ -193,7 +233,7 @@
 ],
 [
 "Text",
-"Client created using the skipole wsgi generator."
+"Web client created using the skipole wsgi generator."
 ]
 ]
 }
@@ -1025,7 +1065,34 @@
 "link_class": "",
 "link_style": "",
 "odd_class": "",
-"show": true,
+"show": false,
+"title1": "",
+"title2": "",
+"widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "links.Table1_Links",
+"name": "bvwoelements",
+"brief": "Table of blob vector write only elements",
+"fields": {
+"col1": [],
+"col1_class": "",
+"col2": [],
+"col2_class": "",
+"col2_getfields": [],
+"col2_links": [],
+"even_class": "",
+"force_ident": false,
+"header_class": "w3-theme-d2",
+"link_class": "w3-button w3-block w3-theme-d4",
+"link_style": "width:15em;",
+"odd_class": "",
+"show": false,
 "title1": "",
 "title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
@@ -3297,6 +3364,91 @@
 [
 "Widget",
 {
+"class": "dropdown.HiddenContainer",
+"name": "modalupload",
+"brief": "modal container holding upload functions",
+"fields": {
+"boxdiv_class": "w3-modal-content w3-panel w3-theme-d3 w3-border",
+"boxdiv_style": "",
+"button_class": "w3-bar-item w3-button w3-right w3-theme-l2",
+"buttondiv_class": "w3-bar",
+"buttondiv_style": "",
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"hide": true,
+"inner_class": "w3-panel",
+"inner_style": "",
+"link_ident": "getproperties",
+"show": false,
+"widget_class": "w3-modal",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "div inside the modal box",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "paragraph describing upload",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"You can choose a file to upload here."
+],
+[
+"Widget",
+{
+"class": "upload.SubmitUploadFile1",
+"name": "upblob",
+"brief": "form to upload a blob",
+"fields": {
+"action": "home",
+"clear_error": false,
+"error_class": "w3-panel w3-red",
+"filebutton_class": "w3-button w3-theme-d4",
+"filebutton_label": "",
+"filebuttonlabel_class": "",
+"fileinputdiv_class": "w3-section",
+"hidden_field1": "",
+"hidden_field2": "",
+"hidden_field3": "",
+"hidden_field4": "",
+"hide": false,
+"required": true,
+"show": true,
+"show_error": "",
+"submitbutton_class": "w3-button w3-theme-d4",
+"submitbutton_label": "",
+"submitbutton_text": "Submit",
+"submitbuttonlabel_class": "",
+"submitinputdiv_class": "w3-section",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Widget",
+{
 "class": "headers.NavButtons3",
 "name": "navlinks",
 "brief": "Widget showing the nav link buttons",
@@ -3507,6 +3659,27 @@
 "original_fields": {
 "show_error": "Failure when calling a JSON file"
 }
+}
+},
+"newpage": {
+"ident": 16,
+"brief": "Refreshes property page and displays the modal upload box",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": 4003,
+"submit_list": [
+"webcode",
+"devices",
+"show_modalupload"
+],
+"target_ident": 4003
+},
+"original_fields": {}
 }
 },
 "no_javascript": {

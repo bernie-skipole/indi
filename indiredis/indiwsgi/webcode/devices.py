@@ -682,12 +682,35 @@ def _show_blobvector(skicall, index, ad):
     if not element_list:
         return
     # permission is one of ro, wo, rw
-    if ad['perm'] == "xx":   # wo
-        pass                               ########## still to do
+    if ad['perm'] == "wo":
+        # permission is write only
+        # set the modal upload box into the page, initially hidden
+        skicall.page_data['modalupload', 'show'] = True
+        skicall.page_data['modalupload', 'hide'] = True
+        # display label : button to display upload
+        skicall.page_data['property_'+str(index),'bvwoelements', 'show'] = True
+        col1 = []
+        col2 = []
+        col2_links = []
+        col2_getfields = []
+        for eld in element_list:
+            col1.append(eld['label'] + ":")
+            col2.append("Upload File")
+            col2_links.append("show_modalupload")
+            # make getfield a combo of propertyname, element name
+            getfield = _safekey(ad['name'] + "\n" + eld['name'])
+            col2_getfields.append(getfield)
+        skicall.page_data['property_'+str(index),'bvwoelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'bvwoelements', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'bvwoelements', 'col2_links'] = col2_links
+        skicall.page_data['property_'+str(index),'bvwoelements', 'col2_getfields'] = col2_getfields
     elif ad['perm'] == "yy": #rw
-        pass                               ########## still to do
+        # set the modal upload box into the page, initially hidden
+        skicall.page_data['modalupload', 'show'] = True
+        skicall.page_data['modalupload', 'hide'] = True
+        ########## still to do
     else:
-        # permission is ro
+        # permission is read only
         # display label : filepath in a table
         skicall.page_data['property_'+str(index),'bvelements', 'show'] = True
         col1 = []
@@ -706,6 +729,13 @@ def _show_blobvector(skicall, index, ad):
             skicall.page_data['property_'+str(index),'bvelements', 'col2_links'] = col2_links
 
 
+def show_modalupload(skicall):
+    "Display the modal upload box"
+    # refresh entire page
+    refreshproperties(skicall)
+    skicall.page_data['modalupload', 'hide'] = False
+
+
 def _check_logs(skicall, *args):
     """Checks logs defined by *args, and if changed after the timestamp
        given in skicall returns True"""
@@ -719,7 +749,6 @@ def _check_logs(skicall, *args):
             # page timestamp is earlier than last log entry
             return True
     return False
-
 
 
 def check_for_update(skicall):
@@ -750,17 +779,19 @@ def check_for_update(skicall):
         if _check_logs(skicall, 'devicemessages', device):
             skicall.page_data['JSONtoHTML'] = 'home'
             return
-    # No update has been made, so do not refresh the page
     # if getProperties has not been sent in the last 30 seconds, ensure it is sent
+    # and do a page refresh
     lastsent = tools.getproperties_timestamp(rconn, redisserver)
     if lastsent is None:
         getProperties(skicall)
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
     timethirtysecago = datetime.utcnow() - timedelta(seconds=30)
     stringtimethirtysecago = timethirtysecago.isoformat(timespec='seconds')
     if stringtimethirtysecago > lastsent:
         # lastsent is older than timethirtysecago
         getProperties(skicall)
-
+        skicall.page_data['JSONtoHTML'] = 'home'
  
 
 def check_for_device_change(skicall):
