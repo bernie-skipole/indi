@@ -47,10 +47,13 @@ def start_call(called_ident, skicall):
         # set these into skicall.call_data
         sessiondata = skicall.ident_data.split("/n")
         skicall.call_data["timestamp"] = sessiondata[0]
-        device = sessiondata[1]
+        changedata = sessiondata[1]
+        if changedata:
+            skicall.call_data["changedata"] = int(changedata)
+        device = sessiondata[2]
         if device:
             skicall.call_data["device"] = device
-        group = sessiondata[2]
+        group = sessiondata[3]
         if group:
             skicall.call_data["group"] = group
     return called_ident
@@ -73,17 +76,23 @@ def end_call(page_ident, page_type, skicall):
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
         skicall.page_data["status", "hide"] = False
 
-    # set timestamp, device and group into a string to be sent as ident_data
+    # set changedata, timestamp, device and group into a string to be sent as ident_data
     if "timestamp" in skicall.call_data:
         identstring = skicall.call_data["timestamp"] + "/n"
     else:
         identstring = datetime.utcnow().isoformat(sep='T') + "/n"
+    # changedata is a checksum of the data shown on the page (using zlib.adler32(data))
+    if 'changedata' in skicall.call_data:
+        identstring += str(skicall.call_data['changedata']) + "/n"
+    else:
+        identstring += "/n"
     if "device" in skicall.call_data:
         identstring += skicall.call_data["device"] + "/n"
     else:
         identstring += "/n"
     if "group" in skicall.call_data:
         identstring += skicall.call_data["group"]
+
     # set this string to ident_data
     skicall.page_data['ident_data'] = identstring
     
