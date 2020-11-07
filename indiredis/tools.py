@@ -74,21 +74,33 @@ def open_redis(redisserver):
     return rconn
 
 
-def getproperties_timestamp(rconn, redisserver):
+def getproperties_timestamp(rconn, redisserver, name="", device=""):
     """Return the timestamp string when the last getProperties command was sent
-       (General getProperties - without device name)
+       with the given optional device and property name
        Returns None if not available
 
     :param rconn: A redis connection
     :type rconn: redis.client.Redis
     :param redisserver: The redis server parameters
     :type redisserver: namedtuple
+    :param name: Optional property name
+    :type name: String
+    :param device: Optional device name
+    :type device: String
     :return: A string of timestamp
     :rtype: String
     """
+    if not device:
+        # general
+        key = _key(redisserver, "getProperties")
+    elif not name:
+        # device only
+        key = _key(redisserver, "getProperties", "device", device)
+    else:
+        # device and property
+        key = _key(redisserver, "getProperties", "property", name, device)
     try:
-        gtkey = _key(redisserver, "getProperties")
-        timestamp = rconn.get(gtkey)
+        timestamp = rconn.get(key)
     except:
         return
     if timestamp is None:
@@ -580,12 +592,14 @@ def clearredis(rconn, redisserver):
     rconn.delete( _key(redisserver, "messages") )
     #rconn.delete( _key(redisserver, "logdata", "messages") )
     for device in device_list:
+        rconn.delete( _key(redisserver, "getProperties", "device", device) )
         rconn.delete( _key(redisserver, "devicemessages", device) )
         #rconn.delete( _key(redisserver, "logdata", "devicemessages", device) )
         property_list = properties(rconn, redisserver, device)
         rconn.delete( _key(redisserver, "properties", device) )
         #rconn.delete( _key(redisserver, "logdata", "properties", device) )
         for name in property_list:
+            rconn.delete( _key(redisserver, "getProperties", "property", name, device) )
             rconn.delete( _key(redisserver, "attributes", name, device) )
             #rconn.delete( _key(redisserver, "logdata", "attributes", name, device) )
             elements_list = elements(rconn, redisserver, name, device)

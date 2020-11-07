@@ -184,6 +184,8 @@ def inditomqtt(indiserver, mqttserver):
     # and create a loop to txrx the indiserver port
     loop = asyncio.get_event_loop()
     while True:
+        _TO_INDI.clear()
+        _TO_INDI.append(b'<getProperties version="1.7" />')
         try:
             loop.run_until_complete(_indiconnection(loop, mqttserver.from_indi_topic, mqtt_client, indiserver))
         except ConnectionRefusedError:

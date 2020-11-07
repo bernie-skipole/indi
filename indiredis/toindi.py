@@ -75,12 +75,8 @@ class SenderLoop():
 
     def _handle(self, message):
         "data published by the client, to be sent to indiserver"
-        # an message is published by the client, giving the command
+        # a message is published by the client, giving the command
         data = message['data']
-        # if data is a getProperties set the timestamp in redis
-        if data == b'<getProperties version="1.7" />':
-            timestamp = datetime.utcnow().isoformat(timespec='seconds')
-            self.rconn.set(self.keyprefix + "getProperties", timestamp)
         root = ET.fromstring(data.decode("utf-8"))
         if root.tag == "newTextVector":
             self._set_busy(root)
@@ -92,6 +88,8 @@ class SenderLoop():
             self._set_busy(root)
         elif root.tag == "enableBLOB":
             self._set_blob_state(root)
+        elif root.tag == "getProperties":
+            self._set_timestamp(root)
         # and transmit the xml data via the sender object
         if data is not None:
             self.sender.append(data)
@@ -177,5 +175,30 @@ class SenderLoop():
                 self.rconn.hset(key, "blobs", "Disabled")
             else:
                 self.rconn.hset(key, "blobs", "Enabled")
-        
+
+
+    def _set_timestamp(self, vector):
+        "Set the redis timestamp keys when a getvector is sent"
+        device = vector.get("device")    # name of Device
+        name = vector.get("name")    # name of property
+        timestamp = datetime.utcnow().isoformat(timespec='seconds')
+        if device is None:
+            # data is a general getProperties set the timestamp in redis
+            if self.keyprefix:
+                key = self.keyprefix + "getProperties"
+            else:
+                key = "getProperties"
+        elif name is None:
+            # data is a getProperties for a device
+            if self.keyprefix:
+                key = self.keyprefix + "getProperties:device:" + device
+            else:
+                key = "getProperties:device:" + device
+        else:
+            # data is a getProperties for a device and property name
+            if self.keyprefix:
+                key = self.keyprefix + "getProperties:property:" + name + ":" + device
+            else:
+                key = "getProperties:property:" + name + ":" + device
+        self.rconn.set(key, timestamp)
 

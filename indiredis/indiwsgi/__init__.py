@@ -77,10 +77,7 @@ def end_call(page_ident, page_type, skicall):
         skicall.page_data["status", "hide"] = False
 
     # set changedata, timestamp, device and group into a string to be sent as ident_data
-    if "timestamp" in skicall.call_data:
-        identstring = skicall.call_data["timestamp"] + "/n"
-    else:
-        identstring = datetime.utcnow().isoformat(sep='T') + "/n"
+    identstring = datetime.utcnow().isoformat(sep='T') + "/n"
     # changedata is a checksum of the data shown on the page (using zlib.adler32(data))
     if 'changedata' in skicall.call_data:
         identstring += str(skicall.call_data['changedata']) + "/n"

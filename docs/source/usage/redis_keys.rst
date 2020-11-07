@@ -9,12 +9,25 @@ If a key prefix is defined, then the full keynames will be "prefixproperties:dev
 
 NOTE : BLOB's are not stored in redis, but are held in the BLOB folder given as an argument to indiredis.
 
-Stored current values
-^^^^^^^^^^^^^^^^^^^^^
+Timestamps of sent requests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These timestamps are saved so that a client can resend a getProperties if one has not been sent for a period. May be useful if a client has been disconnected for a while.
 
 **getProperties**
 
-Contains a timestamp updated whenever the client sends the general getProperties command. This timestamp is saved so that a client can resend a getProperties if one has not been sent for a period. May be useful if a client has been disconnected for a while.
+Contains a timestamp updated whenever the client sends the general getProperties command.
+
+**getProperties:device:<devicename>**
+
+Contains a timestamp updated whenever the client sends the getProperties command with a specified device.
+
+**getProperties:property:<propertyname>:<devicename>**
+
+Contains a timestamp updated whenever the client sends the getProperties command with a specified device and property.
+
+Stored current values
+^^^^^^^^^^^^^^^^^^^^^
 
 **devices**
 

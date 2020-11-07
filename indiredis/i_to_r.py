@@ -93,6 +93,7 @@ async def _rxfromindi(reader, loop, rconn):
 
 async def _indiconnection(loop, rconn, indiserver):
     "coroutine to create the connection and start the sender and receiver"
+    # start by sending a getproperties
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
     _message(rconn, f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
@@ -158,6 +159,8 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     # and create a loop to txrx the indiserver port
     loop = asyncio.get_event_loop()
     while True:
+        _TO_INDI.clear()
+        _TO_INDI.append(b'<getProperties version="1.7" />')
         try:
             loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
         except ConnectionRefusedError:
