@@ -42,14 +42,19 @@ def start_call(called_ident, skicall):
         return
 
     if skicall.ident_data:
-        # if ident_data exists, it should be a timestamp and
-        # optionally the device name and property group to be displayed
+        # if ident_data exists, it should optionally be
+        # the device name and property group to be displayed
+        # with two checksums
+        # checksum1 - flags if the page has been changed
+        # checksum2 - flags if an html refresh is needed, rather than json update
         # set these into skicall.call_data
         sessiondata = skicall.ident_data.split("/n")
-        skicall.call_data["timestamp"] = sessiondata[0]
-        changedata = sessiondata[1]
-        if changedata:
-            skicall.call_data["changedata"] = int(changedata)
+        checksum1 = sessiondata[0]
+        if checksum1:
+            skicall.call_data["checksum1"] = int(checksum1)
+        checksum2 = sessiondata[1]
+        if checksum2:
+            skicall.call_data["checksum2"] = int(checksum2)
         device = sessiondata[2]
         if device:
             skicall.call_data["device"] = device
@@ -76,11 +81,17 @@ def end_call(page_ident, page_type, skicall):
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
         skicall.page_data["status", "hide"] = False
 
-    # set changedata, timestamp, device and group into a string to be sent as ident_data
-    identstring = datetime.utcnow().isoformat(sep='T') + "/n"
-    # changedata is a checksum of the data shown on the page (using zlib.adler32(data))
-    if 'changedata' in skicall.call_data:
-        identstring += str(skicall.call_data['changedata']) + "/n"
+    # set device and group into a string to be sent as ident_data
+        # with two checksums
+        # checksum1 - flags if the page has been changed
+        # checksum2 - flags if an html refresh is needed, rather than json update
+    # checksum1 is a checksum of the data shown on the page (using zlib.adler32(data))
+    if 'checksum1' in skicall.call_data:
+        identstring = str(skicall.call_data['checksum1']) + "/n"
+    else:
+        identstring = "/n"
+    if 'checksum2' in skicall.call_data:
+        identstring += str(skicall.call_data['checksum2']) + "/n"
     else:
         identstring += "/n"
     if "device" in skicall.call_data:

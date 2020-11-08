@@ -24,12 +24,12 @@ def devicelist(skicall):
     skicall.call_data.clear()
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    changedata = ''
+    checksum1 = ''
     # get last message
     message = tools.last_message(rconn, redisserver)
     if message:
         skicall.page_data['message', 'para_text'] = message
-        changedata += message
+        checksum1 += message
     devices = tools.devices(rconn, redisserver)
     if not devices:
         skicall.page_data['device', 'hide'] = True
@@ -39,25 +39,25 @@ def devicelist(skicall):
             skicall.page_data['message', 'para_text'] = "Awaiting device information."
         # publish getProperties
         getProperties(skicall)
-        changedata += skicall.page_data['message', 'para_text']
-        # encode changedata as binary, then create a checksum
-        bindata = changedata.encode('utf-8', errors='ignore')
-        skicall.call_data["changedata"] = adler32(bindata)
+        checksum1 += skicall.page_data['message', 'para_text']
+        # encode checksum1 as binary, then create a checksum
+        bindata = checksum1.encode('utf-8', errors='ignore')
+        skicall.call_data["checksum1"] = adler32(bindata)
         return
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
     for index,devicename in enumerate(devices):
         skicall.page_data['device_'+str(index),'devicename', 'button_text'] = devicename
         skicall.page_data['device_'+str(index),'devicename','get_field1'] = devicename
-        changedata += devicename
+        checksum1 += devicename
         # set device messages here
         devicemessage = tools.last_message(rconn, redisserver, devicename)
         if devicemessage:
             skicall.page_data['device_'+str(index),'devicemessage','para_text'] = devicemessage
-            changedata += devicemessage
-    # encode changedata as binary, then create a checksum
-    bindata = changedata.encode('utf-8', errors='ignore')
-    skicall.call_data["changedata"] = adler32(bindata)
+            checksum1 += devicemessage
+    # encode checksum1 as binary, then create a checksum
+    bindata = checksum1.encode('utf-8', errors='ignore')
+    skicall.call_data["checksum1"] = adler32(bindata)
     # send getProperties if one hasn't been sent in the last minute
     lastsent = tools.getproperties_timestamp(rconn, redisserver)
     if lastsent is None:
@@ -78,28 +78,28 @@ def check_for_update(skicall):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    rxchangedata = skicall.call_data.get("changedata", -1)
+    rxchecksum1 = skicall.call_data.get("checksum1", -1)
     devices = tools.devices(rconn, redisserver)
     if not devices:
         # no devices! Request browser to do a full page update
         skicall.page_data['JSONtoHTML'] = 'home'
         return
-    changedata = ''
+    checksum1 = ''
     # check if last message changed
     message = tools.last_message(rconn, redisserver)
     if message:
-        changedata += message
+        checksum1 += message
     # devices is a list of known devices
     for index,devicename in enumerate(devices):
-        changedata += devicename
+        checksum1 += devicename
         # set device messages here
         devicemessage = tools.last_message(rconn, redisserver, devicename)
         if devicemessage:
-            changedata += devicemessage
-    # encode changedata as binary, then create a checksum
-    bindata = changedata.encode('utf-8', errors='ignore')
+            checksum1 += devicemessage
+    # encode checksum1 as binary, then create a checksum
+    bindata = checksum1.encode('utf-8', errors='ignore')
     check = adler32(bindata)
-    if check != rxchangedata:
+    if check != rxchecksum1:
         # data read from redis is not the same as that currently shown
         # so request browser to do a full page update
         skicall.page_data['JSONtoHTML'] = 'home'
@@ -177,7 +177,7 @@ def getDeviceProperties(skicall):
 
 def _read_redis(skicall):
     """Reads redis and returns a dictionary of device and its properties for the properties page
-       and a checksum for the displayed property page"""
+       and checksums for the displayed property page"""
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     # gets device from skicall.call_data["device"]
@@ -194,21 +194,26 @@ def _read_redis(skicall):
         raise FailPage("The specified device has not been found")
 
 
-    pdict = {"devicename":devicename}
+    pdict = {"devicename":devicename}   # checks if any property has changed in the current displayed group
+    hdict = {}                          # checks if any property that requires a html refresh has changed
 
     properties = tools.properties(rconn, redisserver, devicename)
+    # this is a list of property names, if any changes, then a full html refresh should happen
     if not properties:
         raise FailPage("No properties for the device have been found")
     pdict['properties'] = properties
-    # get last message and last device message
+    hdict['properties'] = properties
+
+    # get last message and last device message, these can be updated by json, so do not require html
+    # refresh, and so do not appear in hdict
     message = tools.last_message(rconn, redisserver)
     if message:
         pdict['message'] = message
     devicemessage = tools.last_message(rconn, redisserver, devicename)
     if devicemessage:
         pdict['devicemessage'] = devicemessage
+
     # create list of property attributes dictionaries
-    numbervectors = []   # record properties which are numbervectors
     att_list = []        # record property attributes - used to sort properties on the page
     for propertyname in properties:
         # get the property attributes
@@ -218,17 +223,18 @@ def _read_redis(skicall):
         if label is None:
             att_dict['label'] = propertyname
         att_list.append(att_dict)
-        if att_dict['vector'] == "NumberVector":
-            numbervectors.append(propertyname)
-    pdict['numbervectors'] = numbervectors
+
 
     # now sort att_list by group and then by label
     att_list.sort(key = lambda ad : (ad.get('group'), ad.get('label')))
 
     # get a list of groups for the group navigation bar
+    # if the group_list has changed (perhaps new properties with a new group has arrived)
+    # then this requires a html refresh
     group_set = set(ad['group'] for ad in att_list)
     group_list = sorted(group_set)
     pdict['group_list'] = group_list
+    hdict['group_list'] = group_list
     group = skicall.call_data.get('group')
     # could be None, if called from the home devices page, display the first group
     if group is None:
@@ -237,11 +243,14 @@ def _read_redis(skicall):
         raise FailPage("The group specified has not been recognised")
     pdict['group'] = group
 
-    propertygroup = []   # record properties which are in the group being displayed
+    # record properties which are in the group being displayed
+    # If new properties appear in this group, then a html refresh is needed
+    propertygroup = []
     for ad in att_list:
         if att_dict['group'] == group:
-            propertygroup.append(propertyname)
+            propertygroup.append(ad['name'])
     pdict['propertygroup'] = propertygroup
+    hdict['propertygroup'] = propertygroup
 
     # group_att_list is att_list limited to group members
     group_att_list = []
@@ -250,23 +259,55 @@ def _read_redis(skicall):
         # Only display the properties with the given group attribute
         if group == ad['group']:
             group_att_list.append(ad)
-    # temporarily set pdict['att_list'] to group_att_list so the checksum can be calculated
+
+    # a html refresh is only needed for those properties in this group which are not number vectors
+    numbervectors = []   # record properties which are numbervectors in this group
+    not_numbers  = []
+    for ad in group_att_list:
+        # loops through each property in the group, where ad is the attribute directory of the property
+        # for every property in the group_att_list, there is a list of element dictionaries which could change
+        ad["elements"] = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+        if ad['vector'] == "NumberVector":
+            numbervectors.append(ad['name'])
+        else:
+            not_numbers.append(ad)
+    hdict['not_numbers'] = not_numbers
+    # so if any of these change, which includes property attributes and elements, a full refresh is needed
+
+    pdict['numbervectors'] = numbervectors
+    # However, a number vector could have more or fewer elements, or with different names.
+    # in which case that also requires an html change
+    element_names = []
+    for ad in group_att_list:
+        # get list of element names for the given property and device
+        element_names.append( tools.elements(rconn, redisserver, ad['name'], ad['device']) )
+    hdict['element_names'] = element_names
+
+    # temporarily set pdict['att_list'] to group_att_list so the checksum1 can be calculated
     pdict['att_list'] = group_att_list
-    # work out checksum
+
+    # create checksums from string values of pdict and hdict
+
+    # work out checksum1
     # encode the string of pdict as binary, then create a checksum
-    bindata = str(pdict).encode('utf-8', errors='ignore')
-    checksum = adler32(bindata)
+    bindata1 = str(pdict).encode('utf-8', errors='ignore')
+    checksum1 = adler32(bindata1)
     # replace pdict['att_list'] as att_list
     pdict['att_list'] = att_list
-    return pdict, checksum
+    # work out checksum2
+    bindata2 = str(hdict).encode('utf-8', errors='ignore')
+    checksum2 = adler32(bindata2)
+
+    return pdict, checksum1, checksum2
 
 
 def refreshproperties(skicall):
     "Reads redis and refreshes the properties page"
     # read properties from redis
-    pdict, checksum = _read_redis(skicall)
-    # set checksum into ident_data which is sent back and can be used to check if the page has changed
-    skicall.call_data["changedata"] = checksum
+    pdict, checksum1, checksum2 = _read_redis(skicall)
+    # set checksum's into ident_data which is sent back and can be used to check if the page has changed
+    skicall.call_data["checksum1"] = checksum1
+    skicall.call_data["checksum2"] = checksum2
     skicall.page_data['devicename', 'large_text'] = pdict['devicename']
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
@@ -335,7 +376,7 @@ def _show_textvector(skicall, index, ad):
     set_state(skicall, index, ad)
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+    element_list = ad["elements"]
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -412,7 +453,7 @@ def _show_numbervector(skicall, index, ad):
     set_state(skicall, index, ad)
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+    element_list = ad["elements"]
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -553,7 +594,7 @@ def _show_switchvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+    element_list = ad["elements"]
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -748,7 +789,7 @@ def _show_lightvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+    element_list = ad["elements"]
     if not element_list:
         return
     # No permission value for lightvectors
@@ -797,7 +838,7 @@ def _show_blobvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    element_list = tools.property_elements(rconn, redisserver, ad['name'], ad['device'])
+    element_list = ad["elements"]
     if not element_list:
         return
     # permission is one of ro, wo, rw
@@ -855,36 +896,25 @@ def show_modalupload(skicall):
     skicall.page_data['modalupload', 'hide'] = False
 
 
-def _check_logs(skicall, *args):
-    """Checks logs defined by *args, and if changed after the timestamp
-       given in skicall returns True"""
-    rconn = skicall.proj_data["rconn"]
-    redisserver = skicall.proj_data["redisserver"]
-    timestamp = skicall.call_data['timestamp']
-    logentry = tools.logs(rconn, redisserver, 1, *args)
-    if logentry:
-        logtime, logdata = logentry[0]
-        if timestamp < logtime:
-            # page timestamp is earlier than last log entry, so this item changed since after the last page update
-            return True
-    return False
-
- 
 
 def check_for_device_change(skicall):
-    """Called to update the properties page by json, which should occur every ten seconds"""
+    """Called to update the properties page, which should occur every ten seconds"""
     # The page which has called for this update shows all the properties in
-    # a particular group, and the device, timestamp and group should all be present
+    # a particular group, and the device, group and checksums should all be present
     # in call_data
-    if ('device' not in skicall.call_data) or ('timestamp' not in skicall.call_data) or ('group' not in skicall.call_data) or ('changedata' not in skicall.call_data):
+    if (('device' not in skicall.call_data) or 
+        ('group' not in skicall.call_data) or 
+        ('checksum1' not in skicall.call_data) or
+        ('checksum2' not in skicall.call_data)):
         # something wrong, divert to the home page
         skicall.page_data['JSONtoHTML'] = 'home'
         return
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    pdict, checksum = _read_redis(skicall)
+    pdict, checksum1, checksum2 = _read_redis(skicall)
     devicename = pdict["devicename"]
-    if checksum == skicall.call_data['changedata']:
+    if (checksum1 == skicall.call_data['checksum1']) and (checksum2 == skicall.call_data['checksum2']):
+        # generated checksums are equal to the received checksums so
         # no update required, but send getproperties for the device every 90 seconds
         # and general getproperties every five minutes
         lastsent = tools.getproperties_timestamp(rconn, redisserver, device=devicename)
@@ -909,103 +939,36 @@ def check_for_device_change(skicall):
                 getProperties(skicall)
         return
 
-    # so an update is needed
+    # so an update is needed, it could be a whole page html, or just those items which can be changed by json
+    # if checksum2 is unchanged, this means those items requiring a whole page refresh (groups, propertynames)
+    # are unchanged, and therefore only a json refresh is needed
 
-    # now check logs
-
-    # if a devicemessage has updated, refresh the page
-    if _check_logs(skicall, 'devicemessages', devicename):
+    if checksum2 != skicall.call_data['checksum2']:
+        # the whole page needs refreshing, request the browser to make an html call
         skicall.page_data['JSONtoHTML'] = 'refreshproperties'
         return
+        
+    #############################################################################################################
+    # To reach this point, only those items which can be updated by json have changed, therefore do a json update
 
-    # check if property names found for this device has a later timestamp than this page
-    if _check_logs(skicall, 'properties', devicename):
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-        return
+    if 'message' in pdict:
+        skicall.page_data['message', 'para_text'] = pdict['message']
+    if 'devicemessage' in pdict:
+        skicall.page_data['devicemessage','para_text'] = pdict['devicemessage']
 
-    properties = pdict['properties']
-    numbervectors = pdict['numbervectors']   # record properties which are numbervectors
-    propertygroup = pdict['propertygroup']   # record properties which are in the group being displayed
-    att_list = pdict['att_list']             # record property attributes - used to sort properties on the page
+    numbervectors = pdict['numbervectors']   # properties which are numbervectors
+    att_list = pdict['att_list']             # property attributes - used to sort properties on the page
 
     # numbervectors are treated different to other vectors - they will have a json page update
     # whereas all other property changes will cause a full page refresh
-    # check if attributes of a property have changed, and also list numbervectors
-    numbervectors = []   # record properties which are numbervectors
-    propertygroup = []   # record properties which are in the group being displayed
-    att_list = []        # record property attributes - used to sort properties on the page
 
-    for att_dict in att_list:
-        if att_dict['vector'] != "NumberVector":
-            # if any property other than a number vector has changed attributes, refresh the page
-            if _check_logs(skicall, 'attributes', att_dict['name'], devicename):
-                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-                return
-
-    # for every property in the displayed group, other than numbervectors, check elements have not changed
-    for propertyname in propertygroup:
-        if propertyname in numbervectors:
-            continue
-        elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
-        # elements is a list of dictionaries of element attributes
-        if not elements:
-            continue
-        # check if element names for this property has changed
-        if _check_logs(skicall, 'elements', propertyname, devicename):
-            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-            return
-        # check for updated element attributes
-        for elementdict in elements:
-            # check if attribute has changed
-            if _check_logs(skicall, 'elementattributes', elementdict['name'], propertyname, devicename):
-                skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-                return
-
-    # for numbervectors in this group only, if there has been a change
-    # set property name :elements list into updatedict
-    updatedict = {}
-    for propertyname in numbervectors:
-        if propertyname not in propertygroup:
-            continue
-        elements = tools.property_elements(rconn, redisserver, propertyname, devicename)
-        # elements is a list of dictionaries of element attributes
-        if not elements:
-            continue
-        # check if element names for this property has changed
-        if _check_logs(skicall, 'elements', propertyname, devicename):
-            skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-            return
-        # check for updated property attributes
-        logentry = tools.logs(rconn, redisserver, 1, 'attributes', propertyname, devicename)
-        if logentry:
-            logtime, logdata = logentry[0]
-            if timestamp < logtime:
-                updatedict[propertyname] = elements
-                # property needs to be updated
-                continue
-        # check for updated element attributes
-        for elementdict in elements:
-            logentry = tools.logs(rconn, redisserver, 1, 'elementattributes', elementdict['name'], propertyname, devicename)
-            if logentry:
-                logtime, logdata = logentry[0]
-                if timestamp < logtime:
-                    updatedict[propertyname] = elements
-                    # property needs to be updated, do not bother checking further elements in the property
-                    break
-
-    if not updatedict:
-        # no number vector needs updating, but since checksum has changed the page still needs updating
-        skicall.page_data['JSONtoHTML'] = 'refreshproperties'
-        return
-
-    # updatedict keys are the property names needing updating,
-    # values are the list of element attribute dictionaries within that property
+    # refresh numbervectors in this group only
 
     for index, ad in enumerate(att_list):
         # loops through each property, where ad is the attribute directory of the property
         # and index is the section index on the web page
         propertyname = ad['name']
-        if propertyname not in updatedict:
+        if propertyname not in numbervectors:
             continue 
         
         # set the change into page data
@@ -1021,7 +984,7 @@ def check_for_device_change(skicall):
         skicall.page_data['property_'+str(index),'nvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
         skicall.page_data['property_'+str(index),'propertyname', 'small_text'] = ad['message']
 
-        element_list = updatedict[propertyname]
+        element_list = ad["elements"]
         if not element_list:
             continue
         # permission is one of ro, wo, rw
@@ -1042,5 +1005,10 @@ def check_for_device_change(skicall):
             for eld in element_list:
                 col2.append(eld['formatted_number'])
             skicall.page_data['property_'+str(index),'nvelements', 'col2'] = col2
+
+    # as this new data is inserted into the page, the page data should now have the same
+    # checksums as the generated checksums
+
+    skicall.call_data['checksum1'] = checksum1
 
 
