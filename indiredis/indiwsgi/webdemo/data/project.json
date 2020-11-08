@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "General indiredis website",
-"version": "0.0.6",
-"skipole": "5.0.8",
+"version": "0.0.7",
+"skipole": "5.1.0",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,

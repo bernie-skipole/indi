@@ -1,5 +1,5 @@
-indiredis>=0.0.6
+indiredis>=0.0.7
 paho-mqtt>=1.5.1
 redis>=3.5.3
-skipole>=5.0.8
+skipole>=5.1.0
 waitress>=1.4.4
