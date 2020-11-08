@@ -915,28 +915,7 @@ def check_for_device_change(skicall):
     devicename = pdict["devicename"]
     if (checksum1 == skicall.call_data['checksum1']) and (checksum2 == skicall.call_data['checksum2']):
         # generated checksums are equal to the received checksums so
-        # no update required, but send getproperties for the device every 90 seconds
-        # and general getproperties every five minutes
-        lastsent = tools.getproperties_timestamp(rconn, redisserver, device=devicename)
-        if lastsent is None:
-            # send getProperties for this device
-            tools.getProperties(rconn, redisserver, device=devicename)
-        else:
-            ninetysecondsago = datetime.utcnow() - timedelta(minutes=1, seconds=30)
-            stringninetysecondsago = ninetysecondsago.isoformat(timespec='seconds')
-            if stringninetysecondsago > lastsent:
-                # lastsent is older than ninetysecondsago
-                tools.getProperties(rconn, redisserver, device=devicename)
-        # send general getProperties if one hasn't been sent in the last 5 minutes
-        lastsent = tools.getproperties_timestamp(rconn, redisserver)
-        if lastsent is None:
-            getProperties(skicall)
-        else:
-            fiveminutesago = datetime.utcnow() - timedelta(minutes=5)
-            stringfiveminutesago = fiveminutesago.isoformat(timespec='seconds')
-            if stringfiveminutesago > lastsent:
-                # lastsent is older than fiveminutesago
-                getProperties(skicall)
+        # no update required
         return
 
     # so an update is needed, it could be a whole page html, or just those items which can be changed by json
