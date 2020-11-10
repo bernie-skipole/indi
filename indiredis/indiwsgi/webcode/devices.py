@@ -2,7 +2,7 @@
 import pathlib
 from datetime import datetime, timedelta
 from time import sleep
-from base64 import urlsafe_b64encode
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from zlib import adler32
 
 from skipole import FailPage
@@ -17,6 +17,15 @@ def _safekey(key):
     """Provides a base64 encoded key from a given key"""
     b64binarydata = urlsafe_b64encode(key.encode('utf-8')).rstrip(b"=")  # removes final '=' padding
     return b64binarydata.decode('ascii')
+
+
+def _fromsafekey(safekey):
+    """Decodes a base64 encoded key"""
+    b64binarydata = safekey.encode('utf-8') # get the received data and convert to binary
+    # add padding
+    b64binarydata = b64binarydata + b"=" * (4-len(b64binarydata)%4)
+    return urlsafe_b64decode(b64binarydata).decode('utf-8') # b64 decode, and convert to string
+
 
 def devicelist(skicall):
     "Gets a list of devices and fill index devices page"
@@ -894,6 +903,31 @@ def show_modalupload(skicall):
     # refresh entire page
     refreshproperties(skicall)
     skicall.page_data['modalupload', 'hide'] = False
+    # device name should already be set in ident_data with skicall.call_data["device"]
+    received_data = skicall.submit_dict['received_data']
+    # example of  received_data
+    #
+    # {('property_0', 'bvwoelements', 'col2_getfields'): 'aXJ0ZXN0Ml9ibG9iCmlydGVzdDJfYmxvYl9iMQ'}
+    try:
+        keys = list(received_data.keys())
+        propertyindex = keys[0][0]
+        p,sectionindex = propertyindex.split("_")
+    except:
+        raise FailPage("Invalid data")
+    if p != "property":
+        raise FailPage("Invalid data")
+    if (propertyindex, 'bvwoelements', 'col2_getfields') not in received_data:
+        raise FailPage("Invalid data")
+    try:
+        rxdata = received_data[propertyindex, 'bvwoelements', 'col2_getfields']
+        data = _fromsafekey(rxdata)
+        propertyname, elementname = data.split("\n")
+    except:
+        raise FailPage("Invalid data")
+    # set upload widget hidden field with this data, so it is submitted with the file to upload
+    skicall.page_data['upblob', 'hidden_field1'] = rxdata
+
+
 
 
 

@@ -3379,8 +3379,8 @@
 "hide": true,
 "inner_class": "w3-panel",
 "inner_style": "",
-"link_ident": "getproperties",
-"show": false,
+"link_ident": "refreshproperties",
+"show": true,
 "widget_class": "w3-modal",
 "widget_style": ""
 },
@@ -3661,27 +3661,6 @@
 }
 }
 },
-"newpage": {
-"ident": 16,
-"brief": "Refreshes property page and displays the modal upload box",
-"RespondPage": {
-"class": "AllowedAccept",
-"original_args": {
-"allowed_callers": [
-4003
-],
-"alternate_ident": "home",
-"fail_ident": 4003,
-"submit_list": [
-"webcode",
-"devices",
-"show_modalupload"
-],
-"target_ident": 4003
-},
-"original_fields": {}
-}
-},
 "no_javascript": {
 "ident": 10,
 "brief": "Forwards to no_javascript template",
@@ -3791,6 +3770,27 @@
 "toggle_blob"
 ],
 "target_ident": "general_json"
+},
+"original_fields": {}
+}
+},
+"whatupload": {
+"ident": 16,
+"brief": "Displays the modal upload box",
+"RespondPage": {
+"class": "AllowedAccept",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": 4003,
+"submit_list": [
+"webcode",
+"devices",
+"show_modalupload"
+],
+"target_ident": 4003
 },
 "original_fields": {}
 }

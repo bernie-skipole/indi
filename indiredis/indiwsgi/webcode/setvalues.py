@@ -491,4 +491,6 @@ def toggle_blob(skicall):
         skicall.page_data[propertyindex, 'enableblob', 'button_text'] = "Disable"
         skicall.page_data[propertyindex, 'enableblob', 'get_field1'] = _safekey(propertyname + "\nDisable")
         skicall.page_data[propertyindex,'bvtable', 'col2'] = [ None, None, None, "Enabled"]
-    
+
+
+

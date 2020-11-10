@@ -25,10 +25,10 @@ import sys, os, threading, argparse
 
 ############################################################################################
 # Required during development if a non-standard package of skipole is being used ###########
-#skipole_package_location = "/home/bernard/git/skipole"   # folder of skipole package
+skipole_package_location = "/home/bernard/git/skipole"   # folder of skipole package
 #
-#if skipole_package_location not in sys.path:
-#    sys.path.insert(0,skipole_package_location)
+if skipole_package_location not in sys.path:
+    sys.path.insert(0,skipole_package_location)
 ############################################################################################
 
 from . import inditoredis, indi_server, redis_server, indiwsgi
@@ -72,10 +72,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
 #    During development, serve the web admin pages by uncommenting the following
-#    from skipole import skiadmin, set_debug
-#    set_debug(True)
-#    skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')
-#    application.add_project(skiadmin_application, url='/skiadmin')
+    from skipole import skiadmin, set_debug
+    set_debug(True)
+    skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')
+    application.add_project(skiadmin_application, url='/skiadmin')
 
     # serve the application with the python waitress web server in another thread, and start inditoredis
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':args.port})
