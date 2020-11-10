@@ -1013,11 +1013,11 @@ class BLOBElement(ParentElement):
                 # no new file is given in child.text, nor any file currently exists
                 return
             # read from attributes, may not exist, so use the empty defaults
-            self.filepath = attribs("filepath", "")
+            self.filepath = attribs.get("filepath", "")
             if self.filepath:
                 self.size = attribs.get("size","")
                 self.format = attribs.get("format","")
-                self.timestamp = attribs("timestamp", self.timestamp)
+                self.timestamp = attribs.get("timestamp", self.timestamp)
             return
         # a new file exists in child.text
         # make filename from timestamp, and change colon in the timestamp to _ for safer name
