@@ -898,9 +898,11 @@ class BLOBVector(ParentProperty):
         for child in vector:
             element = BLOBElement(self.timestamp)
             element.setup_from_def(child, timestamp=self.timestamp)
-            # If child.text save standard_b64decode(child.text) to a file
-            # and set the filepath attribute of the element
-            element.set_file(self.device, self.name, child)
+            # A defBLOB only has name and label, contents are empty, however if blobs are enabled
+            # and this BLOB element has been previously defined, and a filepath saved in redis,
+            # then get element pathname etc from redis
+            if self.blobs == "Enabled":
+                element.set_file(rconn, self.device, self.name, child)
             self.elements[element.name] = element
 
     def setup_from_redis(self, rconn, device, name):
@@ -955,12 +957,15 @@ class BLOBElement(ParentElement):
 
     def setup_from_def(self, child, **kwargs):
         "Set up element from xml"
-        self.size =  child.get("size", "")     # number of bytes in decoded and uncompressed BLOB
-        self.format =  child.get("format", "") # format as a file suffix, eg: .z, .fits, .fits.z
+        # A defBLOB only has name and label, contents are empty
+        # name and label are set in super
+        super().setup_from_def(child, **kwargs)
+        # initialise data
+        self.size =  ""     # number of bytes in decoded and uncompressed BLOB
+        self.format = ""    # format as a file suffix, eg: .z, .fits, .fits.z
         self.filepath = ""
         if 'timestamp' in kwargs:
             self.timestamp = kwargs["timestamp"]
-        super().setup_from_def(child, **kwargs)
 
 
     def setup_from_redis(self, rconn, device, name, element_name):
@@ -983,7 +988,7 @@ class BLOBElement(ParentElement):
             self.timestamp = kwargs['timestamp']
         # If child.text, save standard_b64decode(child.text) to a file
         # and set the new filepath attribute of the element
-        self.set_file(device, name, child)
+        self.set_file(rconn, device, name, child)
         self.write(rconn, device, name)
 
     def set_value(self, child):
@@ -991,19 +996,31 @@ class BLOBElement(ParentElement):
         return
 
 
-    def set_file(self, devicename, propertyname, child):
-        "If child.text is blob data, this saves the file, and sets a filepath attribute"
+    def set_file(self, rconn, devicename, propertyname, child):
+        """If child.text is blob data, this saves the file, and sets a filepath attribute
+           If no text, checks if redis contains a previous filepath and uses that"""
         if not _BLOBFOLDER:
-            self.filepath = ""
-            return
-        if child.text is None:
-            # no new file, do not alter the current filepath
             return
         # check if the _BLOBFOLDER exists
         if not _BLOBFOLDER.exists():
             # if not, create it
             _BLOBFOLDER.mkdir(parents=True)
-        # make filename safer by changing colon in the timestamp to _
+        if child.text is None:
+            # no new file
+            # Check if a filepath exists in redis
+            attribs = self.get_attributes(rconn, devicename, propertyname)
+            if not attribs:
+                # no new file is given in child.text, nor any file currently exists
+                return
+            # read from attributes, may not exist, so use the empty defaults
+            self.filepath = attribs("filepath", "")
+            if self.filepath:
+                self.size = attribs.get("size","")
+                self.format = attribs.get("format","")
+                self.timestamp = attribs("timestamp", self.timestamp)
+            return
+        # a new file exists in child.text
+        # make filename from timestamp, and change colon in the timestamp to _ for safer name
         filename =  self.timestamp.replace(":", "_") + self.format
         counter = 0
         while True:
@@ -1017,6 +1034,7 @@ class BLOBElement(ParentElement):
                 break
         filepath.write_bytes(standard_b64decode(child.text))
         self.filepath = str(filepath)
+        # size and format are specified in the child vector
 
     def __str__(self):
         return ""

@@ -181,7 +181,7 @@ def inditomqtt(indiserver, mqttserver):
     mqtt_client.connect(host=mqttserver.host, port=mqttserver.port)
     mqtt_client.loop_start()
 
-    # and create a loop to txrx the indiserver port
+    # Now create a loop to tx and rx the indiserver port
     loop = asyncio.get_event_loop()
     while True:
         _TO_INDI.clear()

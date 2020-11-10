@@ -156,7 +156,7 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     # and start senderloop in its thread
     run_toindi.start()
     # the senderloop will place data to transmit to indiserver in the _TO_INDI dequeue
-    # and create a loop to txrx the indiserver port
+    # Now create a loop to tx and rx to the indiserver port
     loop = asyncio.get_event_loop()
     while True:
         _TO_INDI.clear()
