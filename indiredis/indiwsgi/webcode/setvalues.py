@@ -494,3 +494,21 @@ def toggle_blob(skicall):
 
 
 
+def set_blob(skicall):
+    "Responds to a submission to upload a blob"
+    rconn = skicall.proj_data["rconn"]
+    redisserver = skicall.proj_data["redisserver"]
+    # device name should already be set in ident_data with skicall.call_data["device"]
+    rxdata = skicall.page_data['upblob', 'hidden_field1']
+    data = _fromsafekey(rxdata)
+    propertyname, elementname = data.split("\n")
+    devicename = skicall.call_data["device"]
+    rxfile = skicall.call_data['upblob', "action"]
+    
+
+
+
+
+
+
+
