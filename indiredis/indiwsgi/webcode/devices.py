@@ -925,7 +925,7 @@ def show_modalupload(skicall):
     except:
         raise FailPage("Invalid data")
     # set upload widget hidden field with this data, so it is submitted with the file to upload
-    skicall.page_data['upblob', 'hidden_field1'] = rxdata
+    skicall.page_data['upblob', 'hidden_field1'] = _safekey(propertyname + "\n" + sectionindex + "\n" + elementname)
 
 
 

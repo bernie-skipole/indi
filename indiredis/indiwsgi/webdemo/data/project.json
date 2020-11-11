@@ -21,6 +21,7 @@
 "redirector": 2030,
 "refreshproperties": 7,
 "server_error": 2020,
+"set_blobvector": 5050,
 "set_numbervector": 5030,
 "set_switchvector": 5020,
 "set_textvector": 5010,
@@ -1218,6 +1219,34 @@
 "restricted": false,
 "folders": {},
 "pages": {
+"blobvector": {
+"ident": 5050,
+"brief": "Uploads a file",
+"RespondPage": {
+"class": "AllowStore",
+"original_args": {
+"allowed_callers": [
+4003
+],
+"alternate_ident": "home",
+"fail_ident": "home",
+"submit_list": [
+"webcode",
+"setvalues",
+"set_blob"
+],
+"submit_option": true,
+"target_ident": "refreshproperties",
+"validate_fail_ident": null,
+"validate_option": false
+},
+"original_fields": {
+"upblob:action": "",
+"upblob:hidden_field1": "",
+"upblob:submitbutton": ""
+}
+}
+},
 "numbervector": {
 "ident": 5030,
 "brief": "Set a numbervector",
@@ -3404,15 +3433,18 @@
 [
 "Text",
 "You can choose a file to upload here."
+]
+]
+}
 ],
 [
 "Widget",
 {
-"class": "upload.SubmitUploadFile1",
+"class": "upload.SubmitUploadFile2",
 "name": "upblob",
 "brief": "form to upload a blob",
 "fields": {
-"action": "home",
+"action": "set_blobvector",
 "clear_error": false,
 "error_class": "w3-panel w3-red",
 "filebutton_class": "w3-button w3-theme-d4",
@@ -3427,17 +3459,14 @@
 "required": true,
 "show": true,
 "show_error": "",
+"submitbutton": "Submit",
 "submitbutton_class": "w3-button w3-theme-d4",
 "submitbutton_label": "",
-"submitbutton_text": "Submit",
 "submitbuttonlabel_class": "",
 "submitinputdiv_class": "w3-section",
 "widget_class": "w3-section",
 "widget_style": ""
 }
-}
-]
-]
 }
 ]
 ]
@@ -3741,7 +3770,8 @@
 "original_args": {
 "allowed_callers": [
 4003,
-4002
+4002,
+5050
 ],
 "fail_ident": "home",
 "submit_list": [

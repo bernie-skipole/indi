@@ -451,6 +451,14 @@
 "submitinputdiv_class": "w3-section",
 "widget_class": "w3-section"
 },
+"SubmitUploadFile2": {
+"error_class": "w3-panel w3-red",
+"filebutton_class": "w3-button w3-theme-d4",
+"fileinputdiv_class": "w3-section",
+"submitbutton_class": "w3-button w3-theme-d4",
+"submitinputdiv_class": "w3-section",
+"widget_class": "w3-section"
+},
 "UploadFile1": {
 "error_class": "w3-panel w3-red",
 "filebutton_class": "w3-button w3-theme-d4",

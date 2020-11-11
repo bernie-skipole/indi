@@ -36,6 +36,8 @@ import xml.etree.ElementTree as ET
 
 from datetime import datetime
 
+from base64 import standard_b64encode
+
 import re, json, math
 
 REDIS_AVAILABLE = True
@@ -76,7 +78,7 @@ def open_redis(redisserver):
 
 def getproperties_timestamp(rconn, redisserver, name="", device=""):
     """Return the timestamp string when the last getProperties command was sent
-       with the given optional device and property name
+       by the client, with the given optional device and property name
        Returns None if not available
 
     :param rconn: A redis connection
@@ -525,6 +527,55 @@ def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
     except:
         nnvstring = None
     return nnvstring
+
+
+
+def newblobvector(rconn, redisserver, name, device, values, timestamp=None):
+    """Sends a newBLOBVector request, returns the xml string sent, or None on failure.
+    Values should be a list of dictionaries, each dictionary with key of name, size, format, value
+    The name key should contain the element name.
+    size: number of bytes in the uncompressed BLOB
+    format: a file suffix
+    value: the data as bytes, but not base64 encoded, this function will do that.
+    Timestamp should be a datetime object, if None the current utc datetime will be used.
+
+    :param rconn: A redis connection
+    :type rconn: redis.client.Redis
+    :param redisserver: The redis server parameters
+    :type redisserver: namedtuple
+    :param name: The property name
+    :type name: String
+    :param device: The device name
+    :type device: String
+    :param values: List of element dictionaries
+    :type values: List
+    :param timestamp: A datetime.datetime object or None
+    :type timestamp: datetime.datetime
+    :return:  A string of the xml published, or None on failure
+    :rtype: String
+    """
+    nbv = ET.Element('newBLOBVector')
+    nbv.set("device", device)
+    nbv.set("name", name)
+    if timestamp is None:
+        nbv.set("timestamp", datetime.utcnow().isoformat(sep='T'))
+    else:
+        nbv.set("timestamp", timestamp.isoformat(sep='T'))
+    # for the elements given in values, add to nbv
+    try:
+        for element in values:
+            ob = ET.Element('oneBLOB')
+            ob.set("name", element['name'])
+            ob.set("size", str(element['size']))
+            ob.set("format", element['format'])
+            ob.text = standard_b64encode(element['value']).decode('ascii')
+            nbv.append(ob)
+        nbvstring = ET.tostring(nbv)
+        rconn.publish(redisserver.to_indi_channel, nbvstring)
+    except:
+        nbvstring = None
+    return nbvstring
+
 
 
 # Command to control whether setBLOBs should be sent to this channel from a given Device. They can

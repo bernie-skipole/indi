@@ -1,6 +1,8 @@
 
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
+from pathlib import Path
+
 from skipole import FailPage
 
 from ... import tools
@@ -499,12 +501,22 @@ def set_blob(skicall):
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     # device name should already be set in ident_data with skicall.call_data["device"]
-    rxdata = skicall.page_data['upblob', 'hidden_field1']
+    rxdata = skicall.call_data['upblob', 'hidden_field1']
     data = _fromsafekey(rxdata)
-    propertyname, elementname = data.split("\n")
+    propertyname, sectionindex, elementname = data.split("\n")
     devicename = skicall.call_data["device"]
     rxfile = skicall.call_data['upblob', "action"]
-    
+    fpath = skicall.call_data['upblob', "submitbutton"]
+    fextension = Path(fpath).suffixes    #  fextension is something like ['.tar'] or ['tar', '.gz']
+    fext = ''
+    for f in fextension:
+        fext += f
+    data_sent = tools.newblobvector(rconn, redisserver, propertyname, devicename, [{'name':elementname, 'size':len(rxfile), 'format':fext, 'value':rxfile}])
+    if not data_sent:
+        raise FailPage("Error sending data")
+    set_state(skicall, sectionindex, "Busy")
+    skicall.call_data["status"] = "The file has been submitted"
+
 
 
 

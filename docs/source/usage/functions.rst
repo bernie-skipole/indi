@@ -130,6 +130,12 @@ your localhost, you can use::
 
 This runs the script __main__.py within indiredis, and serves the client at localhost:8000
 
+You can also try::
+
+    python3 -m indiredis -h
+
+For help on the full set of arguments available.
+
 If you want to import indiwsgi and run your own web server in your own script, further examples are
 given below which can be adapted to your own system.
 
@@ -210,9 +216,18 @@ You will still need indiserver to be running first - either started in another t
 running this script in a terminal, connect your browser to localhost:8000 to view the web pages.
 
 The __main__.py script in the indiredis package is very similar to the above example with the addition of
-accepting the blob_folder as a script argument. 
+accepting host, port, blob_folder, etc., as script arguments. 
 
+**Web client limitation**
 
+Sending BLOB's from client to device is achieved on the browser by giving the user the option of uploading
+a file. This may be required for certain instruments, which may, for example, need a configuration uploaded,
+or a script of instructions.
+
+The indi specification requires the file format and the size before compression. This wsgi application uses
+the uploaded filename extension as the format, and the uploaded file size as the 'size' parameter, since it is
+not clear how to robustly work out the uncompressed size for this general purpose client. To properly meet the
+specification therefore you should only send uncompressed files.
 
 
 

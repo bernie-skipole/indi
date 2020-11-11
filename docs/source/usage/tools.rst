@@ -50,6 +50,8 @@ which then transmits the xml on to indisserver.
 
 .. autofunction:: indiredis.tools.newnumbervector
 
+.. autofunction:: indiredis.tools.newblobvector
+
 .. autofunction:: indiredis.tools.enableblob
 
 Utilities
