@@ -212,7 +212,7 @@ can be run in separate threads from a single script::
     inditoredis(indi_host, redis_host, blob_folder=BLOBS)
 
 
-You will still need indiserver to be running first - either started in another terminal, or as a service. On
+You will still need indiserver to be running - either started in another terminal, or as a service. On
 running this script in a terminal, connect your browser to localhost:8000 to view the web pages.
 
 The __main__.py script in the indiredis package is very similar to the above example with the addition of
@@ -224,10 +224,16 @@ Sending BLOB's from client to device is achieved on the browser by giving the us
 a file. This may be required for certain instruments, which may, for example, need a configuration uploaded,
 or a script of instructions.
 
-The indi specification requires the file format and the size before compression. This wsgi application uses
-the uploaded filename extension as the format, and the uploaded file size as the 'size' parameter, since it is
-not clear how to robustly work out the uncompressed size for this general purpose client. To properly meet the
-specification therefore you should only send uncompressed files.
+The indi protocol requires the file format and the size before compression to be set in the XML data. This
+wsgi application uses the uploaded filename extension as the format, and the uploaded file size as the 'size'
+parameter. To comply with the specification therefore you should only upload uncompressed files.
+
+The web client gives you the option to request file compression. If this is chosen, the wsgi application will
+take your uploaded uncompressed file (from which it derives the size) and will then compress it using gzip,
+and add .gz to the extension format, and will then send the data on to indiserver.
+
+Note: this is done by holding the file in variables (in memory) rather than reading/writing to disc, which
+may not work with very large files.
 
 
 

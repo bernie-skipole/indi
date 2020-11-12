@@ -3,6 +3,8 @@ from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 from pathlib import Path
 
+import gzip
+
 from skipole import FailPage
 
 from ... import tools
@@ -506,21 +508,21 @@ def set_blob(skicall):
     propertyname, sectionindex, elementname = data.split("\n")
     devicename = skicall.call_data["device"]
     rxfile = skicall.call_data['upblob', "action"]
+    lenrxfile = len(rxfile)
     fpath = skicall.call_data['upblob', "submitbutton"]
     fextension = Path(fpath).suffixes    #  fextension is something like ['.tar'] or ['tar', '.gz']
     fext = ''
     for f in fextension:
         fext += f
     if skicall.call_data['zipbox', "checkbox"] == "zipfile":
-        print("ZZZZZZ")
-    data_sent = tools.newblobvector(rconn, redisserver, propertyname, devicename, [{'name':elementname, 'size':len(rxfile), 'format':fext, 'value':rxfile}])
+        # zip the file and add .gz extension
+        rxfile = gzip.compress(rxfile)
+        fext = fext + ".gz"
+    data_sent = tools.newblobvector(rconn, redisserver, propertyname, devicename, [{'name':elementname, 'size':lenrxfile, 'format':fext, 'value':rxfile}])
     if not data_sent:
         raise FailPage("Error sending data")
     set_state(skicall, sectionindex, "Busy")
     skicall.call_data["status"] = "The file has been submitted"
-
-
-
 
 
 

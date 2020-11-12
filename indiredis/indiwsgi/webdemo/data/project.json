@@ -3489,7 +3489,7 @@
 "parts": [
 [
 "Text",
-"Check here if you want the web server to zip compress your file before sending it on to indiserver. This will also add the extension '.gz' to the file."
+"Check here if you want the web server to compress your file (using gzip) before sending it on to indiserver. This will also add the extension '.gz' to the file."
 ]
 ]
 }
