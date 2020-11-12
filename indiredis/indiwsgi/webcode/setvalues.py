@@ -522,7 +522,12 @@ def set_blob(skicall):
     if not data_sent:
         raise FailPage("Error sending data")
     set_state(skicall, sectionindex, "Busy")
-    skicall.call_data["status"] = "The file has been submitted"
+    skicall.call_data["status"] = f"""The file has been submitted:
+    Device name   : {devicename}
+    Property name : {propertyname}
+    Element name  : {elementname}
+    Size          : {lenrxfile}
+    Format        : {fext}"""
 
 
 
