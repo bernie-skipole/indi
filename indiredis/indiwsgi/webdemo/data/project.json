@@ -1243,7 +1243,8 @@
 "original_fields": {
 "upblob:action": "",
 "upblob:hidden_field1": "",
-"upblob:submitbutton": ""
+"upblob:submitbutton": "",
+"zipbox:checkbox": ""
 }
 }
 },
@@ -3432,7 +3433,7 @@
 "parts": [
 [
 "Text",
-"You can choose a file to upload here."
+"You can choose a file to upload here. The INDI specification requires the file size before compression to be sent with the data.  Therefore upload an uncompressed file here, to allow the web server to measure the size. You can also instruct the web server to then compress the file if required."
 ]
 ]
 }
@@ -3446,6 +3447,7 @@
 "fields": {
 "action": "set_blobvector",
 "clear_error": false,
+"container_class": "",
 "error_class": "w3-panel w3-red",
 "filebutton_class": "w3-button w3-theme-d4",
 "filebutton_label": "",
@@ -3461,12 +3463,69 @@
 "show_error": "",
 "submitbutton": "Submit",
 "submitbutton_class": "w3-button w3-theme-d4",
-"submitbutton_label": "",
+"submitbutton_label": "Send file:",
 "submitbuttonlabel_class": "",
+"submitbuttonlabel_style": "display:inline-block;margin-right:1%;text-align:right;width:20%;",
 "submitinputdiv_class": "w3-section",
 "widget_class": "w3-section",
 "widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "container div",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "About the zip checkbox",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Check here if you want the web server to zip compress your file before sending it on to indiserver. This will also add the extension '.gz' to the file."
+]
+]
 }
+],
+[
+"Widget",
+{
+"class": "checkbox.CheckBox1",
+"name": "zipbox",
+"brief": "Checked to request file compression",
+"fields": {
+"checkbox": "zipfile",
+"checkbox_class": "w3-check",
+"checkbox_style": "",
+"checked": false,
+"clear_error": false,
+"div_class": "",
+"div_style": "",
+"error_class": "w3-panel w3-red",
+"left_class": "",
+"left_label": "Zip File:",
+"left_style": "display:inline-block;margin-right:1%;text-align:right;width:20%;",
+"right_class": "",
+"right_label": "",
+"right_style": "",
+"show": true,
+"show_error": "",
+"widget_class": "w3-section",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
 }
 ]
 ]

@@ -67,16 +67,6 @@ def devicelist(skicall):
     # encode checksum1 as binary, then create a checksum
     bindata = checksum1.encode('utf-8', errors='ignore')
     skicall.call_data["checksum1"] = adler32(bindata)
-    # send getProperties if one hasn't been sent in the last minute
-    lastsent = tools.getproperties_timestamp(rconn, redisserver)
-    if lastsent is None:
-        getProperties(skicall)
-    else:
-        oneminuteago = datetime.utcnow() - timedelta(minutes=1)
-        stringoneminuteago = oneminuteago.isoformat(timespec='seconds')
-        if stringoneminuteago > lastsent:
-            # lastsent is older than oneminuteago
-            getProperties(skicall)
 
 
 def check_for_update(skicall):
@@ -112,18 +102,6 @@ def check_for_update(skicall):
         # data read from redis is not the same as that currently shown
         # so request browser to do a full page update
         skicall.page_data['JSONtoHTML'] = 'home'
-        return
-    # send getProperties if one hasn't been sent in the last minute
-    lastsent = tools.getproperties_timestamp(rconn, redisserver)
-    if lastsent is None:
-        getProperties(skicall)
-    else:
-        oneminuteago = datetime.utcnow() - timedelta(minutes=1)
-        stringoneminuteago = oneminuteago.isoformat(timespec='seconds')
-        if stringoneminuteago > lastsent:
-            # lastsent is older than oneminuteago
-            getProperties(skicall)
-
 
 
 def propertylist(skicall):

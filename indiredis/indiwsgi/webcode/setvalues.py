@@ -511,6 +511,8 @@ def set_blob(skicall):
     fext = ''
     for f in fextension:
         fext += f
+    if skicall.call_data['zipbox', "checkbox"] == "zipfile":
+        print("ZZZZZZ")
     data_sent = tools.newblobvector(rconn, redisserver, propertyname, devicename, [{'name':elementname, 'size':len(rxfile), 'format':fext, 'value':rxfile}])
     if not data_sent:
         raise FailPage("Error sending data")
