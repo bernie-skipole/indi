@@ -6,8 +6,16 @@ The indiredis package
 Functions in indiredis
 ^^^^^^^^^^^^^^^^^^^^^^
 
-These first three functions are used to create named tuples gathering the data for the
-associated servers.
+These first three functions are used to create named tuples.
+
+For example::
+
+    from indiredis import indi_server, redis_server
+
+    indi_host = indi_server(host='localhost', port=7624)
+    redis_host = redis_server(host='localhost', port=6379)
+
+These variables 'indi_host' and 'redis_host' are then used as inputs to further functions which require definitions of the hosts.
 
 .. autofunction:: indiredis.indi_server
 
@@ -46,7 +54,7 @@ So a minimal script using defaults to run inditoredis could be::
 
 Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument.
 
-The two functions below work together to provide communications via an MQTT server.
+As an alternative to inditoredis, the two functions below work together to provide communications via an MQTT server.
 
 .. _inditomqtt:
 
@@ -114,8 +122,7 @@ The function which creates the wsgi application:
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
 
 This particular client application is general purpose, and learns all instrument properties from the
-redis store, it employs a browser client refresh every ten seconds, and so may not be useful for an
-instrument that updates data at a faster rate.
+redis store.
 
 If this wsgi application is not used, the skipole package is not required by indiredis, and does not
 have to be installed on your machine.
@@ -219,6 +226,9 @@ The __main__.py script in the indiredis package is very similar to the above exa
 accepting host, port, blob_folder, etc., as script arguments. 
 
 **Web client limitation**
+
+The web client employs a browser refresh every ten seconds, so data changes which update at a faster rate
+will jump rather than change smoothly.
 
 Sending BLOB's from client to device is achieved on the browser by giving the user the option of uploading
 a file. This may be required for certain instruments, which may, for example, need a configuration uploaded,

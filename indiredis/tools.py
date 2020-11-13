@@ -532,10 +532,10 @@ def newnumbervector(rconn, redisserver, name, device, values, timestamp=None):
 
 def newblobvector(rconn, redisserver, name, device, values, timestamp=None):
     """Sends a newBLOBVector request, returns the xml string sent, or None on failure.
-    Values should be a list of dictionaries, each dictionary with key of name, size, format, value
-    The name key should contain the element name.
-    size: number of bytes in the uncompressed BLOB
-    format: a file suffix
+    Values should be a list of dictionaries, each dictionary with key of name, size, format, value.
+    The name key should contain the element name,
+    size: number of bytes in the uncompressed BLOB,
+    format: a file suffix,
     value: the data as bytes, but not base64 encoded, this function will do that.
     Timestamp should be a datetime object, if None the current utc datetime will be used.
 
@@ -590,7 +590,7 @@ def newblobvector(rconn, redisserver, name, device, values, timestamp=None):
 
 
 def enableblob(rconn, redisserver, name, device, instruction):
-    """Sends an enableBLOB instruction, returns the xml string sent, or None on failure.
+    """Sends an enableBLOB instruction, returns the xml string sent, or None on failure,
     instruction should be one of Never, Also or Only.
 
     :param rconn: A redis connection

@@ -5,8 +5,7 @@ Introduction
 The indiredis package
 ^^^^^^^^^^^^^^^^^^^^^
 
-This Python3 package provides an INDI client with the capability to read instrument properties from indiserver (port 7624) and store them in redis, and in the
-other direction; can read data published to redis and send it in INDI XML format to indiserver. If the package is run, it provides instrument control via a web service. If imported, it provides tools to read/write to redis, and hence indiserver, for use by your own GUI or WEB applications.
+This Python3 package provides an INDI web client (if run with the python3 -m option), or if imported, it provides your own Python scripts with functions that read instrument properties from indiserver (port 7624) and stores them in redis, and in the other direction; can read data published to redis and sends it in INDI XML format to indiserver.
 
 The package is a client only, it does not include indiserver or drivers.
 

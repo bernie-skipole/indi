@@ -62,7 +62,7 @@ A key is created for every element name, for every property name, for every devi
 Stored logged values
 ^^^^^^^^^^^^^^^^^^^^
 
-As well as the current values stored above, as values change, a history of data is stored within keys listed here. Each log is stored as a list of strings, each string being of the format Timestamp space datastring.  This Timestamp is the time at which the data was received (Not timestamps given in the protocol - though they will be included within the data string where given). The datastrings are JSON strings of the data as defined above.
+As well as the current values stored above, as values change, a history of data is stored within keys listed here. Each log is stored as a list of strings, each string being of the format Timestamp space datastring.  This Timestamp is the time at which the data was received (Not timestamps given in the protocol - though they will be included within the data string where given). The datastrings are JSON strings of the data.
 
 **logdata:devices**
 
