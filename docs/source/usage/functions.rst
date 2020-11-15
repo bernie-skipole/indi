@@ -23,6 +23,8 @@ These variables 'indi_host' and 'redis_host' are then used as inputs to further 
 
 .. autofunction:: indiredis.mqtt_server
 
+The parameter snoop_indi_topic in the above function is currently unused, and may be developed in future.
+
 The tuples created by the above functions are then used as parameters for the following functions.
 
 .. _inditoredis:

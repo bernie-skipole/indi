@@ -31,7 +31,7 @@ from .m_to_r import mqtttoredis
 
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
 RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic'])
+MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic', 'snoop_indi_topic'])
 
 
 #mqttserver = MQTTServer('10.34.167.1', 1883, '', '', '', '')
@@ -85,7 +85,7 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
         raise ValueError("The port must be an integer, 6379 is default")
     return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
 
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi'):
+def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi', snoop_indi_topic='snoop_indi'):
     """Creates a named tuple to hold MQTT server parameters
 
     The to_indi_topic string is used as the MQTT topic which publishes data to indiserver.
@@ -106,14 +106,20 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
     :type to_indi_topic: String
     :param from_indi_topic: A string to use as the mqtt topic to send data towards redis.
     :type from_indi_topic: String
+    :param snoop_indi_topic: This MQTT client subscribes to subtopics snoop_indi/#
+    :type snoop_indi_topic: String
     :return: A named tuple with above parameters as named elements
     :rtype: collections.namedtuple
     """
     if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
         raise ValueError("MQTT topics must exist and must be different from each other.")
+
+    if (not snoop_indi_topic) or (snoop_indi_topic == to_indi_topic) or (snoop_indi_topic == from_indi_topic):
+        raise ValueError("MQTT topics must exist and must be different from each other.")
+
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 1883 is default")
-    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic)
+    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic, snoop_indi_topic)
 
 
 

@@ -34,7 +34,7 @@ import sys, os, threading, argparse
 from . import inditoredis, indi_server, redis_server, indiwsgi
 
 
-version = "0.0.8"
+version = "0.0.9"
 
 if __name__ == "__main__":
 

@@ -182,17 +182,20 @@ def _read_redis(skicall):
 
 
     pdict = {"devicename":devicename}   # checks if any property has changed in the current displayed group
-    hdict = {}                          # checks if any property that requires a html refresh has changed
+    hlist = []                          # checks if any property that requires a html refresh has changed
+
+    # hlist will have all items added to it, that if changed, will require an html change
+    # a string version of hlist will then be used to create a checksum
 
     properties = tools.properties(rconn, redisserver, devicename)
     # this is a list of property names, if any changes, then a full html refresh should happen
     if not properties:
         raise FailPage("No properties for the device have been found")
     pdict['properties'] = properties
-    hdict['properties'] = properties
+    hlist.append(properties)
 
     # get last message and last device message, these can be updated by json, so do not require html
-    # refresh, and so do not appear in hdict
+    # refresh, and so do not appear in hlist
     message = tools.last_message(rconn, redisserver)
     if message:
         pdict['message'] = message
@@ -221,7 +224,7 @@ def _read_redis(skicall):
     group_set = set(ad['group'] for ad in att_list)
     group_list = sorted(group_set)
     pdict['group_list'] = group_list
-    hdict['group_list'] = group_list
+    hlist.append(group_list)
     group = skicall.call_data.get('group')
     # could be None, if called from the home devices page, display the first group
     if group is None:
@@ -237,7 +240,7 @@ def _read_redis(skicall):
         if att_dict['group'] == group:
             propertygroup.append(ad['name'])
     pdict['propertygroup'] = propertygroup
-    hdict['propertygroup'] = propertygroup
+    hlist.append(propertygroup)
 
     # group_att_list is att_list limited to group members
     group_att_list = []
@@ -258,7 +261,7 @@ def _read_redis(skicall):
             numbervectors.append(ad['name'])
         else:
             not_numbers.append(ad)
-    hdict['not_numbers'] = not_numbers
+    hlist.append(not_numbers)
     # so if any of these change, which includes property attributes and elements, a full refresh is needed
 
     pdict['numbervectors'] = numbervectors
@@ -268,12 +271,12 @@ def _read_redis(skicall):
     for ad in group_att_list:
         # get list of element names for the given property and device
         element_names.append( tools.elements(rconn, redisserver, ad['name'], ad['device']) )
-    hdict['element_names'] = element_names
+    hlist.append(element_names)
 
     # temporarily set pdict['att_list'] to group_att_list so the checksum1 can be calculated
     pdict['att_list'] = group_att_list
 
-    # create checksums from string values of pdict and hdict
+    # create checksums from string values of pdict and hlist
 
     # work out checksum1
     # encode the string of pdict as binary, then create a checksum
@@ -282,7 +285,7 @@ def _read_redis(skicall):
     # replace pdict['att_list'] as att_list
     pdict['att_list'] = att_list
     # work out checksum2
-    bindata2 = str(hdict).encode('utf-8', errors='ignore')
+    bindata2 = str(hlist).encode('utf-8', errors='ignore')
     checksum2 = adler32(bindata2)
 
     return pdict, checksum1, checksum2
@@ -807,6 +810,7 @@ def _show_blobvector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:"]
         skicall.page_data['property_'+str(index),'bvtable', 'col2'] = [ ad['perm'], ad['timeout'], ad['timestamp']]
         skicall.page_data['property_'+str(index), 'enableblob', 'show'] = False   # do not show the enable blob button
+        skicall.page_data['property_'+str(index), 'endescription', 'show'] = False   # do not show the enable description
     else:
         # if ro or rw then add the Receive Blobs status, enabled or disabled
         skicall.page_data['property_'+str(index),'bvtable', 'col1'] = [ "Perm:", "Timeout:", "Timestamp:", "Receive BLOB's:"]
@@ -825,6 +829,8 @@ def _show_blobvector(skicall, index, ad):
 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
+    button_class = "w3-button w3-block w3-theme-d4"
+    button_style = "width:15em;"
     element_list = ad["elements"]
     if not element_list:
         return
@@ -835,27 +841,81 @@ def _show_blobvector(skicall, index, ad):
         skicall.page_data['modalupload', 'show'] = True
         skicall.page_data['modalupload', 'hide'] = True
         # display label : button to display upload
-        skicall.page_data['property_'+str(index),'bvwoelements', 'show'] = True
+        skicall.page_data['property_'+str(index),'bvwelements', 'show'] = True
         col1 = []
         col2 = []
-        col2_links = []
+        col2_link_idents = []
+        col2_json_idents = []
         col2_getfields = []
+        link_classes = []
+        link_styles = []
         for eld in element_list:
             col1.append(eld['label'] + ":")
             col2.append("Upload File")
-            col2_links.append("show_modalupload")
+            col2_link_idents = ["no_javascript"]
+            col2_json_idents.append("show_modalupload")
             # make getfield a combo of propertyname, element name
             getfield = _safekey(ad['name'] + "\n" + eld['name'])
             col2_getfields.append(getfield)
-        skicall.page_data['property_'+str(index),'bvwoelements', 'col1'] = col1
-        skicall.page_data['property_'+str(index),'bvwoelements', 'col2'] = col2
-        skicall.page_data['property_'+str(index),'bvwoelements', 'col2_links'] = col2_links
-        skicall.page_data['property_'+str(index),'bvwoelements', 'col2_getfields'] = col2_getfields
-    elif ad['perm'] == "yy": #rw
+            link_classes.append(button_class)
+            link_styles.append(button_style)
+        skicall.page_data['property_'+str(index),'bvwelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_link_idents'] = col2_link_idents
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_json_idents'] = col2_json_idents
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_getfields'] = col2_getfields
+        skicall.page_data['property_'+str(index),'bvwelements', 'link_classes'] = link_classes
+        skicall.page_data['property_'+str(index),'bvwelements', 'link_styles'] = link_styles
+    elif ad['perm'] == "rw":
         # set the modal upload box into the page, initially hidden
+        # permission is read write
         skicall.page_data['modalupload', 'show'] = True
         skicall.page_data['modalupload', 'hide'] = True
-        ########## still to do
+        skicall.page_data['property_'+str(index),'bvwelements', 'show'] = True
+        col1 = []
+        col2 = []
+        col2_link_idents = []
+        col2_json_idents = []
+        col2_getfields = []
+        link_classes = []
+        link_styles = []
+        # note, there are two rows of the table for each element, one for received data, and one for the upload button
+        for eld in element_list:
+            # 1st row
+            col1.append(eld['label'] + ":")
+            if eld['filepath']:
+                path = pathlib.Path(eld['filepath'])
+                col2.append(path.name)
+                col2_link_idents.append(f"/blobs/{path.name}")
+            else:
+                col2.append("")
+                col2_link_idents.append("")
+            # no json or get field in first row
+            col2_json_idents.append("")
+            col2_getfields.append("")
+            link_classes.append('')
+            link_styles.append('')
+            # 2nd row
+            col1.append("Send a file to the instrument:")
+            col2.append("Upload File")
+            col2_link_idents.append("no_javascript")
+            col2_json_idents.append("show_modalupload")
+            # make getfield a combo of propertyname, element name
+            getfield = _safekey(ad['name'] + "\n" + eld['name'])
+            col2_getfields.append(getfield)
+            link_classes.append(button_class)
+            link_styles.append(button_style)
+        skicall.page_data['property_'+str(index),'bvwelements', 'col1'] = col1
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2'] = col2
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_link_idents'] = col2_link_idents
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_json_idents'] = col2_json_idents
+        skicall.page_data['property_'+str(index),'bvwelements', 'col2_getfields'] = col2_getfields
+        skicall.page_data['property_'+str(index),'bvwelements', 'link_classes'] = link_classes
+        skicall.page_data['property_'+str(index),'bvwelements', 'link_styles'] = link_styles
+        # take off the border at the bottem of every row
+        skicall.page_data['property_'+str(index),'bvwelements', 'widget_class'] = "w3-table w3-centered"
+        # and add it, just for even rows
+        skicall.page_data['property_'+str(index),'bvwelements', 'even_class'] = "w3-border-bottom"
     else:
         # permission is read only
         # display label : filepath in a table
@@ -878,14 +938,12 @@ def _show_blobvector(skicall, index, ad):
 
 def show_modalupload(skicall):
     "Display the modal upload box"
-    # refresh entire page
-    refreshproperties(skicall)
     skicall.page_data['modalupload', 'hide'] = False
     # device name should already be set in ident_data with skicall.call_data["device"]
     received_data = skicall.submit_dict['received_data']
     # example of  received_data
     #
-    # {('property_0', 'bvwoelements', 'col2_getfields'): 'aXJ0ZXN0Ml9ibG9iCmlydGVzdDJfYmxvYl9iMQ'}
+    # {('property_0', 'bvwelements', 'col2_getfields'): 'aXJ0ZXN0Ml9ibG9iCmlydGVzdDJfYmxvYl9iMQ'}
     try:
         keys = list(received_data.keys())
         propertyindex = keys[0][0]
@@ -894,10 +952,10 @@ def show_modalupload(skicall):
         raise FailPage("Invalid data")
     if p != "property":
         raise FailPage("Invalid data")
-    if (propertyindex, 'bvwoelements', 'col2_getfields') not in received_data:
+    if (propertyindex, 'bvwelements', 'col2_getfields') not in received_data:
         raise FailPage("Invalid data")
     try:
-        rxdata = received_data[propertyindex, 'bvwoelements', 'col2_getfields']
+        rxdata = received_data[propertyindex, 'bvwelements', 'col2_getfields']
         data = _fromsafekey(rxdata)
         propertyname, elementname = data.split("\n")
     except:

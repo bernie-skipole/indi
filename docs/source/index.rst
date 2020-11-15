@@ -3,8 +3,6 @@
 indiredis - an INDI Client
 ==========================
 
-Status: In development. ReadWrite BLOBS still to do
-RO BLOBS done, WO BLOBS done, all other vectors done
 
 .. toctree::
    :maxdepth: 2

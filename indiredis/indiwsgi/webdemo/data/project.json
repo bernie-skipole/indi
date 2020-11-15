@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "General indiredis website",
-"version": "0.0.8",
-"skipole": "5.1.1",
+"version": "0.0.9",
+"skipole": "5.1.2",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
@@ -1077,26 +1077,41 @@
 [
 "Widget",
 {
-"class": "links.Table1_Links",
-"name": "bvwoelements",
-"brief": "Table of blob vector write only elements",
+"class": "links.Table2_Links",
+"name": "bvwelements",
+"brief": "Table of blob vector write elements",
 "fields": {
 "col1": [],
 "col1_class": "",
 "col2": [],
 "col2_class": "",
 "col2_getfields": [],
-"col2_links": [],
+"col2_json_idents": [],
+"col2_link_idents": [],
 "even_class": "",
 "force_ident": false,
 "header_class": "w3-theme-d2",
-"link_class": "w3-button w3-block w3-theme-d4",
-"link_style": "width:15em;",
+"link_classes": [],
+"link_styles": [],
 "odd_class": "",
 "show": false,
 "title1": "",
 "title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
+"widget_style": ""
+}
+}
+],
+[
+"Widget",
+{
+"class": "paras.ParaText",
+"name": "endescription",
+"brief": "Describes the Enable function",
+"fields": {
+"para_text": "BLOB's can only be received on this connection if enabled.",
+"show": true,
+"widget_class": "w3-left",
 "widget_style": ""
 }
 }
@@ -3873,13 +3888,13 @@
 4003
 ],
 "alternate_ident": "home",
-"fail_ident": 4003,
+"fail_ident": "general_json",
 "submit_list": [
 "webcode",
 "devices",
 "show_modalupload"
 ],
-"target_ident": 4003
+"target_ident": "general_json"
 },
 "original_fields": {}
 }
