@@ -70,11 +70,12 @@ async def _reader(stdout, driver, loop, rconn):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
-                # result is None, or the device name if a defxxxx was received
-                if devicename:
-                    driver.devicename = devicename
+                if _checkBlobs(driver, message):
+                    # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+                    devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                    # result is None, or the device name if a defxxxx was received
+                    if devicename:
+                        driver.devicename = devicename
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -85,14 +86,34 @@ async def _reader(stdout, driver, loop, rconn):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-            devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
-            # result is None, or the device name if a defxxxx was received
-            if devicename:
-                driver.devicename = devicename
+            if _checkBlobs(driver, message):
+                # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+                devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                # result is None, or the device name if a defxxxx was received
+                if devicename:
+                    driver.devicename = devicename
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
+
+
+def _checkBlobs(driver, message):
+    "Returns True or False, True if the message is accepted, False otherwise"
+    # driver.enabled is one of Never or Also or Only
+    if driver.enabled == "Also":
+        return True
+    root = ET.fromstring(message.decode("utf-8"))
+    if root.tag == "setBLOBVector":
+        if driver.enabled == "Never":
+            return False
+        else:
+            # driver.enabled must be Only
+            return True
+    elif driver.enabled == "Only":
+        # so not a setBLOBVector, but only setBLOBVector allowed
+        return False
+    # driver.enabled must be never, but its not a setBLOBVector, so ok
+    return True
 
 
 async def _writer(stdin, driver):
