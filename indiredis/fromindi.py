@@ -103,7 +103,8 @@ _BLOBFOLDER = ""
 
 
 def receive_from_indiserver(data, rconn):
-    "receives xml data, parses it and stores in redis. Publishes the data is received on _FROM_INDI_CHANNEL"
+    """receives xml data, parses it and stores in redis. Publishes the data is received on _FROM_INDI_CHANNEL,
+       returns device name if given, or None"""
     global _FROM_INDI_CHANNEL
     if rconn is None:
         return
@@ -111,31 +112,38 @@ def receive_from_indiserver(data, rconn):
     timestamp = datetime.utcnow().isoformat(sep='T')
     root = ET.fromstring(data)
 
+    devicename = None
+
     if root.tag == "defTextVector":
         text_vector = TextVector()                      # create a TextVector object
         text_vector.setup_from_def(rconn, root)         # store the received data in a TextVector object
         text_vector.write(rconn)                        # call the write method to store data in redis
         text_vector.log(rconn, timestamp)
+        devicename = text_vector.device
     elif root.tag == "defNumberVector":
         number_vector = NumberVector()
         number_vector.setup_from_def(rconn, root)
         number_vector.write(rconn)
         number_vector.log(rconn, timestamp)
+        devicename = number_vector.device
     elif root.tag == "defSwitchVector":
         switch_vector = SwitchVector()
         switch_vector.setup_from_def(rconn, root)
         switch_vector.write(rconn)
         switch_vector.log(rconn, timestamp)
+        devicename = switch_vector.device
     elif root.tag == "defLightVector":
         light_vector = LightVector()
         light_vector.setup_from_def(rconn, root)
         light_vector.write(rconn)
         light_vector.log(rconn, timestamp)
+        devicename = light_vector.device
     elif root.tag == "defBLOBVector":
         blob_vector = BLOBVector()
         blob_vector.setup_from_def(rconn, root)
         blob_vector.write(rconn)
         blob_vector.log(rconn, timestamp)
+        devicename = blob_vector.device
     elif root.tag == "message":
         message = Message(root)
         message.write(rconn)
@@ -166,6 +174,7 @@ def receive_from_indiserver(data, rconn):
             blob_vector.log(rconn, timestamp)
     # and publishes the data received
     rconn.publish(_FROM_INDI_CHANNEL, data)
+    return devicename
 
 
 def setup_redis(key_prefix, to_indi_channel, from_indi_channel, log_lengths, blob_folder):

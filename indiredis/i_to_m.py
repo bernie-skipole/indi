@@ -5,6 +5,29 @@
        Receives data from MQTT, and outputs to port 7624 and indiserver.
    """
 
+#
+# snooping
+#
+# Normally every indiserver/device publishes on the from_indi topic (from indi device to the client)
+#
+# If a device wants to snoop on all other devices it subscribes to the to_ind topic
+#
+# Every device subscribes to snoop_control/#
+# and to snoop_data/client_id
+#
+# If an indiserver/device wants to publish, it sends a getproperties to snoop_control/client_id
+#
+# All devices receive it, but the sending device, recognising its own id, ignores it.
+#
+# Any device receiving the getproperties, checks if the getproperties is relevant to itself.
+#
+# If it is, then it publishes its data to snoop_data/client_id, where client_id is the client_id of the originating request
+#
+# where the device, which is interested in that data, will receive it
+
+
+
+
 import sys, collections, threading, asyncio
 
 from time import sleep
@@ -42,6 +65,9 @@ _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 def _inditomqtt_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     global _TO_INDI
+    if message.topic == userdata["pubsnoopcontrol"]:
+        # The message received, is one this device has transmitted, ignore it
+        return
     # we have received a message from the mqtt server, put it into the _TO_INDI buffer
     _TO_INDI.append(message.payload)
  
@@ -55,7 +81,17 @@ def _inditomqtt_on_connect(client, userdata, flags, rc):
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe( userdata["to_indi_topic"], 2 )
-        print("MQTT client connected")
+
+        # Every device subscribes to snoop_control/# being the snoop_contol topic and all subtopics
+        client.subscribe( userdata["snoopcontrol"], 2 )
+
+        # and to snoop_data/client_id
+        client.subscribe( userdata["snoopdata"], 2 )
+
+        print(f"""MQTT client connected. Subscribed to:
+{userdata["to_indi_topic"]} - Receiving data from clients
+{userdata["snoopcontrol"]} - Receiving snoop getProperties from other devices
+{userdata["snoopdata"]} - Receiving snooped data sent to this device by other devices""")
     else:
         userdata['comms'] = False
 
@@ -162,11 +198,18 @@ def inditomqtt(indiserver, mqttserver):
     print("inditomqtt started")
 
     # create an mqtt client and connection
-    userdata={ "comms"           : False,        # an indication mqtt connection is working
-               "to_indi_topic"   : mqttserver.to_indi_topic,
-               "from_indi_topic" : mqttserver.from_indi_topic }
+    userdata={ "comms"               : False,        # an indication mqtt connection is working
+               "to_indi_topic"       : mqttserver.to_indi_topic,
+               "from_indi_topic"     : mqttserver.from_indi_topic,
+               "snoop_control_topic" : mqttserver.snoop_control_topic,
+               "snoop_data_topic"    : mqttserver.snoop_data_topic,
+               "client_id"           : mqttserver.client_id,
+               "snoopdata"           : mqttserver.snoop_data_topic + "/" + mqttserver.client_id,
+               "snoopcontrol"        : mqttserver.snoop_control_topic + "/#",                         # used to receive other's getproperty
+               "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqttserver.client_id    # used when publishing a getproperty
+              }
 
-    mqtt_client = mqtt.Client(userdata=userdata)
+    mqtt_client = mqtt.Client(client_id=mqttserver.client_id, userdata=userdata)
     # attach callback function to client
     mqtt_client.on_connect = _inditomqtt_on_connect
     mqtt_client.on_disconnect = _inditomqtt_on_disconnect

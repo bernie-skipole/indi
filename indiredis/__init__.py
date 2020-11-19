@@ -21,20 +21,23 @@ mqtttoredis:
 import collections
 
 
-# make the functions inditoredis, inditomqtt, mqtttoredis available to scripts importing this module
+# make the functions inditoredis, inditomqtt, mqtttoredis, driverstoredis
+# available to scripts importing this module
 from .i_to_r import inditoredis
 from .i_to_m import inditomqtt
 from .m_to_r import mqtttoredis
+from .d_to_r import driverstoredis
 
 
 # define namedtuples to hold server parameters
 
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
 RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic', 'snoop_indi_topic'])
+MQTTServer = collections.namedtuple('MQTTServer', ['client_id', 'host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic',
+                                                   'snoop_control_topic', 'snoop_data_topic'])
 
 
-#mqttserver = MQTTServer('10.34.167.1', 1883, '', '', '', '')
+# mqttserver ip = '10.34.167.1'
 
 
 # Functions which return the appropriate named tuple. Provides defaults and enforces values
@@ -52,6 +55,7 @@ def indi_server(host='localhost', port=7624):
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 7624 is default")
     return IndiServer(host, port)
+
 
 def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi'):
     """Creates a named tuple to hold redis server parameters
@@ -85,15 +89,20 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
         raise ValueError("The port must be an integer, 6379 is default")
     return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
 
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi', snoop_indi_topic='snoop_indi'):
-    """Creates a named tuple to hold MQTT server parameters
 
-    The to_indi_topic string is used as the MQTT topic which publishes data to indiserver.
-    It can be any string you prefer which does not clash with any other topic you may be using with MQTT.
+def mqtt_server(client_id, host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi',
+                snoop_control_topic='snoop_control', snoop_data_topic='snoop_data',):
+    """Creates a named tuple to hold MQTT parameters
 
-    The from_indi_topic string must be different from the to_indi_topic string. It is used as the channel on
-    which data is sent from indiserver towards the redis server.
+    client_id is an MQTT id, a string, unique on the MQTT network, related to the attached device - such as 'indiserver01'.
 
+    The topic strings are used as MQTT topics which pass data across the MQTT network, each must be different from
+    each other, and should not clash other topic's you may be using for non-indi communication via your
+    MQTT broker. Both the indiserver MQTT connection, and the indi client connection have the same topics - used to
+    communicate with each other, but must have different client_id's.
+
+    :client_id: The MQTT id, a string unique on the MQTT network
+    :type client_id: String
     :param host: The name or ip address of the mqtt server, defaults to localhost
     :type host: String
     :param port: The port number of the mqtt server, defaults to standard port 1883
@@ -104,22 +113,29 @@ def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_t
     :type password: String
     :param to_indi_topic: A string to use as the mqtt topic to send data towards indiserver.
     :type to_indi_topic: String
-    :param from_indi_topic: A string to use as the mqtt topic to send data towards redis.
+    :param from_indi_topic: A string to use as the mqtt topic to send data from indiserver.
     :type from_indi_topic: String
-    :param snoop_indi_topic: This MQTT client subscribes to subtopics snoop_indi/#
-    :type snoop_indi_topic: String
+    :param snoop_control_topic: A topic carrying snoop getProperties requests
+    :type snoop_control_topic: String
+    :param snoop_data_topic: A topic carrying snoop data
+    :type snoop_data_topic: String
     :return: A named tuple with above parameters as named elements
     :rtype: collections.namedtuple
     """
-    if (not to_indi_topic) or (not from_indi_topic) or (to_indi_topic == from_indi_topic):
-        raise ValueError("MQTT topics must exist and must be different from each other.")
+    if (not client_id) or (not isinstance(client_id, str)):
+        raise ValueError("An MQTT client_id must be given and must be a non-empty string.")
 
-    if (not snoop_indi_topic) or (snoop_indi_topic == to_indi_topic) or (snoop_indi_topic == from_indi_topic):
-        raise ValueError("MQTT topics must exist and must be different from each other.")
+    topics = set((to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic))
+    if len(topics) != 4:
+       raise ValueError("The MQTT topics must be different from each other.")
+
+    for t in topics:
+        if (not t) or (not isinstance(t, str)):
+            raise ValueError("The MQTT topics must be non-empty strings.")
 
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 1883 is default")
-    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic, snoop_indi_topic)
+    return MQTTServer(client_id, host, port, username, password, to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic)
 
 
 

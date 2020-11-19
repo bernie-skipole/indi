@@ -74,6 +74,7 @@ async def _rxfromindi(reader, loop, rconn):
                 # the message is complete, handle message here
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                 result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                # result is None, or the device name if a defxxxx was received
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -86,6 +87,7 @@ async def _rxfromindi(reader, loop, rconn):
             # the message is complete, handle message here
             # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
             result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+            # result is None, or the device name if a defxxxx was received
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None

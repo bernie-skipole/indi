@@ -137,7 +137,7 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
                "redisserver"     : redisserver,
                "rconn"           : rconn }
 
-    mqtt_client = mqtt.Client(userdata=userdata)
+    mqtt_client = mqtt.Client(client_id=mqttserver.client_id, userdata=userdata)
     # attach callback function to client
     mqtt_client.on_connect = _mqtttoredis_on_connect
     mqtt_client.on_disconnect = _mqtttoredis_on_disconnect
