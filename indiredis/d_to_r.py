@@ -74,7 +74,7 @@ async def _reader(stdout, driver, loop, rconn):
                 devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                 # result is None, or the device name if a defxxxx was received
                 if devicename:
-                    driver.add(devicename)
+                    driver.devicename = devicename
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -89,7 +89,7 @@ async def _reader(stdout, driver, loop, rconn):
             devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
             # result is None, or the device name if a defxxxx was received
             if devicename:
-                driver.add(devicename)
+                driver.devicename = devicename
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
@@ -224,9 +224,6 @@ def _message(rconn, message):
     return
 
 
-
-
-
 class _Driver:
 
     def __init__(self, driver):
@@ -235,22 +232,13 @@ class _Driver:
         self.inque = collections.deque(maxlen=5)
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
-        # The device names, being served by this driver
-        # a set is used, rather than a single name in case this driver is operating several devices
-        # being a set, rather than a list ensures unque names are stored
-        self.devices = set()
+        # The device name, being served by this driver
+        self.devicename = ""
+        self.enabled = "Never"   # or Also or Only
 
     def append(self, data):
         "Append data to the driver inque, where it can be read and transmitted to the driver"
         self.inque.append(data)
-
-    def __contains__(self, devicename):
-        return devicename in self.devices
-
-    def add(self, devicename):
-        "Given a devicename, add it to self.devices"
-        if devicename:
-            self.devices.add(devicename)
 
 
 class _Sender:
@@ -265,15 +253,24 @@ class _Sender:
     def append(self, data):
         "This data is appended to any driver.inque if the message is relevant to that driver"
         root = ET.fromstring(data.decode("utf-8"))
-        device = root.get("device")    # name of Device
-        if not device:
+        devicename = root.get("device")    # name of Device
+
+        if root.tag = "BLOBenable":
+            if not devicename:
+                return
+            for driver in self.driverlist:
+                if devicename == driver.devicename:
+                    driver.enabled = root.text.strip()
+                    return
+            return   
+        if not devicename:
             # add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
             return
-        # so a device is specified, check if the name is in any of the drivers
+        # so a devicename is specified, check if the name is in any of the drivers
         for driver in self.driverlist:
-            if device in driver:
+            if devicename == driver.devicename:
                 driver.append(data)
                 break
         else:
