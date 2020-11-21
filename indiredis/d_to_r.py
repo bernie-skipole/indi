@@ -243,7 +243,7 @@ def _message(rconn, message):
 
 
 def _remove(driverlist, message):
-    "A delProperty has been received, remove the given device/property from snoops"
+    "A delProperty has been received, remove the given device/property from snoops and blob enables"
     global _DRIVERDICT
     root = ET.fromstring(message)
     if root.tag != "delProperty":
@@ -255,18 +255,13 @@ def _remove(driverlist, message):
     name = root.get("name")        # name of Property
     if name:
         for driver in driverlist:
-            if (device,name) in driver.snoopproperties:
-                driver.snoopproperties.remove((device,name))
+            driver.delproperty(device, name)
         return
     # no property name, remove all mentions of this device name
     if device in _DRIVERDICT:
         del _DRIVERDICT[device]
     for driver in driverlist:
-        if device in driver.snoopdevices:
-            driver.snoopdevices.remove(device)
-        for devicename,propertyname in driver.snoopproperties:
-            if device == devicename:
-                driver.snoopproperties.remove((devicename,propertyname))
+        driver.deldevice(device)
 
 
 class _Driver:
@@ -279,7 +274,8 @@ class _Driver:
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
         # Blobs enabled or not
-        self.enabled = "Never"   # or Also or Only
+        self.enableproperties = {}
+        self.enabledevices = {}
         # flag set to True, if this snoops on all other devices
         self.snoopall = False
         # set of devicenames this driver snoops on
@@ -291,23 +287,78 @@ class _Driver:
         "Append data to the driver inque, where it can be read and transmitted to the driver"
         self.inque.append(data)
 
+    def setenabled(self, devicename, propertyname, value):
+        "Sets the Blobstatus for the given devicename, blobname"
+        if devicename is None:
+            # illegal
+            return
+        if propertyname:
+            self.enableproperties['devicename','propertyname'] = value   # Never or Also or Only
+        else:
+            self.enabledevices['devicename'] = value
+
+    def delproperty(self, devicename, propertyname):
+       "Deletes property from snooping, and enabled records"
+        if (devicename,propertyname) in self.snoopproperties:
+            self.snoopproperties.remove((devicename,propertyname))
+        if (devicename,propertyname) in self.enableproperties:
+            del self.enableproperties[devicename,propertyname]
+
+    def deldevice(self, device):
+        "Deletes devicename from snooping, and enabled records"
+        if device in self.snoopdevices:
+            self.snoopdevices.remove(device)
+        for devicename,propertyname in self.snoopproperties:
+            if device == devicename:
+                self.snoopproperties.remove((devicename,propertyname))
+        if device in self.enabledevices:
+            del self.enabledevices[device]
+        for devicename,propertyname in self.enableproperties:
+            if device == devicename:
+                del self.enableproperties[devicename,propertyname]
+
     def checkBlobs(self, message):
         "Returns True or False, True if the message is accepted, False otherwise"
-        # driver.enabled is one of Never or Also or Only
-        if self.enabled == "Also":
-            return True
         root = ET.fromstring(message.decode("utf-8"))
+        device = root.get("device")    # name of Device
+        name = root.get("name")        # name of Property
+
+        if name and (not device):
+            # illegal
+            return False
+
+        if name and ((device, name) in self.enableproperties):
+            value = self.enableproperties[device, name]
+            if root.tag == "setBLOBVector":
+                if value == "Never":
+                    return False
+                else:
+                    return True
+            else:
+                # something other than a BLOB
+                if value == "Only":
+                    return False
+                else:
+                    return True
+           
+        # device,name may, or may not, be given, but are not in self.enableproperties
+        # so maybe device is in self.enabledevice
+        value = self.enabledevice.get(device)
         if root.tag == "setBLOBVector":
-            if self.enabled == "Never":
+            if (value == "Only") or (value == "Also"):
+                return True
+            else:
+                # value could be Never, or None - which is equivalent to Never for Blobs
+                return False
+        else:
+            # something other than a BLOB
+            if value == "Only":
+                # Anything other than a Blob is not allowed
                 return False
             else:
-                # driver.enabled must be Only
+                # value could be None, Never or Also = all of which allow non-blobs
                 return True
-        elif self.enabled == "Only":
-            # so not a setBLOBVector, but only setBLOBVector allowed
-            return False
-        # driver.enabled must be never, but its not a setBLOBVector, so ok
-        return True
+
 
     def setsnoop(self, data):
         "data received from the driver starts with b'<getProperties ', so set snooping flags"
@@ -381,7 +432,7 @@ class _Sender:
             # given the name, enable the driver
             if devicename in _DRIVERDICT:
                 driver = _DRIVERDICT[devicename]
-                driver.enabled = root.text.strip()
+                driver.setenabled(devicename, root.get("name"), root.text.strip())
 
         if not devicename:
             # add to all inque's
