@@ -298,7 +298,7 @@ class _Driver:
             self.enabledevices['devicename'] = value
 
     def delproperty(self, devicename, propertyname):
-       "Deletes property from snooping, and enabled records"
+        "Deletes property from snooping, and enabled records"
         if (devicename,propertyname) in self.snoopproperties:
             self.snoopproperties.remove((devicename,propertyname))
         if (devicename,propertyname) in self.enableproperties:
