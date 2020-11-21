@@ -112,8 +112,6 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
             messagetagnumber = None
 
 
-
-
 async def _writer(stdin, driver):
     """Writes data to stdin by reading it from the driver.inque"""
     while True:
@@ -288,14 +286,14 @@ class _Driver:
         self.inque.append(data)
 
     def setenabled(self, devicename, propertyname, value):
-        "Sets the Blobstatus for the given devicename, blobname"
+        "Sets the enableBLOB status for the given devicename, blobname"
         if devicename is None:
             # illegal
             return
         if propertyname:
-            self.enableproperties['devicename','propertyname'] = value   # Never or Also or Only
+            self.enableproperties[devicename,propertyname] = value   # Never or Also or Only
         else:
-            self.enabledevices['devicename'] = value
+            self.enabledevices[devicename] = value
 
     def delproperty(self, devicename, propertyname):
         "Deletes property from snooping, and enabled records"
@@ -343,7 +341,7 @@ class _Driver:
            
         # device,name may, or may not, be given, but are not in self.enableproperties
         # so maybe device is in self.enabledevice
-        value = self.enabledevice.get(device)
+        value = self.enabledevices.get(device)
         if root.tag == "setBLOBVector":
             if (value == "Only") or (value == "Also"):
                 return True
@@ -358,7 +356,6 @@ class _Driver:
             else:
                 # value could be None, Never or Also = all of which allow non-blobs
                 return True
-
 
     def setsnoop(self, data):
         "data received from the driver starts with b'<getProperties ', so set snooping flags"
@@ -384,7 +381,6 @@ class _Driver:
             # must snoop on this device and property
             self.snoopproperties.add((device,name))
 
-
     def snoopsend(self, driverlist, message):
         "message has been received by this driver, send it to other drivers that are snooping"
         root = ET.fromstring(message)
@@ -409,7 +405,6 @@ class _Driver:
                 driver.append(message)
 
 
-
 class _Sender:
     """An object, with an append method, which gets data appended, which in turn
      gets added here to the required driver inque's which causes the data to be
@@ -425,14 +420,15 @@ class _Sender:
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
 
-        if root.tag == "BLOBenable":
+        if root.tag == "enableBLOB":
             if not devicename:
-                # a devicename must be associated with a BLOBenable, if not given discard
+                # a devicename must be associated with a enableBLOB, if not given discard
                 return
             # given the name, enable the driver
             if devicename in _DRIVERDICT:
                 driver = _DRIVERDICT[devicename]
                 driver.setenabled(devicename, root.get("name"), root.text.strip())
+            return
 
         if not devicename:
             # add to all inque's
