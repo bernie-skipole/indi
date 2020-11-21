@@ -63,7 +63,7 @@ async def _rxfromindi(reader, loop, rconn):
                 if data.startswith(st):
                     messagetagnumber = index
                     break
-            if messagetagnumber is None:
+            else:
                 # data does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
                 continue

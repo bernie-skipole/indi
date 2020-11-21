@@ -1,7 +1,7 @@
 
 """Defines blocking function driverstoredis:
    
-       Given the drivers, runs them and receives/transmits XML data via their stdin/stdout channels
+       Given the driver executables, runs them and receives/transmits XML data via their stdin/stdout channels
        and stores/publishes via redis.
    """
 
@@ -37,7 +37,7 @@ _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
-async def _reader(stdout, driver, loop, rconn):
+async def _reader(stdout, driver, driverlist, loop, rconn):
     """Reads data from stdout which is the output stream of the driver
        and send it via fromindi.receive_from_indiserver - which sets data into redis
        and returns the devicename if found.
@@ -60,8 +60,12 @@ async def _reader(stdout, driver, loop, rconn):
                 if data.startswith(st):
                     messagetagnumber = index
                     break
-            if messagetagnumber is None:
-                # data does not start with a recognised tag, so ignore it
+            else:
+                # check if data received is a b'<getProperties ... />' snooping request
+                if data.startswith(b'<getProperties '):
+                    driver.setsnoop(data)
+                    # sets flags in the driver that it is snooping
+                # data is either a getProperties, or does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
                 continue
             # set this data into the received message
@@ -69,12 +73,18 @@ async def _reader(stdout, driver, loop, rconn):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                if _checkBlobs(driver, message):
+                # if this is to be sent to other devices via snooping mechanism, then copy the recieved
+                # message to other divers inque
+                driver.snoopsend(driverlist, message)
+                if driver.checkBlobs(message):
                     # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                     devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                     # result is None, or the device name if a defxxxx was received
                     if devicename and (devicename not in _DRIVERDICT):
                         _DRIVERDICT[devicename] = driver
+                if message.startswith(b'<delProperty '):
+                    # remove this device/property from snooping records
+                    _remove(driverlist, message)
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -85,34 +95,23 @@ async def _reader(stdout, driver, loop, rconn):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            if _checkBlobs(driver, message):
+            # if this is to be sent to other devices via snooping mechanism, then copy the recieved
+            # message to other divers inque
+            driver.snoopsend(driverlist, message)
+            if driver.checkBlobs(message):
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                 devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                 # result is None, or the device name if a defxxxx was received
                 if devicename and (devicename not in _DRIVERDICT):
                     _DRIVERDICT[devicename] = driver
+            if message.startswith(b'<delProperty '):
+                # remove this device/property from snooping records
+                _remove(driverlist, message)
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
 
 
-def _checkBlobs(driver, message):
-    "Returns True or False, True if the message is accepted, False otherwise"
-    # driver.enabled is one of Never or Also or Only
-    if driver.enabled == "Also":
-        return True
-    root = ET.fromstring(message.decode("utf-8"))
-    if root.tag == "setBLOBVector":
-        if driver.enabled == "Never":
-            return False
-        else:
-            # driver.enabled must be Only
-            return True
-    elif driver.enabled == "Only":
-        # so not a setBLOBVector, but only setBLOBVector allowed
-        return False
-    # driver.enabled must be never, but its not a setBLOBVector, so ok
-    return True
 
 
 async def _writer(stdin, driver):
@@ -146,7 +145,7 @@ async def _driverconnections(driverlist, loop, rconn):
             stdin=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
 
-        tasks.append(_reader(proc.stdout, driver, loop, rconn))
+        tasks.append(_reader(proc.stdout, driver, driverlist, loop, rconn))
         tasks.append(_writer(proc.stdin, driver))
         tasks.append(_perror(proc.stderr))
         _message(rconn, f"Driver {driver.executable} started")
@@ -230,7 +229,6 @@ def driverstoredis(drivers, redisserver, log_lengths={}, blob_folder=''):
             loop.close()
 
 
-
 def _message(rconn, message):
     "Saves a message to redis, as if a message had been received from indiserver"
     try:
@@ -244,21 +242,121 @@ def _message(rconn, message):
     return
 
 
+def _remove(driverlist, message):
+    "A delProperty has been received, remove the given device/property from snoops"
+    global _DRIVERDICT
+    root = ET.fromstring(message)
+    if root.tag != "delProperty":
+        return
+    device = root.get("device")    # name of Device
+    if device is None:
+        # illegal
+        return
+    name = root.get("name")        # name of Property
+    if name:
+        for driver in driverlist:
+            if (device,name) in driver.snoopproperties:
+                driver.snoopproperties.remove((device,name))
+        return
+    # no property name, remove all mentions of this device name
+    if device in _DRIVERDICT:
+        del _DRIVERDICT[device]
+    for driver in driverlist:
+        if device in driver.snoopdevices:
+            driver.snoopdevices.remove(device)
+        for devicename,propertyname in driver.snoopproperties:
+            if device == devicename:
+                driver.snoopproperties.remove((devicename,propertyname))
+
+
 class _Driver:
     "An object holding state information for each driver"
 
     def __init__(self, driver):
         self.executable = driver
         # inque is a deque used to send data to the device
-        self.inque = collections.deque(maxlen=5)
+        self.inque = collections.deque(maxlen=10)
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
         # Blobs enabled or not
         self.enabled = "Never"   # or Also or Only
+        # flag set to True, if this snoops on all other devices
+        self.snoopall = False
+        # set of devicenames this driver snoops on
+        self.snoopdevices = set()
+        # set of (devicenames, propertynames) this driver snoop on
+        self.snoopproperties = set()
 
     def append(self, data):
         "Append data to the driver inque, where it can be read and transmitted to the driver"
         self.inque.append(data)
+
+    def checkBlobs(self, message):
+        "Returns True or False, True if the message is accepted, False otherwise"
+        # driver.enabled is one of Never or Also or Only
+        if self.enabled == "Also":
+            return True
+        root = ET.fromstring(message.decode("utf-8"))
+        if root.tag == "setBLOBVector":
+            if self.enabled == "Never":
+                return False
+            else:
+                # driver.enabled must be Only
+                return True
+        elif self.enabled == "Only":
+            # so not a setBLOBVector, but only setBLOBVector allowed
+            return False
+        # driver.enabled must be never, but its not a setBLOBVector, so ok
+        return True
+
+    def setsnoop(self, data):
+        "data received from the driver starts with b'<getProperties ', so set snooping flags"
+        if self.snoopall:
+            # already snoops everything, do not have to do anything else
+            return
+        root = ET.fromstring(data)
+        if root.tag != "getProperties":
+            return
+        device = root.get("device")    # name of Device
+        if device is None:
+            # this is a general getProperties request, snoops on everything
+            self.snoopall = True
+            return
+        if device in self.snoopdevices:
+            # already snoops on all properties of this device
+            return
+        name = root.get("name")        # name of Property
+        if name is None:
+            # must snoop on all properties of this device
+            self.snoopdevices.add(device)
+        else:
+            # must snoop on this device and property
+            self.snoopproperties.add((device,name))
+
+
+    def snoopsend(self, driverlist, message):
+        "message has been received by this driver, send it to other drivers that are snooping"
+        root = ET.fromstring(message)
+        device = root.get("device")    # name of Device
+        name = root.get("name")        # name of Property
+        for driver in driverlist:
+            if driver is self:
+                # do not copy data to self
+                continue
+            if driver.snoopall:
+                # this driver snoops everything
+                driver.append(message)
+            elif device is None:
+                continue
+            elif device in driver.snoopdevices:
+                # this driver snoops this device
+                driver.append(message)
+            elif name is None:
+                continue
+            elif (device,name) in driver.snoopproperties:
+                # this driver snoops this device,property
+                driver.append(message)
+
 
 
 class _Sender:
@@ -276,7 +374,7 @@ class _Sender:
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
 
-        if root.tag = "BLOBenable":
+        if root.tag == "BLOBenable":
             if not devicename:
                 # a devicename must be associated with a BLOBenable, if not given discard
                 return
