@@ -22,10 +22,9 @@ try:
 except:
     REDIS_AVAILABLE = False
 
-# The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to the devices. Limit length to five items - an arbitrary setting
+# Global _DRIVERDICT is a dictionary of {devicename: _Driver instance, ...}
 
-_TO_INDI = collections.deque(maxlen=5)
+_DRIVERDICT = {}
 
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
@@ -42,8 +41,8 @@ async def _reader(stdout, driver, loop, rconn):
     """Reads data from stdout which is the output stream of the driver
        and send it via fromindi.receive_from_indiserver - which sets data into redis
        and returns the devicename if found.
-       the devicename is set into the driver object, to identify the device
-       associated with the driver"""
+       the devicename and driver is set into _DRIVERDICT"""
+    global _DRIVERDICT
 
     # get received data, and put it into message
     message = b''
@@ -74,8 +73,8 @@ async def _reader(stdout, driver, loop, rconn):
                     # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                     devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                     # result is None, or the device name if a defxxxx was received
-                    if devicename:
-                        driver.devicename = devicename
+                    if devicename and (devicename not in _DRIVERDICT):
+                        _DRIVERDICT[devicename] = driver
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -90,8 +89,8 @@ async def _reader(stdout, driver, loop, rconn):
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                 devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
                 # result is None, or the device name if a defxxxx was received
-                if devicename:
-                    driver.devicename = devicename
+                if devicename and (devicename not in _DRIVERDICT):
+                    _DRIVERDICT[devicename] = driver
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
@@ -246,6 +245,7 @@ def _message(rconn, message):
 
 
 class _Driver:
+    "An object holding state information for each driver"
 
     def __init__(self, driver):
         self.executable = driver
@@ -253,8 +253,7 @@ class _Driver:
         self.inque = collections.deque(maxlen=5)
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
-        # The device name, being served by this driver
-        self.devicename = ""
+        # Blobs enabled or not
         self.enabled = "Never"   # or Also or Only
 
     def append(self, data):
@@ -270,32 +269,32 @@ class _Sender:
     def __init__(self, driverlist):
         self.driverlist = driverlist
 
-
     def append(self, data):
         "This data is appended to any driver.inque if the message is relevant to that driver"
+        global _DRIVERDICT
         root = ET.fromstring(data.decode("utf-8"))
-        devicename = root.get("device")    # name of Device
+        devicename = root.get("device")    # name of Device, could be None if the data
+                                           # does not specify it
 
         if root.tag = "BLOBenable":
             if not devicename:
+                # a devicename must be associated with a BLOBenable, if not given discard
                 return
-            for driver in self.driverlist:
-                if devicename == driver.devicename:
-                    driver.enabled = root.text.strip()
-                    return
-            return   
+            # given the name, enable the driver
+            if devicename in _DRIVERDICT:
+                driver = _DRIVERDICT[devicename]
+                driver.enabled = root.text.strip()
+
         if not devicename:
             # add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
-            return
-        # so a devicename is specified, check if the name is in any of the drivers
-        for driver in self.driverlist:
-            if devicename == driver.devicename:
-                driver.append(data)
-                break
+        elif devicename in _DRIVERDICT:
+            # so a devicename is specified, and the associated driver is known
+            driver = _DRIVERDICT[devicename]
+            driver.append(data)
         else:
-            # no driver found, so send it to all
+            # so a devicename is specified, but no driver found, so send it to all
             for driver in self.driverlist:
                 driver.append(data)
 
