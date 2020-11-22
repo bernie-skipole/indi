@@ -56,7 +56,28 @@ So a minimal script using defaults to run inditoredis could be::
 
 Note that BLOB's - Binary Large Objects, such as images are not stored in redis, but are set into a directory of your choice defined by the blob_folder argument.
 
-As an alternative to inditoredis, the two functions below work together to provide communications via an MQTT server.
+
+.. _driverstoredis:
+
+indiredis.driverstoredis
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: indiredis.driverstoredis
+
+A minimal script using defaults to run driverstoredis could be::
+
+    from indiredis import driverstoredis, redis_server
+
+    redis_host = redis_server(host='localhost', port=6379)
+
+    # blocking call which runs the service, communicating between the drivers and redis
+
+    driverstoredis(["indi_simulator_telescope", "indi_simulator_ccd"], redis_host, blob_folder='/path/to/blob_folder')
+
+    # The list of two simulated drivers shown above should be replaced by a list of your own drivers.
+
+
+As an alternative to inditoredis or driverstoredis, the two functions below work together to provide communications via an MQTT server.
 
 .. _inditomqtt:
 
@@ -225,7 +246,40 @@ You will still need indiserver to be running - either started in another termina
 running this script in a terminal, connect your browser to localhost:8000 to view the web pages.
 
 The __main__.py script in the indiredis package is very similar to the above example with the addition of
-accepting host, port, blob_folder, etc., as script arguments. 
+accepting host, port, blob_folder, etc., as script arguments.
+
+
+And a further example using the driverstoredis function, which does not need indiserver::
+
+
+    import threading, os, sys
+
+    from indiredis import driverstoredis, redis_server, indiwsgi
+
+    # any wsgi web server can serve the wsgi application produced by
+    # indiwsgi.make_wsgi_app, in this example the web server 'waitress' is used
+
+    from waitress import serve
+
+    redis_host = redis_server(host='localhost', port=6379)
+
+    # Set a directory of your choice where blobs will be stored
+    BLOBS = '/path/to/blob_folder'
+
+    # create a wsgi application
+    application = indiwsgi.make_wsgi_app(redis_host, blob_folder=BLOBS)
+    if application is None:
+        print("Are you sure the skipole framework is installed?")
+        sys.exit(1)
+
+    # serve the application with the python waitress web server in its own thread
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    # and start it
+    webapp.start()
+
+    # and start driverstoredis
+    driverstoredis(["indi_simulator_telescope", "indi_simulator_ccd"], redis_host, blob_folder=BLOBS)
+
 
 **Web client limitation**
 
