@@ -12,6 +12,8 @@ from time import sleep
 
 from datetime import datetime
 
+import xml.etree.ElementTree as ET
+
 from . import toindi, fromindi, tools
 
 REDIS_AVAILABLE = True
@@ -73,7 +75,8 @@ async def _rxfromindi(reader, loop, rconn):
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                root = ET.fromstring(message.decode("utf-8"))
+                result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
                 # result is None, or the device name if a defxxxx was received
                 # and start again, waiting for a new message
                 message = b''
@@ -86,7 +89,8 @@ async def _rxfromindi(reader, loop, rconn):
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
             # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-            result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+            root = ET.fromstring(message.decode("utf-8"))
+            result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
             # result is None, or the device name if a defxxxx was received
             # and start again, waiting for a new message
             message = b''

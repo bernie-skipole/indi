@@ -102,15 +102,14 @@ _BLOBFOLDER = ""
 
 
 
-def receive_from_indiserver(data, rconn):
-    """receives xml data, parses it and stores in redis. Publishes the data is received on _FROM_INDI_CHANNEL,
+def receive_from_indiserver(data, root, rconn):
+    """receives xml data, parses it and stores in redis. Publishes the data received on _FROM_INDI_CHANNEL,
        returns device name if given, or None"""
     global _FROM_INDI_CHANNEL
     if rconn is None:
         return
     # this timestamp is the time at which the data is received
     timestamp = datetime.utcnow().isoformat(sep='T')
-    root = ET.fromstring(data)
 
     devicename = None
 

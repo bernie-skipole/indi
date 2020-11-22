@@ -1,8 +1,6 @@
 # indiredis
 
-This Python3 package provides an INDI web client (if run with the python3 -m option), or if imported, it provides your own Python scripts with functions that read instrument properties from indiserver (port 7624) and stores them in redis, and in the other direction; can read data published to redis and sends it in INDI XML format to indiserver.
-
-The package is a client only, it does not include indiserver or drivers.
+This Python3 package provides an INDI web client (if run with the python3 -m option), or if imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
 
 INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
@@ -27,11 +25,11 @@ indiredis can be imported into your own scripts, rather than executed with pytho
 
 Two options are available:
 
-The data can be transferred between indiserver and redis.
+Data can be transferred between the INDI protocol and redis.
 
 or
 
-The data can be transferred between indiserver and redis via an MQTT server.
+Data can be transferred between the INDI protocol and redis via an MQTT server.
 
 Further information is availble at:
 

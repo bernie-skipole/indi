@@ -7,10 +7,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="indiredis",
-    version="0.0.9",
+    version="0.1.0",
     author="Bernard Czenkusz",
     author_email="bernie@skipole.co.uk",
-    description="INDI client storing instrument data to redis, and on receiving data published to redis, sending on to indiserver. If the package is run, it provides instrument control via a web service. If imported, it provides tools to read/write to redis, and hence indiserver, for use by your own GUI or WEB applications.",
+    description="Client for general Instrument control, converting between the INDI protocol and redis storage. If the package is run, it provides a web service for controlling instruments attached via indiserver. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bernie-skipole/indi",

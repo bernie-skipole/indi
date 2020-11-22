@@ -2,7 +2,8 @@
 """
 Defines functions to create named tuples for the indi, redis and mqtt servers.
 
-Provides blocking functions used to run the conversion between indiserver and redis storage.
+Provides blocking functions used to run the conversion between the INDI protocol
+and redis storage.
 
 inditoredis:
    Receives XML data from indiserver on port 7624 and stores in redis.
@@ -15,6 +16,11 @@ inditomqtt:
 mqtttoredis:
    Receives XML data from MQTT and stores in redis.
    Reads data published via redis, and outputs to MQTT.
+
+driverstoredis:
+   Given a list of drivers, runs them and stores received XML data in redis.
+   Reads data published via redis, and outputs to the drivers. Does not require
+   indiserver.
 
 """
 
@@ -37,7 +43,7 @@ MQTTServer = collections.namedtuple('MQTTServer', ['client_id', 'host', 'port', 
                                                    'snoop_control_topic', 'snoop_data_topic'])
 
 
-# mqttserver ip = '10.34.167.1'
+# my test mqttserver ip = '10.34.167.1'
 
 
 # Functions which return the appropriate named tuple. Provides defaults and enforces values

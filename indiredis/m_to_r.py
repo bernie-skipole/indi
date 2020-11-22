@@ -10,6 +10,8 @@ import os, sys, threading, pathlib
 
 from time import sleep
 
+import xml.etree.ElementTree as ET
+
 REDIS_AVAILABLE = True
 try:
     import redis
@@ -27,16 +29,13 @@ except:
 from . import toindi, fromindi, tools
 
 
-#mqttserver = MQTTServer('10.34.167.1', 1883, '', '')
-
-
-
 ### MQTT Handlers for mqtttoredis
 
 def _mqtttoredis_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     # we have received a message from the indiserver, load it into redis
-    fromindi.receive_from_indiserver(message.payload, userdata["rconn"] )
+    root = ET.fromstring(message.payload.decode("utf-8"))
+    fromindi.receive_from_indiserver(message.payload, root, userdata["rconn"] )
  
 
 def _mqtttoredis_on_connect(client, userdata, flags, rc):

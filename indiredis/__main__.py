@@ -23,23 +23,15 @@ should enable you to view and control the connected instruments.
 
 import sys, os, threading, argparse
 
-############################################################################################
-# Required during development if a non-standard package of skipole is being used ###########
-#skipole_package_location = "/home/bernard/git/skipole"   # folder of skipole package
-#
-#if skipole_package_location not in sys.path:
-#    sys.path.insert(0,skipole_package_location)
-############################################################################################
-
 from . import inditoredis, indi_server, redis_server, indiwsgi
 
 
-version = "0.0.9"
+version = "0.1.0"
 
 if __name__ == "__main__":
 
-    # any wsgi web server can serve the wsgi application produced by
-    # indiwsgi.make_wsgi_app, in this example the web server 'waitress' is used
+    # any wsgi web server can serve the wsgi application produced by indiwsgi.make_wsgi_app,
+    # in this example the web server 'waitress' is used
 
     from waitress import serve
 
@@ -70,12 +62,6 @@ if __name__ == "__main__":
     if application is None:
         print("Are you sure the skipole framework is installed?")
         sys.exit(1)
-
-#    During development, serve the web admin pages by uncommenting the following
-#    from skipole import skiadmin, set_debug
-#    set_debug(True)
-#    skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')
-#    application.add_project(skiadmin_application, url='/skiadmin')
 
     # serve the application with the python waitress web server in another thread, and start inditoredis
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':args.port})

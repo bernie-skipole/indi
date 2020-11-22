@@ -73,18 +73,19 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
+                root = ET.fromstring(message.decode("utf-8"))
                 # if this is to be sent to other devices via snooping mechanism, then copy the recieved
                 # message to other divers inque
-                driver.snoopsend(driverlist, message)
-                if driver.checkBlobs(message):
+                driver.snoopsend(driverlist, message, root)
+                if driver.checkBlobs(root):
                     # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                    devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                    devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
                     # result is None, or the device name if a defxxxx was received
                     if devicename and (devicename not in _DRIVERDICT):
                         _DRIVERDICT[devicename] = driver
-                if message.startswith(b'<delProperty '):
+                if root.tag == "delProperty":
                     # remove this device/property from snooping records
-                    _remove(driverlist, message)
+                    _remove(driverlist, root)
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
@@ -95,18 +96,19 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
+            root = ET.fromstring(message.decode("utf-8"))
             # if this is to be sent to other devices via snooping mechanism, then copy the recieved
             # message to other divers inque
-            driver.snoopsend(driverlist, message)
-            if driver.checkBlobs(message):
+            driver.snoopsend(driverlist, message, root)
+            if driver.checkBlobs(root):
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, rconn)
+                devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
                 # result is None, or the device name if a defxxxx was received
                 if devicename and (devicename not in _DRIVERDICT):
                     _DRIVERDICT[devicename] = driver
-            if message.startswith(b'<delProperty '):
+            if root.tag == "delProperty":
                 # remove this device/property from snooping records
-                _remove(driverlist, message)
+                _remove(driverlist, root)
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
@@ -240,10 +242,9 @@ def _message(rconn, message):
     return
 
 
-def _remove(driverlist, message):
+def _remove(driverlist, root):
     "A delProperty has been received, remove the given device/property from snoops and blob enables"
     global _DRIVERDICT
-    root = ET.fromstring(message)
     if root.tag != "delProperty":
         return
     device = root.get("device")    # name of Device
@@ -315,9 +316,8 @@ class _Driver:
             if device == devicename:
                 del self.enableproperties[devicename,propertyname]
 
-    def checkBlobs(self, message):
+    def checkBlobs(self, root):
         "Returns True or False, True if the message is accepted, False otherwise"
-        root = ET.fromstring(message.decode("utf-8"))
         device = root.get("device")    # name of Device
         name = root.get("name")        # name of Property
 
@@ -381,9 +381,8 @@ class _Driver:
             # must snoop on this device and property
             self.snoopproperties.add((device,name))
 
-    def snoopsend(self, driverlist, message):
+    def snoopsend(self, driverlist, message, root):
         "message has been received by this driver, send it to other drivers that are snooping"
-        root = ET.fromstring(message)
         device = root.get("device")    # name of Device
         name = root.get("name")        # name of Property
         for driver in driverlist:
