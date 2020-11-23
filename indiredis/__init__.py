@@ -103,9 +103,8 @@ def mqtt_server(client_id, host='localhost', port=1883, username='', password=''
     client_id is an MQTT id, a string, unique on the MQTT network, related to the attached device - such as 'indiserver01'.
 
     The topic strings are used as MQTT topics which pass data across the MQTT network, each must be different from
-    each other, and should not clash other topic's you may be using for non-indi communication via your
-    MQTT broker. Both the indiserver MQTT connection, and the indi client connection have the same topics - used to
-    communicate with each other, but must have different client_id's.
+    each other, and should not clash with other topic's you may be using for non-indi communication via your
+    MQTT broker.
 
     :client_id: The MQTT id, a string unique on the MQTT network
     :type client_id: String
