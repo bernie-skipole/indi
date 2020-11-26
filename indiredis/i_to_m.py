@@ -10,20 +10,18 @@
 #
 # Normally every indiserver/device publishes on the from_indi topic (from indi device to the client)
 #
-# If a device wants to snoop on all other devices it subscribes to the to_ind topic
-#
 # Every device subscribes to snoop_control/#
 # and to snoop_data/client_id
 #
-# If an indiserver/device wants to publish, it sends a getproperties to snoop_control/client_id
+# If an indiserver/device wants to snoop, it sends a getproperties to snoop_control/client_id where client_id is its own id
 #
 # All devices receive it, but the sending device, recognising its own id, ignores it.
+# All other devices receiving the getproperties on topic snoop_control/#, records the snooping request, and the snooping client which wants it
 #
-# Any device receiving the getproperties, checks if the getproperties is relevant to itself.
+# When transmitting data, checks if another client wants to snoop it, if so then it publishes its data to snoop_data/client_id,
+# where client_id is the client_id of the originating snooping request
 #
-# If it is, then it publishes its data to snoop_data/client_id, where client_id is the client_id of the originating request
-#
-# where the device, which is interested in that data, will receive it
+# where the device, which is interested in that data, will receive it, as it subscribes to snoop_data/client_id
 
 
 
@@ -43,6 +41,18 @@ try:
     import paho.mqtt.client as mqtt
 except:
     MQTT_AVAILABLE = False
+
+# Global _DEVICESET is a set of device names served by this indiserver
+_DEVICESET = set()
+
+# _SENDSNOOPALL is a set of clientid's which want all data sent to them
+_SENDSNOOPALL = set()
+
+# _SENDSNOOPDEVICES is a dictionary of {devicename: set of clientid's, ...} which are those clients which snoop the given devicename
+_SENDSNOOPDEVICES = {}
+
+# _SENDSNOOPDEVICES is a dictionary of {(devicename,propertyname): set of clientid's, ...} which are those clients which snoop the given device/property
+_SENDSNOOPPROPERTIES = {}
 
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
@@ -64,10 +74,40 @@ _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 def _inditomqtt_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
-    global _TO_INDI
+    global _TO_INDI, _DEVICESET, _SENDSNOOPALL, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
     if message.topic == userdata["pubsnoopcontrol"]:
-        # The message received, is one this device has transmitted, ignore it
+        # The message received on the snoop control topic, is one this device has transmitted, ignore it
         return
+    # On receiving a getproperties on snoop_control/#, checks the name, property to be snooped
+    if message.topic.startswith(userdata["snoop_control_topic"]+"/"):
+        root = ET.fromstring(message.payload.decode("utf-8"))
+        if root.tag != "getProperties":
+            # only getProperties listenned to on snoop_control_topic
+            return
+        devicename = root.get("device")
+        propertyname = root.get("name")
+        if propertyname and (not devicename):
+            # illegal
+            return
+        snooptopic, remote_client_id = message.topic.split("/", maxsplit=1)
+        if not devicename:
+            # Its a snoop everything request
+            _SENDSNOOPALL.add(remote_client_id)
+        elif not propertyname:
+            # Its a snoop device request
+            if devicename in _SENDSNOOPDEVICES:
+                _SENDSNOOPDEVICES[devicename].add(remote_client_id)
+            else:
+                _SENDSNOOPDEVICES[devicename] = set((remote_client_id,))
+        else:
+            # Its a snoop device/property request
+            if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_client_id)
+            else:
+                _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_client_id,))
+    if message.payload.startswith(b"delProperty"):
+        root = ET.fromstring(message.payload.decode("utf-8"))
+        _remove(root)
     # we have received a message from the mqtt server, put it into the _TO_INDI buffer
     _TO_INDI.append(message.payload)
  
@@ -121,10 +161,12 @@ async def _txtoindi(writer):
             await asyncio.sleep(0.5)
 
 
-async def _rxfromindi(reader, loop, topic, mqtt_client):
+async def _rxfromindi(reader, loop, userdata, mqtt_client):
+    global _DEVICESET, _SENDSNOOPALL, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
     # get received data, and put it into message
     message = b''
     messagetagnumber = None
+    topic = userdata["from_indi_topic"]
     while True:
         # get blocks of data from the indiserver
         try:
@@ -139,7 +181,11 @@ async def _rxfromindi(reader, loop, topic, mqtt_client):
                     messagetagnumber = index
                     break
             else:
-                # data does not start with a recognised tag, so ignore it
+                # check if data received is a b'<getProperties ... />' snooping request
+                if data.startswith(b'<getProperties '):
+                    # send a snoop request on topic snoop_control/client_id where client_id is its own id
+                    result = await loop.run_in_executor(None, _sendtomqtt, data, userdata["pubsnoopcontrol"], mqtt_client)
+                # data is either a getProperties, or does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
                 continue
             # set this data into the received message
@@ -147,9 +193,31 @@ async def _rxfromindi(reader, loop, topic, mqtt_client):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
+                root = ET.fromstring(message.decode("utf-8"))
+                devicename = root.get("device")
                 # Run '_sendtomqtt' in the default loop's executor:
                 result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
+                # check if this data it to be sent to snooping devices
+                for client_id in _SENDSNOOPALL:
+                    snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                    result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+                if devicename in _DEVICESET:
+                    if devicename in _SENDSNOOPDEVICES:
+                        for client_id in _SENDSNOOPDEVICES[devicename]:
+                            snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                            result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+                    propertyname = root.get("name")
+                    if propertyname:
+                        if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                            for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
+                                snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                                result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                 # and start again, waiting for a new message
+                if devicename:
+                    _DEVICESET.add(devicename)
+                if root.tag == "delProperty":
+                    # remove this device/property from snooping records
+                    _remove(root)
                 message = b''
                 messagetagnumber = None
             # and read either the next message, or the children of this tag
@@ -159,19 +227,41 @@ async def _rxfromindi(reader, loop, topic, mqtt_client):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
+            root = ET.fromstring(message.decode("utf-8"))
+            devicename = root.get("device")
             # Run '_sendtomqtt' in the default loop's executor:
             result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
+            # check if this data it to be sent to snooping devices
+            for client_id in _SENDSNOOPALL:
+                snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+            if devicename in _DEVICESET:
+                if devicename in _SENDSNOOPDEVICES:
+                    for client_id in _SENDSNOOPDEVICES[devicename]:
+                        snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                        result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+                propertyname = root.get("name")
+                if propertyname:
+                    if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                        for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
+                            snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                            result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
             # and start again, waiting for a new message
+            if devicename:
+                _DEVICESET.add(devicename)
+            if root.tag == "delProperty":
+                # remove this device/property from snooping records
+                _remove(root)
             message = b''
             messagetagnumber = None
 
 
-async def _indiconnection(loop, topic, mqtt_client, indiserver):
+async def _indiconnection(loop, userdata, mqtt_client, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    _message(topic, mqtt_client, f"Connected to {indiserver.host}:{indiserver.port}")
+    _message(userdata["from_indi_topic"], mqtt_client, f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
-    received = _rxfromindi(reader, loop, topic, mqtt_client)
+    received = _rxfromindi(reader, loop, userdata, mqtt_client)
     await asyncio.gather(sent, received)
 
 
@@ -230,7 +320,7 @@ def inditomqtt(indiserver, mqttserver):
         _TO_INDI.clear()
         _TO_INDI.append(b'<getProperties version="1.7" />')
         try:
-            loop.run_until_complete(_indiconnection(loop, mqttserver.from_indi_topic, mqtt_client, indiserver))
+            loop.run_until_complete(_indiconnection(loop, userdata, mqtt_client, indiserver))
         except ConnectionRefusedError:
             _message(mqttserver.from_indi_topic, mqtt_client, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
@@ -255,5 +345,21 @@ def _message(topic, mqtt_client, message):
     return
 
 
+def _remove(root):
+    "A delProperty is received or being sent, remove this device/property from snooping records"
+    global _DEVICESET, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
+    devicename = root.get("device")
+    if not devicename:
+        return
+    propertyname = root.get("name")
+    if propertyname:
+        if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+            del _SENDSNOOPPROPERTIES[devicename,propertyname]
+        return
+    # devicename only
+    if devicename in _DEVICESET:
+        _DEVICESET.remove(devicename)
+    if devicename in _SENDSNOOPDEVICES:
+        del _SENDSNOOPDEVICES[devicename]
 
 
