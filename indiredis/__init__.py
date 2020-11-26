@@ -9,6 +9,11 @@ inditoredis:
    Receives XML data from indiserver on port 7624 and stores in redis.
    Reads data published via redis, and outputs to port 7624 and indiserver.
 
+driverstoredis:
+   Given a list of drivers, runs them and stores received XML data in redis.
+   Reads data published via redis, and outputs to the drivers. Does not require
+   indiserver.
+
 inditomqtt:
    Receives XML data from indiserver on port 7624 and publishes via MQTT.
    Receives data from MQTT, and outputs to port 7624 and indiserver.
@@ -16,11 +21,6 @@ inditomqtt:
 mqtttoredis:
    Receives XML data from MQTT and stores in redis.
    Reads data published via redis, and outputs to MQTT.
-
-driverstoredis:
-   Given a list of drivers, runs them and stores received XML data in redis.
-   Reads data published via redis, and outputs to the drivers. Does not require
-   indiserver.
 
 """
 

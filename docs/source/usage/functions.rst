@@ -175,7 +175,14 @@ In terminal one, run indiserver with the simulated instruments::
 
     indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide indi_simulator_gps
 
-In terminal two, run inditoredis using the minimal script described above.
+In terminal two, run inditoredis with the following script::
+
+    from indiredis import inditoredis, indi_server, redis_server
+
+    indi_host = indi_server(host='localhost', port=7624)
+    redis_host = redis_server(host='localhost', port=6379)
+
+    inditoredis(indi_host, redis_host, blob_folder='/path/to/blob_folder')
 
 In terminal three, run the following web service::
 
@@ -205,9 +212,8 @@ Wait a few seconds, and the devices, with their properties, should be discovered
 
 To end the program, press Ctrl-c a few times in the terminal.
 
-A further example, showing how inditoredis and the wsgi application with web server
-can be run in separate threads from a single script::
-
+A further example, still with indiserver running in another terminal, which shows how inditoredis
+and the web service can be run by a single script::
 
     import threading, os, sys
 
@@ -242,15 +248,12 @@ can be run in separate threads from a single script::
     inditoredis(indi_host, redis_host, blob_folder=BLOBS)
 
 
-You will still need indiserver to be running - either started in another terminal, or as a service. On
-running this script in a terminal, connect your browser to localhost:8000 to view the web pages.
+On running this script in a terminal, connect your browser to localhost:8000 to view the web pages.
 
 The __main__.py script in the indiredis package is very similar to the above example with the addition of
 accepting host, port, blob_folder, etc., as script arguments.
 
-
 And a further example using the driverstoredis function, which does not need indiserver::
-
 
     import threading, os, sys
 

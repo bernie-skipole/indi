@@ -5,19 +5,21 @@ Introduction
 The indiredis package
 ^^^^^^^^^^^^^^^^^^^^^
 
-This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. If the package is run, it provides a web service for controlling instruments attached via indiserver. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
-
-The package is a client only, it does not include indiserver or drivers.
+This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
 
 INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-Though INDI is used for astronomical instruments, it can also be used for any instrument control if appropriate INDI drivers are available.
+The package is a client only, it does not include indiserver or drivers, but is compatable with them.
 
-Your host should have a redis server running, and indiserver should also be running, together with appropriate drivers and connected instruments. For example, prior to running indiredis, in another terminal, run::
+For further information, see :ref:`references`.
+
+Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
+
+Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run::
 
     indiserver -v indi_simulator_telescope indi_simulator_ccd
 
-Usage is then::
+Usage of this client is then::
 
     python3 -m indiredis /path/to/blobfolder
 
@@ -64,14 +66,6 @@ Importing indiredis
 
 indiredis can be imported into your own scripts, rather than executed with python3 -m. This is particularly aimed at helping the developer create their own GUI's or controlling scripts, perhaps more specialised than the web client included.
 
-Two options are available:
-
-The data can be transferred between indiserver and redis.
-
-or
-
-The data can be transferred between indiserver and redis via an MQTT server.
-
 The indiredis package provides the following which can be used by your own script:
 
 **indiredis.inditoredis()**
@@ -88,13 +82,13 @@ For an example of usage, see :ref:`driverstoredis`.
 
 **indiredis.indiwsgi.make_wsgi_app()**
 
-The package indiredis.indiwsgi is provided with the function make_wsgi_app which creates a Python WSGI application that provides the included web client.
+The package indiredis.indiwsgi provides the function make_wsgi_app which returns a Python WSGI application.
 
 WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the __main__.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.  
 
 An example of creating the wsgi application, and running it with waitress is given at :ref:`web_client`.
 
-As an alternative to the inditoredis function, two further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
+Further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
 **indiredis.inditomqtt()**
 
