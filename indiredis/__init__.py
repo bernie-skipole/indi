@@ -100,7 +100,7 @@ def mqtt_server(client_id, host='localhost', port=1883, username='', password=''
                 snoop_control_topic='snoop_control', snoop_data_topic='snoop_data',):
     """Creates a named tuple to hold MQTT parameters
 
-    client_id is an MQTT id, a string, unique on the MQTT network, related to the attached device - such as 'indiserver01'.
+    client_id is an MQTT id, a string, unique on the MQTT network, related to the attached device - such as 'indi_server01'.
 
     The topic strings are used as MQTT topics which pass data across the MQTT network, each must be different from
     each other, and should not clash with other topic's you may be using for non-indi communication via your

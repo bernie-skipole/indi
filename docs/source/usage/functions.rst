@@ -23,7 +23,8 @@ These variables 'indi_host' and 'redis_host' are then used as inputs to further 
 
 .. autofunction:: indiredis.mqtt_server
 
-The snoop features across MQTT are currently under development.
+The snoop features across MQTT are currently under development. When choosing a client id, consider using a prefix, to avoid clashing
+with other users of the MQTT server, such as indi_server01, or indi_client01.
 
 The tuples created by the above functions are then used as parameters for the following functions.
 
@@ -32,7 +33,9 @@ The tuples created by the above functions are then used as parameters for the fo
 indiredis.inditoredis
 ^^^^^^^^^^^^^^^^^^^^^
 
-Converts directly between indiserver (port 7624) and redis, converting indi XML to redis key-value storage.
+An INDI client which reads data from indiserver (port 7624) converts the XML to redis key-value storage. In the other direction,
+subscribes to XML data published via Redis and transmits to indiserver. Enables a GUI or web client to communicate to indiserver
+purely via redis.
 
 .. autofunction:: indiredis.inditoredis
 
@@ -97,13 +100,13 @@ Example Python script running on the machine with indiserver and the connected i
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
     indi_host = indi_server(host='localhost', port=7624)
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+    mqtt_host = mqtt_server('indi_server01', host='10.34.167.1', port=1883)
 
     # blocking call which runs the service, communicating between indiserver and mqtt
 
     inditomqtt(indi_host, mqtt_host)
 
-Substitute your own MQTT server ip address for 10.34.167.1 in the above example.
+Substitute your own MQTT server ip address for 10.34.167.1, and your own client id for 'indi_server01'.
 
 .. _mqtttoredis:
 
@@ -112,7 +115,7 @@ indiredis.mqtttoredis
 
 Intended to be run on the same server running a redis service, typically with the gui or web service which can read/write to redis.
 
-Receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
+An INDI client which receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
 
 .. autofunction:: indiredis.mqtttoredis
 
@@ -122,15 +125,15 @@ Example Python script running at the redis server::
 
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
-    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+    mqtt_host = mqtt_server('indi_client01', host='10.34.167.1', port=1883)
     redis_host = redis_server(host='localhost', port=6379)
 
     # blocking call which runs the service, communicating between mqtt and redis
 
     mqtttoredis(mqtt_host, redis_host, blob_folder='/path/to/blob_folder')
 
-    # Set the blob_folder to a directory of your choice
-    # and substitute your own MQTT server ip address for 10.34.167.1
+
+Set the blob_folder to a directory of your choice and substitute your own MQTT server ip address for 10.34.167.1, and client id for 'indi_client01'.
 
 .. _web_client:
 
@@ -144,7 +147,7 @@ The function which creates the wsgi application:
 
 .. autofunction:: indiredis.indiwsgi.make_wsgi_app
 
-This particular client application is general purpose, and learns all instrument properties from the
+This particular client application is general purpose, learning all instrument properties from the
 redis store.
 
 If this wsgi application is not used, the skipole package is not required by indiredis, and does not
