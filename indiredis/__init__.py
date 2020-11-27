@@ -106,7 +106,7 @@ def mqtt_server(client_id, host='localhost', port=1883, username='', password=''
     each other, and should not clash with other topic's you may be using for non-indi communication via your
     MQTT broker.
 
-    :client_id: The MQTT id, a string unique on the MQTT network
+    :param client_id: The MQTT id, a string unique on the MQTT network
     :type client_id: String
     :param host: The name or ip address of the mqtt server, defaults to localhost
     :type host: String
