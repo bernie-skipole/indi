@@ -33,6 +33,7 @@ from .i_to_r import inditoredis
 from .i_to_m import inditomqtt
 from .m_to_r import mqtttoredis
 from .d_to_r import driverstoredis
+from .d_to_m import driverstomqtt
 
 
 # define namedtuples to hold server parameters

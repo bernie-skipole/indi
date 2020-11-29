@@ -63,8 +63,9 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
             else:
                 # check if data received is a b'<getProperties ... />' snooping request
                 if data.startswith(b'<getProperties '):
-                    driver.setsnoop(data)
                     # sets flags in the driver that it is snooping
+                    root = ET.fromstring(data)
+                    driver.setsnoop(root)
                 # data is either a getProperties, or does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
                 continue
@@ -74,7 +75,7 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
                 root = ET.fromstring(message.decode("utf-8"))
-                # if this is to be sent to other devices via snooping mechanism, then copy the recieved
+                # if this is to be sent to other devices via snooping mechanism, then copy the read
                 # message to other divers inque
                 driver.snoopsend(driverlist, message, root)
                 if driver.checkBlobs(root):
@@ -97,7 +98,7 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
             root = ET.fromstring(message.decode("utf-8"))
-            # if this is to be sent to other devices via snooping mechanism, then copy the recieved
+            # if this is to be sent to other devices via snooping mechanism, then copy the read
             # message to other divers inque
             driver.snoopsend(driverlist, message, root)
             if driver.checkBlobs(root):
@@ -361,12 +362,11 @@ class _Driver:
                 # value could be None, Never or Also = all of which allow non-blobs
                 return True
 
-    def setsnoop(self, data):
+    def setsnoop(self, root):
         "data received from the driver starts with b'<getProperties ', so set snooping flags"
         if self.snoopall:
             # already snoops everything, do not have to do anything else
             return
-        root = ET.fromstring(data)
         if root.tag != "getProperties":
             return
         device = root.get("device")    # name of Device
@@ -386,7 +386,7 @@ class _Driver:
             self.snoopproperties.add((device,name))
 
     def snoopsend(self, driverlist, message, root):
-        "message has been received by this driver, send it to other drivers that are snooping"
+        "message has been read from this driver, send it to other drivers that are snooping"
         device = root.get("device")    # name of Device
         name = root.get("name")        # name of Property
         for driver in driverlist:

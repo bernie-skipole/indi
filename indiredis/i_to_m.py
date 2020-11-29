@@ -199,16 +199,19 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
                 result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
                 # check if this data it to be sent to snooping devices
                 for client_id in _SENDSNOOPALL:
+                    # these clients snoop everything
                     snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                     result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                 if devicename in _DEVICESET:
                     if devicename in _SENDSNOOPDEVICES:
+                        # list of client id's which snoop this devicename
                         for client_id in _SENDSNOOPDEVICES[devicename]:
                             snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                             result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                     propertyname = root.get("name")
                     if propertyname:
                         if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                            # list of client id's which snoop this devicename/propertyname
                             for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
                                 snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                                 result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
@@ -233,16 +236,19 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
             result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
             # check if this data it to be sent to snooping devices
             for client_id in _SENDSNOOPALL:
+                # these clients snoop everything
                 snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                 result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
             if devicename in _DEVICESET:
                 if devicename in _SENDSNOOPDEVICES:
+                    # list of client id's which snoop this devicename
                     for client_id in _SENDSNOOPDEVICES[devicename]:
                         snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                         result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                 propertyname = root.get("name")
                 if propertyname:
                     if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                        # list of client id's which snoop this devicename/propertyname
                         for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
                             snooptopic = userdata["snoop_data_topic"] + "/" + client_id
                             result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
