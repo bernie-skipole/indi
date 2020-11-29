@@ -348,6 +348,8 @@ def _message(topic, mqtt_client, message):
 def _remove(root):
     "A delProperty is received or being sent, remove this device/property from snooping records"
     global _DEVICESET, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
+    if root.tag != "delProperty":
+        return
     devicename = root.get("device")
     if not devicename:
         return
