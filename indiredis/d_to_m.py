@@ -277,9 +277,9 @@ async def _driverconnections(loop, userdata, mqtt_client):
         tasks.append(_reader(proc.stdout, driver, loop, userdata, mqtt_client))
         tasks.append(_writer(proc.stdin, driver))
         tasks.append(_perror(proc.stderr))
-        _message(rconn, f"Driver {driver.executable} started")
+        _message(userdata["from_indi_topic"], mqtt_client, f"Driver {driver.executable} started")
         
-    _message(rconn, "Drivers started, waiting for data")
+    _message(userdata["from_indi_topic"], mqtt_client, "Drivers started, waiting for data")
     # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
     await asyncio.gather(*tasks)
 
@@ -346,7 +346,7 @@ def driverstomqtt(drivers, mqttserver):
         try:
             loop.run_until_complete(_driverconnections(loop, userdata, mqtt_client))
         except FileNotFoundError as e:
-            _message(rconn, str(e))
+            _message(userdata["from_indi_topic"], mqtt_client, str(e))
             sleep(2)
             break
         finally:

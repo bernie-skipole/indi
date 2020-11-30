@@ -176,7 +176,7 @@ Open three terminals.
 
 In terminal one, run indiserver with the simulated instruments::
 
-    indiserver -v indi_simulator_telescope indi_simulator_dome indi_simulator_guide indi_simulator_gps
+    indiserver -v indi_simulator_telescope indi_simulator_ccd
 
 In terminal two, run inditoredis with the following script::
 

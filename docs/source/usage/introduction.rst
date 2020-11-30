@@ -5,13 +5,13 @@ Introduction
 The indiredis package
 ^^^^^^^^^^^^^^^^^^^^^
 
-This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
+This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
 
-INDI - Instrument Neutral Distributed Interface, see https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
+INDI - Instrument Neutral Distributed Interface.
 
-The package is a client only, it does not include indiserver or drivers, but is compatable with them.
+The package does not include indiserver or drivers, but is compatable with them.
 
-For further information, see :ref:`references`.
+For further information on INDI, see :ref:`references`.
 
 Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
@@ -34,17 +34,17 @@ For further usage information, including setting ports and hosts, try::
 Installation
 ^^^^^^^^^^^^
 
+Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver with drivers (apt-get install indi-bin). If you are using the MQTT functions you will also need an MQTT server on your network (apt-get install mosquitto). 
+
 For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:
 
-python3 -m pip install --user indiredis
+python3 -m pip install indiredis
 
 Using a virtual environment may be preferred, if you need further information on pip and virtual environments, try:
 
 https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
 
-Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver (apt-get install indi-bin).
-
-The above pip command should automatically pull in the packages: 
+The above pip command should automatically pull in the following packages: 
 
 skipole - required for the built in web service, not needed if you are making your own GUI
 
@@ -54,11 +54,9 @@ redis - Python redis client, needed.
 
 paho-mqtt - Python MQTT client, only needed if you are using the MQTT facility.
 
-indiredis has functions for transferring data between indiserver and redis via an MQTT server. If these are used, then an MQTT server (apt-get install mosquitto) is needed.
-
 If you do not want the python dependencies to be automatically installed with pip, then use the --no-deps option:
 
-python3 -m pip install --user --no-deps indiredis
+python3 -m pip install --no-deps indiredis
 
 
 Importing indiredis
