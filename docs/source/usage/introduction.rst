@@ -68,7 +68,7 @@ The indiredis package provides the following which can be used by your own scrip
 
 **indiredis.inditoredis()**
 
-The primary function of the package which converts between indiserver and redis, providing redis key-value storage of the instrument parameters, and works with the pub/sub faciliies of redis.
+The primary function of the package which converts between indiserver and redis, providing redis key-value storage of the instrument parameters, and works with the pub/sub facilities of redis.
 
 For an example of usage, see :ref:`inditoredis`.
 
@@ -86,7 +86,7 @@ WSGI is a specification that describes how a web server communicates with web ap
 
 An example of creating the wsgi application, and running it with waitress is given at :ref:`web_client`.
 
-Further functions are provided, inditomqtt and mqtttoredis, these work together to transfer the xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
+Further functions are provided to transfer INDI xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
 **indiredis.inditomqtt()**
 
@@ -126,15 +126,19 @@ Redis key/value storage and publication is extremely easy, many web frameworks a
 mqtt - why?
 ^^^^^^^^^^^
 
-MQTT is an option provided here since it makes out-of-band communications easy, for example, if other none-INDI communications are needed between devices, then merely subscribing and publishing with another topic is possible.
+MQTT is an option provided here since it enables instruments connected in different locations able to communicate across the network to the client.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 
-As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a device running indiserver could, for instance, have a dynamic DHCP served address, and a remote GUI could also have a dynamic address, but since both initiate the call to the MQTT server, this does not matter.
+As devices connect to the MQTT server, only the IP address of the MQTT server needs to be fixed, a remote device could, for instance, have a dynamic DHCP served address, and a remote GUI could also have a dynamic address, but since both initiate the call to the MQTT server, this does not matter.
 
-It allows monitoring of the communications by a third device or service by simply subscribing to the topic used. This makes a possible logging service easy to implement.
+It allows monitoring of the communications by a third device or service by simply subscribing to the topic used. This makes a possible instrument data broadcasting or logging service easy to implement.
+
+It makes out-of-band communications easy, for example, if other none-INDI communications are needed between devices, then merely subscribing and publishing with another topic is possible.
 
 A disadvantage may be a loss of throughput and response times. An extra layer of communications plus networking is involved, so this may not be suitable for all scenarios.
+
+Though multiple clients connected to the MQTT network is possible, and useful if they are just gathering data, two clients attempting to simultaneously control one instrument would lead to chaos and confusion! A single controlling client would need to be enforced. 
 
 Security
 ^^^^^^^^

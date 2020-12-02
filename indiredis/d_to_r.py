@@ -204,7 +204,10 @@ def driverstoredis(drivers, redisserver, log_lengths={}, blob_folder=''):
     tools.clearredis(rconn, redisserver)
 
     # a list of drivers
-    driverlist = list( _Driver(driver) for driver in drivers )
+    if isinstance(drivers, str):
+        driverlist = [ _Driver(drivers) ]
+    else:
+        driverlist = list( _Driver(driver) for driver in drivers )
 
     # sender object, used to append data, and to send it
     sender = _Sender(driverlist)
@@ -442,9 +445,11 @@ class _Sender:
             driver = _DRIVERDICT[devicename]
             driver.append(data)
         else:
-            # so a devicename is specified, but no driver found, so send it to all
+            # this could be data from another device meant to be snooped by this device
+            # add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
+
 
     def clear(self):
         "Clears inques"

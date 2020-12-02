@@ -13,7 +13,7 @@ from datetime import datetime
 
 import xml.etree.ElementTree as ET
 
-from . import toindi, fromindi, tools
+from . import fromindi
 
 MQTT_AVAILABLE = True
 try:
@@ -51,9 +51,9 @@ def _driverstomqtt_on_message(client, userdata, message):
     if message.topic == userdata["pubsnoopcontrol"]:
         # The message received on the snoop control topic, is one this device has transmitted, ignore it
         return
+    root = ET.fromstring(message.payload.decode("utf-8"))
     # On receiving a getproperties on snoop_control/#, checks the name, property to be snooped
     if message.topic.startswith(userdata["snoop_control_topic"]+"/"):
-        root = ET.fromstring(message.payload.decode("utf-8"))
         if root.tag != "getProperties":
             # only getProperties listenned to on snoop_control_topic
             return
@@ -78,11 +78,16 @@ def _driverstomqtt_on_message(client, userdata, message):
                 _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_client_id)
             else:
                 _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_client_id,))
-    if message.payload.startswith(b"delProperty"):
-        root = ET.fromstring(message.payload.decode("utf-8"))
-        _remove(userdata["driverlist"], root)
-    # we have received a message from the mqtt server, put it into the drivers buffer
-    userdata["sender"].append(message.payload)
+        # we have received a snoop getProperties from another device via the mqtt server, put it into the drivers buffer
+        userdata["sender"].append(message.payload, root)
+        return
+    if message.topic.startswith(userdata["snoopdata"]):
+        # This is snoop data sent from other devices connected elsewhere on the mqtt network to this connection
+        # having topic "snoop_data_topic/client_id", where client_id is this client id
+        userdata["sender"].snoopdata(message.payload, root)
+        return
+    # we have received a message from a client via the mqtt server, put it into the drivers buffer
+    userdata["sender"].append(message.payload, root)
  
 
 def _driverstomqtt_on_connect(client, userdata, flags, rc):
@@ -300,7 +305,10 @@ def driverstomqtt(drivers, mqttserver):
         sys.exit(1)
 
     # a list of drivers
-    driverlist = list( _Driver(driver) for driver in drivers )
+    if isinstance(drivers, str):
+        driverlist = [ _Driver(drivers) ]
+    else:
+        driverlist = list( _Driver(driver) for driver in drivers )
 
     # sender object, used to append data, and to send it
     sender = _Sender(driverlist)
@@ -519,19 +527,24 @@ class _Driver:
             if driver is self:
                 # do not copy data to self
                 continue
-            if driver.snoopall:
-                # this driver snoops everything
-                driver.append(message)
-            elif device is None:
-                continue
-            elif device in driver.snoopdevices:
-                # this driver snoops this device
-                driver.append(message)
-            elif name is None:
-                continue
-            elif (device,name) in driver.snoopproperties:
-                # this driver snoops this device,property
-                driver.append(message)
+            driver.snoopreceive(message, device, name)
+
+    def snoopreceive(self, message, device, name):
+        "Received snoop data is added to the drivers inque"
+        if self.snoopall:
+            # this driver snoops everything
+            self.append(message)
+        elif device is None:
+            return
+        elif device in self.snoopdevices:
+            # this driver snoops this device
+            self.append(message)
+        elif name is None:
+            return
+        elif (device,name) in self.snoopproperties:
+            # this driver snoops this device,property
+            self.append(message)
+
 
 
 class _Sender:
@@ -542,10 +555,9 @@ class _Sender:
     def __init__(self, driverlist):
         self.driverlist = driverlist
 
-    def append(self, data):
+    def append(self, data, root):
         "This data is appended to any driver.inque if the message is relevant to that driver"
         global _DRIVERDICT
-        root = ET.fromstring(data.decode("utf-8"))
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
 
@@ -567,10 +579,20 @@ class _Sender:
             # so a devicename is specified, and the associated driver is known
             driver = _DRIVERDICT[devicename]
             driver.append(data)
-        else:
-            # so a devicename is specified, but no driver found, so send it to all
-            for driver in self.driverlist:
-                driver.append(data)
+        #else:
+            # add to all inque's
+        #    for driver in self.driverlist:
+        #        driver.append(data)
+
+    def snoopdata(self, data, root):
+        "Incoming snoop data is added to the drivers inque"
+        device = root.get("device")    # name of Device
+        name = root.get("name")        # name of Property
+        for driver in self.driverlist:
+            # snoopreceive adds it to each driver inque which is snooping this device/property
+            driver.snoopreceive(data, device, name)
+        if root.tag == "delProperty":
+            _remove(self.driverlist, root)
 
     def clear(self):
         "Clears inques"
