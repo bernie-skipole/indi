@@ -23,8 +23,18 @@ These variables 'indi_host' and 'redis_host' are then used as inputs to further 
 
 .. autofunction:: indiredis.mqtt_server
 
-The snoop features across MQTT are currently under development. When choosing a client id, consider using a prefix, to avoid clashing
-with other users of the MQTT server, such as indi_server01, or indi_client01.
+
+To be specific, the client_id should be unique for every connection to the MQTT network.
+
+When choosing a client id, consider using a prefix, to avoid clashing with other users of the MQTT broker,
+such as indi_server01, or indi_client01.
+
+The to_indi_topic should be a string, the same string should be used for every connection, so, for example, clients will send data
+with this topic, and servers/drivers will subscribe to the topic to receive that data.
+
+Similarly the from_indi_topic should be another, different string, again used for every connection.
+
+The same rule follows for the snoop_control_topic and snoop_data_topic.
 
 The tuples created by the above functions are then used as parameters for the following functions.
 

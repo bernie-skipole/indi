@@ -126,7 +126,7 @@ Redis key/value storage and publication is extremely easy, many web frameworks a
 mqtt - why?
 ^^^^^^^^^^^
 
-MQTT is an option provided here since it enables instruments connected in different locations able to communicate across the network to the client.
+MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 
