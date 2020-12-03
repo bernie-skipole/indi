@@ -78,21 +78,21 @@ def _driverstomqtt_on_message(client, userdata, message):
                 _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_client_id)
             else:
                 _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_client_id,))
-        # we have received a snoop getProperties from another device via the mqtt server, put it into the drivers buffer
-        userdata["sender"].append(message.payload, root)
+        # we have received a snoop getProperties from another device via the mqtt server, send it to the drivers
+        userdata["datatodriver"].senddata(message.payload, root)
         return
     if message.topic.startswith(userdata["snoopdata"]):
         # This is snoop data sent from other devices connected elsewhere on the mqtt network to this connection
         # having topic "snoop_data_topic/client_id", where client_id is this client id
-        userdata["sender"].snoopdata(message.payload, root)
+        userdata["datatodriver"].snoopdata(message.payload, root)
         return
-    # we have received a message from a client via the mqtt server, put it into the drivers buffer
-    userdata["sender"].append(message.payload, root)
+    # we have received a message from a client via the mqtt server, send it to the drivers
+    userdata["datatodriver"].senddata(message.payload, root)
  
 
 def _driverstomqtt_on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
-    userdata["sender"].clear()  # - start with fresh empty driver buffers
+    userdata["datatodriver"].clear()  # - start with fresh empty driver buffers
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
@@ -114,9 +114,9 @@ def _driverstomqtt_on_connect(client, userdata, flags, rc):
 
 
 def _driverstomqtt_on_disconnect(client, userdata, rc):
-    "The MQTT client has disconnected, set userdata['comms'] = False, and clear out any data hanging about in sender"
+    "The MQTT client has disconnected, set userdata['comms'] = False, and clear out any data hanging about in datatodriver"
     userdata['comms'] = False
-    userdata["sender"].clear()
+    userdata["datatodriver"].clear()
 
 
 def _sendtomqtt(payload, topic, mqtt_client):
@@ -310,8 +310,8 @@ def driverstomqtt(drivers, mqttserver):
     else:
         driverlist = list( _Driver(driver) for driver in drivers )
 
-    # sender object, used to append data, and to send it
-    sender = _Sender(driverlist)
+    # _DataToDriver object, used to send data to the drivers 
+    datatodriver = _DataToDriver(driverlist)
 
     # wait for two seconds before starting, to give mqtt and other servers
     # time to start up
@@ -329,7 +329,7 @@ def driverstomqtt(drivers, mqttserver):
                "snoopdata"           : mqttserver.snoop_data_topic + "/" + mqttserver.client_id,
                "snoopcontrol"        : mqttserver.snoop_control_topic + "/#",                         # used to receive other's getproperty
                "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqttserver.client_id,   # used when publishing a getproperty
-               "sender"              : sender,
+               "datatodriver"        : datatodriver,
                "driverlist"          : driverlist
               }
 
@@ -547,20 +547,19 @@ class _Driver:
 
 
 
-class _Sender:
-    """An object, with an append method, which gets data appended, which in turn
-     gets added here to the required driver inque's which causes the data to be
+class _DataToDriver:
+    """An object, which receives data, and which in turn sends it 
+     on to the required driver inque's which causes the data to be
      transmitted on to the drivers via the _writer coroutine"""
 
     def __init__(self, driverlist):
         self.driverlist = driverlist
 
-    def append(self, data, root):
+    def senddata(self, data, root):
         "This data is appended to any driver.inque if the message is relevant to that driver"
         global _DRIVERDICT
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
-
         if root.tag == "enableBLOB":
             if not devicename:
                 # a devicename must be associated with a enableBLOB, if not given discard
@@ -570,26 +569,22 @@ class _Sender:
                 driver = _DRIVERDICT[devicename]
                 driver.setenabled(devicename, root.get("name"), root.text.strip())
             return
-
         if not devicename:
-            # add to all inque's
+            # could be a general getProperties, add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
         elif devicename in _DRIVERDICT:
             # so a devicename is specified, and the associated driver is known
             driver = _DRIVERDICT[devicename]
             driver.append(data)
-        #else:
-            # add to all inque's
-        #    for driver in self.driverlist:
-        #        driver.append(data)
 
     def snoopdata(self, data, root):
-        "Incoming snoop data is added to the drivers inque"
-        device = root.get("device")    # name of Device
+        "Incoming snoop data from MQTT is added to the drivers inque"
+        device = root.get("device")    # name of Device from the snoop data
         name = root.get("name")        # name of Property
         for driver in self.driverlist:
-            # snoopreceive adds it to each driver inque which is snooping this device/property
+            # the driver snoopreceive method adds it to the driver inque
+            # if the driver is snooping this device/property
             driver.snoopreceive(data, device, name)
         if root.tag == "delProperty":
             _remove(self.driverlist, root)

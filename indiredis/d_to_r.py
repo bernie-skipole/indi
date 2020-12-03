@@ -396,19 +396,25 @@ class _Driver:
             if driver is self:
                 # do not copy data to self
                 continue
-            if driver.snoopall:
-                # this driver snoops everything
-                driver.append(message)
-            elif device is None:
-                continue
-            elif device in driver.snoopdevices:
-                # this driver snoops this device
-                driver.append(message)
-            elif name is None:
-                continue
-            elif (device,name) in driver.snoopproperties:
-                # this driver snoops this device,property
-                driver.append(message)
+            driver.snoopreceive(message, device, name)
+
+    def snoopreceive(self, message, device, name):
+        "Received snoop data is added to the drivers inque"
+        if self.snoopall:
+            # this driver snoops everything
+            self.append(message)
+        elif device is None:
+            return
+        elif device in self.snoopdevices:
+            # this driver snoops this device
+            self.append(message)
+        elif name is None:
+            return
+        elif (device,name) in self.snoopproperties:
+            # this driver snoops this device,property
+            self.append(message)
+
+
 
 
 class _Sender:
