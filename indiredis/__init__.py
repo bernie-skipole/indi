@@ -3,7 +3,7 @@
 Defines functions to create named tuples for the indi, redis and mqtt servers.
 
 Provides blocking functions used to run the conversion between the INDI protocol
-and redis storage.
+and redis storage, and for transferring INDI data over MQTT.
 
 inditoredis:
    Receives XML data from indiserver on port 7624 and stores in redis.
@@ -17,6 +17,11 @@ driverstoredis:
 inditomqtt:
    Receives XML data from indiserver on port 7624 and publishes via MQTT.
    Receives data from MQTT, and outputs to port 7624 and indiserver.
+
+driverstomqtt:
+   Given a list of drivers, runs them and publises received XML data via MQTT.
+   Reads data published via MQTT, and outputs to the drivers. Does not require
+   indiserver.
 
 mqtttoredis:
    Receives XML data from MQTT and stores in redis.

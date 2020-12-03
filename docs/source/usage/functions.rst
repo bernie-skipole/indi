@@ -90,7 +90,7 @@ A minimal script using defaults to run driverstoredis could be::
     # The list of two simulated drivers shown above should be replaced by a list of your own drivers.
 
 
-As an alternative to inditoredis or driverstoredis, the two functions below work together to provide communications via an MQTT server.
+As an alternative to inditoredis or driverstoredis, the functions below provide communications via an MQTT server.
 
 .. _inditomqtt:
 
@@ -117,6 +117,31 @@ Example Python script running on the machine with indiserver and the connected i
     inditomqtt(indi_host, mqtt_host)
 
 Substitute your own MQTT server ip address for 10.34.167.1, and your own client id for 'indi_server01'.
+
+.. _driverstomqtt:
+
+indiredis.driverstomqtt
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Connects INDI drivers and attached instruments to the MQTT network without needing indiserver.
+
+.. autofunction:: indiredis.driverstomqtt
+
+Example Python script running on the machine with the connected instruments::
+
+    from indiredis import driverstomqtt, mqtt_server
+
+    # define the host/port where the MQTT server is listenning, this function returns a named tuple.
+
+    mqtt_host = mqtt_server('indi_drivers01', host='10.34.167.1', port=1883)
+
+    # blocking call which runs the service, communicating between drivers and mqtt
+
+    driverstomqtt(["indi_simulator_telescope", "indi_simulator_ccd"], mqtt_host)
+
+    # The list of two simulated drivers shown above should be replaced by a list of your own drivers.
+
+Substitute your own MQTT server ip address for 10.34.167.1, and your own client id for 'indi_drivers01'.
 
 .. _mqtttoredis:
 
