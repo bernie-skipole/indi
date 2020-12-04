@@ -1,6 +1,6 @@
 # indiredis
 
-This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis and MQTT, and hence the INDI protocol, for use by your own Python applications.
+This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It also includes functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis and MQTT, and hence the INDI protocol, for use by your own Python applications.
 
 INDI - Instrument Neutral Distributed Interface.
 
