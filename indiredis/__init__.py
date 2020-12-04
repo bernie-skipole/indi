@@ -19,7 +19,7 @@ inditomqtt:
    Receives data from MQTT, and outputs to port 7624 and indiserver.
 
 driverstomqtt:
-   Given a list of drivers, runs them and publises received XML data via MQTT.
+   Given a list of drivers, runs them and publishes received XML data via MQTT.
    Reads data published via MQTT, and outputs to the drivers. Does not require
    indiserver.
 

@@ -10,12 +10,13 @@ These first three functions are used to create named tuples.
 
 For example::
 
-    from indiredis import indi_server, redis_server
+    from indiredis import indi_server, redis_server, mqtt_server
 
     indi_host = indi_server(host='localhost', port=7624)
     redis_host = redis_server(host='localhost', port=6379)
+    mqtt_host = mqtt_server('indi_server01', host='localhost', port=1883)
 
-These variables 'indi_host' and 'redis_host' are then used as inputs to further functions which require definitions of the hosts.
+These variables 'indi_host', 'redis_host' and 'mqtt_host' are then used as inputs to further functions which require definitions of the hosts.
 
 .. autofunction:: indiredis.indi_server
 

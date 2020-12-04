@@ -3,8 +3,6 @@
 indiredis - an INDI Client
 ==========================
 
-Status : INDI - Redis conversions working, MQTT features being worked on.
-
 .. toctree::
    :maxdepth: 2
 

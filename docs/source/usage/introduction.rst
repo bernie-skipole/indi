@@ -5,7 +5,7 @@ Introduction
 The indiredis package
 ^^^^^^^^^^^^^^^^^^^^^
 
-This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own GUI or WEB applications.
+This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis and MQTT, and hence the INDI protocol, for use by your own Python applications.
 
 INDI - Instrument Neutral Distributed Interface.
 
@@ -86,13 +86,13 @@ WSGI is a specification that describes how a web server communicates with web ap
 
 An example of creating the wsgi application, and running it with waitress is given at :ref:`web_client`.
 
-Further functions are provided to transfer INDI xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
+Further functions are provided to transfer INDI xml data via an mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
 **indiredis.inditomqtt()**
 
 Intended to be run on a device with indiserver, appropriate drivers and attached instruments.
 
-Receives/transmitts XML data between indiserver and an MQTT server which ultimately sends data to the remote web/gui server.
+Receives/transmitts XML data between indiserver and an MQTT server which ultimately sends data to the remote web/gui client.
 
 For an example of usage, see :ref:`inditomqtt`.
 
@@ -100,7 +100,7 @@ For an example of usage, see :ref:`inditomqtt`.
 
 This function can take a list of drivers and will run them, without needing indiserver.
 
-Receives/transmitts XML data between the drivers and an MQTT server which ultimately sends data to the remote web/gui server.
+Receives/transmitts XML data between the drivers and an MQTT server which ultimately sends data to the remote web/gui client.
 
 For an example of usage, see :ref:`driverstomqtt`.
 
@@ -134,7 +134,8 @@ Redis key/value storage and publication is extremely easy, many web frameworks a
 mqtt - why?
 ^^^^^^^^^^^
 
-MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client.
+MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client. In particular,
+scripts calling the driverstomqtt() function at different sites, connected to distributed instruments can be controlled from a single client.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 

@@ -76,21 +76,21 @@ The package indiredis.indiwsgi provides the function make_wsgi_app which returns
 
 WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the _main_.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.
 
-Further functions are provided to transfer INDI xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
+Further functions are provided to transfer INDI xml data via an mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
 
 **indiredis.inditomqtt()**
 
 Intended to be run on a device with indiserver, appropriate drivers and attached instruments.
 
-Receives/transmitts XML data between indiserver and an MQTT server which ultimately sends data to the remote web/gui server.
+Receives/transmitts XML data between indiserver and an MQTT server which ultimately sends data to the remote web/gui client.
 
 
 **indiredis.driverstomqtt()**
 
 This function can take a list of drivers and will run them, without needing indiserver.
 
-Receives/transmitts XML data between the drivers and an MQTT server which ultimately sends data to the remote web/gui server.
+Receives/transmitts XML data between the drivers and an MQTT server which ultimately sends data to the remote web/gui client.
 
 
 **indiredis.mqtttoredis()**
@@ -117,7 +117,8 @@ Redis key/value storage and publication is extremely easy, many web frameworks a
 
 ## mqtt - why?
 
-MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client.
+MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client. In particular,
+scripts calling the driverstomqtt() function at different sites, connected to distributed instruments can be controlled from a single client.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 
