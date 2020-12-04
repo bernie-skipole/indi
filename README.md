@@ -74,7 +74,7 @@ This function can take a list of drivers and will run them, without needing indi
 
 The package indiredis.indiwsgi provides the function make_wsgi_app which returns a Python WSGI application.
 
-WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the _main_.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.
+WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed with the python3 -m option, the waitress web server is imported to serve the application. It is possible to use a different WSGI-compatable web server in your own script if desired.
 
 Further functions are provided to transfer INDI xml data via an mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
@@ -107,18 +107,16 @@ The tools module contains a set of Python functions, which your own Python scrip
 
 redis is used as:
 
-More than one web process or thread may be running, redis makes data from a single connection visible to all processes.
+A web application typically has more than one process or thread running, redis makes common data visible to all such processes.
 
 As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes the XML data on the from_indi_channel, which could be used to alert a subscribing GUI application that a value has changed.
-
-When the gui wishes to send data, it can publish it on the to_indi_channel, where it will be picked up by this indiredis service, and sent to indiserver.
 
 Redis key/value storage and publication is extremely easy, many web frameworks already use it.
 
 ## mqtt - why?
 
-MQTT is an option provided here since it enables instruments connected in different locations to communicate across the network to the client. In particular,
-scripts calling the driverstomqtt() function at different sites, connected to distributed instruments can be controlled from a single client.
+MQTT is an option providing distributed communications. In particular, scripts calling the driverstomqtt() function at different sites,
+connected to distributed instruments, enables them to be controlled from a single client.
 
 There is flexibility in where the MQTT server is sited, it could run on the web server, or on a different machine entirely. This makes it possible to choose the direction of the initial connection - which may be useful when passing through NAT firewalls.
 
