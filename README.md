@@ -1,6 +1,6 @@
 # indiredis
 
-This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis, and hence the INDI protocol, for use by your own Python applications.
+This Python3 package provides an INDI client for general Instrument control, converting between the INDI protocol and redis storage. It optionally provides functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis and MQTT, and hence the INDI protocol, for use by your own Python applications.
 
 INDI - Instrument Neutral Distributed Interface.
 
@@ -10,18 +10,18 @@ The package does not include indiserver or drivers, but is compatable with them.
 
 Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
-Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run::
+Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run:
 
 > indiserver -v indi_simulator_telescope indi_simulator_ccd
 
-Usage of this client is then::
+Usage of this client is then:
 
 > python3 -m indiredis /path/to/blobfolder
 
 
 The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
 
-For further usage information, including setting ports and hosts, try::
+For further usage information, including setting ports and hosts, try:
 
 > python3 -m indiredis --help
 
@@ -40,7 +40,7 @@ https://packaging.python.org/guides/installing-using-pip-and-virtual-environment
 
 The above pip command should automatically pull in the following packages: 
 
-skipole - required for the built in web service, not needed if you are making your own GUI
+skipole - required for the built in web service, not needed if you are making your own GUI client.
 
 waitress - Python web server, not needed if you are creating your own gui, or using a different web server.
 
@@ -74,7 +74,7 @@ This function can take a list of drivers and will run them, without needing indi
 
 The package indiredis.indiwsgi provides the function make_wsgi_app which returns a Python WSGI application.
 
-WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the __main__.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.
+WSGI is a specification that describes how a web server communicates with web applications. The function make_wsgi_app creates such an application, and produces html and javascript code which can then be served by any WSGI compatable web server. When indiredis is executed, the _main_.py module is run, which imports and uses the waitress web server to serve the application. It is possible to use a different WSGI-compatable web server to run the application in your own script if desired.
 
 Further functions are provided to transfer INDI xml data from indiserver to an mqtt server, and from the mqtt server to redis, where again indiwsgi could be used to create a web service, or your own application could interface to redis.
 
