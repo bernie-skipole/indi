@@ -96,6 +96,14 @@ Receives/transmitts XML data between indiserver and an MQTT server which ultimat
 
 For an example of usage, see :ref:`inditomqtt`.
 
+**indiredis.driverstomqtt()**
+
+This function can take a list of drivers and will run them, without needing indiserver.
+
+Receives/transmitts XML data between the drivers and an MQTT server which ultimately sends data to the remote web/gui server.
+
+For an example of usage, see :ref:`driverstomqtt`.
+
 
 **indiredis.mqtttoredis()**
 
@@ -106,7 +114,7 @@ For an example of usage, see :ref:`mqtttoredis`.
 
 **indiredis.tools**
 
-The tools module contains a set of Python functions, which your gui may use if convenient. These read the indi devices and properties from redis, returning Python lists and dictionaries, and provides functions to transmit indi commands by publishing to redis.
+The tools module contains a set of Python functions, which your own Python script may use if convenient. These read the indi devices and properties from redis, returning Python lists and dictionaries, and provides functions to transmit indi commands by publishing to redis.
 
 The tools functions are described at :ref:`tools`.
 
