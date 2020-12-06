@@ -45,7 +45,7 @@ from .d_to_m import driverstomqtt
 
 IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
 RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
-MQTTServer = collections.namedtuple('MQTTServer', ['client_id', 'host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic',
+MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic',
                                                    'snoop_control_topic', 'snoop_data_topic'])
 
 
@@ -102,18 +102,14 @@ def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi
     return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
 
 
-def mqtt_server(client_id, host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi',
+def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi',
                 snoop_control_topic='snoop_control', snoop_data_topic='snoop_data',):
     """Creates a named tuple to hold MQTT parameters
-
-    client_id is an MQTT id, a string, unique on the MQTT network, related to the attached device - such as 'indi_server01'.
 
     The topic strings are used as MQTT topics which pass data across the MQTT network, each must be different from
     each other, and should not clash with other topic's you may be using for non-indi communication via your
     MQTT broker.
 
-    :param client_id: The MQTT id, a string unique on the MQTT network
-    :type client_id: String
     :param host: The name or ip address of the mqtt server, defaults to localhost
     :type host: String
     :param port: The port number of the mqtt server, defaults to standard port 1883
@@ -133,8 +129,6 @@ def mqtt_server(client_id, host='localhost', port=1883, username='', password=''
     :return: A named tuple with above parameters as named elements
     :rtype: collections.namedtuple
     """
-    if (not client_id) or (not isinstance(client_id, str)):
-        raise ValueError("An MQTT client_id must be given and must be a non-empty string.")
 
     topics = set((to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic))
     if len(topics) != 4:
@@ -146,7 +140,7 @@ def mqtt_server(client_id, host='localhost', port=1883, username='', password=''
 
     if (not port) or (not isinstance(port, int)):
         raise ValueError("The port must be an integer, 1883 is default")
-    return MQTTServer(client_id, host, port, username, password, to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic)
+    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic)
 
 
 

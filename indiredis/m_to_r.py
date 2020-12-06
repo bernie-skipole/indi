@@ -79,9 +79,11 @@ class _SenderToMQTT():
         # is published, and the data is discarded
 
 
-def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
+def mqtttoredis(mqtt_id, mqttserver, redisserver, log_lengths={}, blob_folder=''):
     """Blocking call that provides the mqtt - redis connection
 
+    :param mqtt_id: A unique string, identifying this connection
+    :type mqtt_id: String
     :param mqttserver: Named Tuple providing the mqtt server parameters
     :type mqttserver: namedtuple
     :param redisserver: Named Tuple providing the redis server parameters
@@ -98,6 +100,10 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
 
     if not REDIS_AVAILABLE:
         print("Error - Unable to import the Python redis package")
+        sys.exit(1)
+
+    if (not mqtt_id) or (not isinstance(mqtt_id, str)):
+        print("Error - An mqtt_id must be given and must be a non-empty string.")
         sys.exit(1)
 
     print("mqtttoredis started")
@@ -136,7 +142,7 @@ def mqtttoredis(mqttserver, redisserver, log_lengths={}, blob_folder=''):
                "redisserver"     : redisserver,
                "rconn"           : rconn }
 
-    mqtt_client = mqtt.Client(client_id=mqttserver.client_id, userdata=userdata)
+    mqtt_client = mqtt.Client(client_id=mqtt_id, userdata=userdata)
     # attach callback function to client
     mqtt_client.on_connect = _mqtttoredis_on_connect
     mqtt_client.on_disconnect = _mqtttoredis_on_disconnect

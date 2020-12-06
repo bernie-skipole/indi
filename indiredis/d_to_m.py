@@ -24,13 +24,13 @@ except:
 # Global _DRIVERDICT is a dictionary of {devicename: _Driver instance, ...}
 _DRIVERDICT = {}
 
-# _SENDSNOOPALL is a set of clientid's which want all data sent to them
+# _SENDSNOOPALL is a set of mqtt_id's which want all data sent to them
 _SENDSNOOPALL = set()
 
-# _SENDSNOOPDEVICES is a dictionary of {devicename: set of clientid's, ...} which are those clients which snoop the given devicename
+# _SENDSNOOPDEVICES is a dictionary of {devicename: set of mqtt_id's, ...} which are those connections which snoop the given devicename
 _SENDSNOOPDEVICES = {}
 
-# _SENDSNOOPDEVICES is a dictionary of {(devicename,propertyname): set of clientid's, ...} which are those clients which snoop the given device/property
+# _SENDSNOOPDEVICES is a dictionary of {(devicename,propertyname): set of mqtt_id's, ...} which are those connections which snoop the given device/property
 _SENDSNOOPPROPERTIES = {}
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
@@ -62,36 +62,36 @@ def _driverstomqtt_on_message(client, userdata, message):
         if propertyname and (not devicename):
             # illegal
             return
-        snooptopic, remote_client_id = message.topic.split("/", maxsplit=1)
+        snooptopic, remote_mqtt_id = message.topic.split("/", maxsplit=1)
         if not devicename:
             # Its a snoop everything request
-            _SENDSNOOPALL.add(remote_client_id)
+            _SENDSNOOPALL.add(remote_mqtt_id)
         elif not propertyname:
             # Its a snoop device request
             if devicename in _SENDSNOOPDEVICES:
-                _SENDSNOOPDEVICES[devicename].add(remote_client_id)
+                _SENDSNOOPDEVICES[devicename].add(remote_mqtt_id)
             else:
-                _SENDSNOOPDEVICES[devicename] = set((remote_client_id,))
+                _SENDSNOOPDEVICES[devicename] = set((remote_mqtt_id,))
         else:
             # Its a snoop device/property request
             if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-                _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_client_id)
+                _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_mqtt_id)
             else:
-                _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_client_id,))
+                _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_mqtt_id,))
         # we have received a snoop getProperties from another device via the mqtt server, send it to the drivers
         userdata["datatodriver"].senddata(message.payload, root)
         return
     if message.topic.startswith(userdata["snoopdata"]):
         # This is snoop data sent from other devices connected elsewhere on the mqtt network to this connection
-        # having topic "snoop_data_topic/client_id", where client_id is this client id
+        # having topic "snoop_data_topic/mqtt_id", where mqtt_id is this connection mqtt_id
         userdata["datatodriver"].snoopdata(message.payload, root)
         return
-    # we have received a message from a client via the mqtt server, send it to the drivers
+    # we have received a message from a connection via the mqtt server, send it to the drivers
     userdata["datatodriver"].senddata(message.payload, root)
  
 
 def _driverstomqtt_on_connect(client, userdata, flags, rc):
-    "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
+    "The callback for when the mqtt client receives a CONNACK response from the MQTT server, renew subscriptions"
     userdata["datatodriver"].clear()  # - start with fresh empty driver buffers
     if rc == 0:
         userdata['comms'] = True
@@ -102,10 +102,10 @@ def _driverstomqtt_on_connect(client, userdata, flags, rc):
         # Every device subscribes to snoop_control/# being the snoop_contol topic and all subtopics
         client.subscribe( userdata["snoopcontrol"], 2 )
 
-        # and to snoop_data/client_id
+        # and to snoop_data/mqtt_id
         client.subscribe( userdata["snoopdata"], 2 )
 
-        print(f"""MQTT client connected. Subscribed to:
+        print(f"""MQTT connected. Subscribed to:
 {userdata["to_indi_topic"]} - Receiving data from clients
 {userdata["snoopcontrol"]} - Receiving snoop getProperties from other devices
 {userdata["snoopdata"]} - Receiving snooped data sent to this device by other devices""")
@@ -157,7 +157,7 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                     if devicename and (devicename in _DRIVERDICT):
                         # its a local devicename, so no need to send getproperties to mqtt, continue with next message
                         continue                    
-                    # send a snoop request on topic snoop_control/client_id where client_id is its own id
+                    # send a snoop request on topic snoop_control/mqtt_id where mqtt_id is its own id
                     result = await loop.run_in_executor(None, _sendtomqtt, data, userdata["pubsnoopcontrol"], mqtt_client)
                 # data is either a getProperties, or does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
@@ -177,22 +177,22 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                     # message to other drivers inque
                     driver.snoopsend(driverlist, message, root)
                     # also may need to be sent to other drivers connected by mqtt
-                    for client_id in _SENDSNOOPALL:
-                        # these clients snoop everything
-                        snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                    for mqtt_id in _SENDSNOOPALL:
+                        # these connections snoop everything
+                        snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                         result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                     if devicename in _DRIVERDICT:
                         if devicename in _SENDSNOOPDEVICES:
-                            # list of client id's which snoop this devicename
-                            for client_id in _SENDSNOOPDEVICES[devicename]:
-                                snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                            # list of mqtt_id's which snoop this devicename
+                            for mqtt_id in _SENDSNOOPDEVICES[devicename]:
+                                snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                                 result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                         propertyname = root.get("name")
                         if propertyname:
                             if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-                                # list of client id's which snoop this devicename/propertyname
-                                for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
-                                    snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                                # list of mqtt_id's which snoop this devicename/propertyname
+                                for mqtt_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
+                                    snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                                     result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                 # and start again, waiting for a new message
                 if devicename and (devicename not in _DRIVERDICT):
@@ -218,23 +218,23 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                 # message to other drivers inque
                 driver.snoopsend(driverlist, message, root)
                 # also may need to be sent to other drivers connected by mqtt
-                for client_id in _SENDSNOOPALL:
-                    # these clients snoop everything
-                    snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                for mqtt_id in _SENDSNOOPALL:
+                    # these connections snoop everything
+                    snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                     result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                 if devicename in _DRIVERDICT:
-                    # find the clients which snoop this devicename
+                    # find the connections which snoop this devicename
                     if devicename in _SENDSNOOPDEVICES:
-                        # list of client id's which snoop this devicename
-                        for client_id in _SENDSNOOPDEVICES[devicename]:
-                            snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                        # list of mqtt_id's which snoop this devicename
+                        for mqtt_id in _SENDSNOOPDEVICES[devicename]:
+                            snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                             result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
                     propertyname = root.get("name")
                     if propertyname:
                         if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-                            # list of client id's which snoop this devicename/propertyname
-                            for client_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
-                                snooptopic = userdata["snoop_data_topic"] + "/" + client_id
+                            # list of mqtt_id's which snoop this devicename/propertyname
+                            for mqtt_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
+                                snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
                                 result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
             # and start again, waiting for a new message
             if devicename and (devicename not in _DRIVERDICT):
@@ -291,10 +291,13 @@ async def _driverconnections(loop, userdata, mqtt_client):
 
 
 
-def driverstomqtt(drivers, mqttserver):
+def driverstomqtt(drivers, mqtt_id, mqttserver):
     """Blocking call that provides the drivers - mqtt connection
 
     :param drivers: List of executable drivers
+    :type drivers: List
+    :param mqtt_id: A unique string, identifying this connection
+    :type mqtt_id: String
     :type drivers: List
     :param mqttserver: Named Tuple providing the mqtt server parameters
     :type mqttserver: namedtuple
@@ -302,6 +305,10 @@ def driverstomqtt(drivers, mqttserver):
 
     if not MQTT_AVAILABLE:
         print("Error - Unable to import the Python paho.mqtt.client package")
+        sys.exit(1)
+
+    if (not mqtt_id) or (not isinstance(mqtt_id, str)):
+        print("Error - An mqtt_id must be given and must be a non-empty string.")
         sys.exit(1)
 
     # a list of drivers
@@ -325,15 +332,15 @@ def driverstomqtt(drivers, mqttserver):
                "from_indi_topic"     : mqttserver.from_indi_topic,
                "snoop_control_topic" : mqttserver.snoop_control_topic,
                "snoop_data_topic"    : mqttserver.snoop_data_topic,
-               "client_id"           : mqttserver.client_id,
-               "snoopdata"           : mqttserver.snoop_data_topic + "/" + mqttserver.client_id,
+               "mqtt_id"             : mqtt_id,
+               "snoopdata"           : mqttserver.snoop_data_topic + "/" + mqtt_id,
                "snoopcontrol"        : mqttserver.snoop_control_topic + "/#",                         # used to receive other's getproperty
-               "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqttserver.client_id,   # used when publishing a getproperty
+               "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqtt_id,   # used when publishing a getproperty
                "datatodriver"        : datatodriver,
                "driverlist"          : driverlist
               }
 
-    mqtt_client = mqtt.Client(client_id=mqttserver.client_id, userdata=userdata)
+    mqtt_client = mqtt.Client(client_id=mqtt_id, userdata=userdata)
     # attach callback function to client
     mqtt_client.on_connect = _driverstomqtt_on_connect
     mqtt_client.on_disconnect = _driverstomqtt_on_disconnect

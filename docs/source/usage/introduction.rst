@@ -24,7 +24,7 @@ Usage of this client is then::
     python3 -m indiredis /path/to/blobfolder
 
 
-The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images are stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
+The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images will be stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
 
 For further usage information, including setting ports and hosts, try::
 
@@ -125,7 +125,7 @@ redis is used as:
 
 A web application typically has more than one process or thread running, redis makes common data visible to all such processes.
 
-As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes the XML data on the from_indi_channel, which could be used to alert a subscribing GUI application that a value has changed.
+As well as simply storing values for other processes to read, redis has a pub/sub functionality. When data is received, indiredis stores it, and publishes the XML data on the from_indi_channel, which could be used to alert a subscribing client application that a value has changed.
 
 Redis key/value storage and publication is extremely easy, many web frameworks already use it.
 
