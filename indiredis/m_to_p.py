@@ -5,7 +5,7 @@
        and transmits it to the client, if data received from the client, transmitts it to MQTT.
    """
 
-import sys, collections, asyncio
+import sys, collections, threading, asyncio
 
 from time import sleep
 
@@ -18,10 +18,6 @@ except:
 # This dequeue has the right side filled from data received at the port from the client
 # and the left side is popped and published to MQTT.
 _TO_MQTT = collections.deque(maxlen=5)
-
-# This has the right hand side filled with data received from MQTT, and the left hand
-# side is popped and wrtten to the port, and hence to the connected client
-_FROM_MQTT = collections.deque(maxlen=5)
 
 
 # All xml data received on the port from the client should be contained in one of the following tags
@@ -39,6 +35,40 @@ _STARTTAGS = tuple(b'<' + tag for tag in TAGS)
 # _ENDTAGS is a tuple of ( b'</newTextVector>', ...  ) data received will be tested to end with such an endtag
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in TAGS)
 
+
+
+# A single instance of this class is used to keep track of connections
+# and hold data received from MQTT to send it on to every connected client 
+
+class _Connections:
+
+    def __init__(self):
+        # cons is a dictionary of {sockport : (from_mqtt_deque, blobstatus), ...}
+        self.cons = {}
+
+    def add_connection(self, sockport):
+        self.cons[sockport] = (collections.deque(maxlen=5), "Never")
+
+    def del_connection(self, sockport):
+        if sockport in self.cons:
+            del self.cons[sockport]
+
+    def append(self, message):
+        "Message received from MQTT, append it to each connection deque"
+        for queue, blobstatus in self.cons.values():
+            queue.append(message)
+
+    def pop(self, sockport):
+        "Get next message, if any from sockport deque, if no message return None"
+        if sockport in self.cons:
+            queue, blobstatus = self.cons
+            if queue:
+                return queue.popleft()
+
+# This instance is filled with data received from MQTT, and for each connection
+# the data is popped and written to the port, and hence to the connected client
+
+_FROM_MQTT = _Connections()
 
 
 ### MQTT Handlers for mqtttoport
@@ -69,13 +99,14 @@ def _mqtttoport_on_disconnect(client, userdata, rc):
     userdata['comms'] = False
 
 
-async def _txtoport(writer):
+async def _txtoport(writer, sockport):
     "Receive data from mqtt and write to port"
     global _FROM_MQTT
+    # sockport is the port integer of the connection
     while True:
-        if _FROM_MQTT:
+        from_mqtt = _FROM_MQTT.pop(sockport)
+        if from_mqtt:
             # Send the next message to the port
-            from_mqtt = _FROM_MQTT.popleft()
             writer.write(from_mqtt)
             await writer.drain()
         else:
@@ -95,6 +126,8 @@ async def _rxfromport(reader):
             data = await reader.readuntil(separator=b'>')
         except asyncio.LimitOverrunError:
             data = await reader.read(n=32000)
+        #except asyncio.streams.IncompleteReadError:
+        #    break
         if not message:
             # data is expected to start with <tag, first strip any newlines
             data = data.strip()
@@ -150,10 +183,25 @@ class _SenderToMQTT():
                 sleep(0.2)
 
 
+
 async def handle_data(reader, writer):
-    sent = _txtoport(writer)
+    global _FROM_MQTT
+    print("INDI client connected")
+    sockip, sockport = writer.get_extra_info('socket').getpeername()
+    _FROM_MQTT.add_connection(sockport)
+    # sockport is the port integer of the connection
+    sent = _txtoport(writer, sockport)
     received = _rxfromport(reader)
-    await asyncio.gather(sent, received)
+    task_sent = asyncio.ensure_future(sent)
+    task_received = asyncio.ensure_future(received)
+    try:
+        await asyncio.gather(task_sent, task_received)
+    except Exception:
+        task_sent.cancel()
+        task_received.cancel()
+    print("INDI client disconnected")
+    _FROM_MQTT.del_connection(sockport)
+
 
 
 def mqtttoport(mqtt_id, mqttserver, port=7624):
@@ -219,10 +267,11 @@ def mqtttoport(mqtt_id, mqttserver, port=7624):
 
     # Serve requests until Ctrl+C is pressed
     print('Serving on {}'.format(server.sockets[0].getsockname()))
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
+    while True:
+        try:
+            loop.run_forever()
+        except KeyboardInterrupt:
+            break
 
     # Close the server
     server.close()

@@ -27,6 +27,10 @@ mqtttoredis:
    Receives XML data from MQTT and stores in redis.
    Reads data published via redis, and outputs to MQTT.
 
+mqtttoport:
+    Opens a server port. If a client is connected, forwards data from MQTT
+    to the client, if data received from the client, passes it to MQTT.
+
 """
 
 import collections
@@ -37,8 +41,10 @@ import collections
 from .i_to_r import inditoredis
 from .i_to_m import inditomqtt
 from .m_to_r import mqtttoredis
+from .m_to_p import mqtttoport
 from .d_to_r import driverstoredis
 from .d_to_m import driverstomqtt
+
 
 
 # define namedtuples to hold server parameters

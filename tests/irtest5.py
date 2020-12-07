@@ -10,7 +10,7 @@ from waitress import serve
 # define the hosts/ports where servers are listenning, these functions return named tuples
 # which are required as arguments to mqtttoredis() and to indiwsgi.make_wsgi_app()
 
-mqtt_host = mqtt_server('indi_client01', host='localhost', port=1883)
+mqtt_host = mqtt_server(host='localhost', port=1883)
 redis_host = redis_server(host='localhost', port=6379)
 
 # Set a directory of your choice where blobs will be stored
@@ -28,5 +28,5 @@ webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127
 webapp.start()
 
 # and start mqtttoredis
-mqtttoredis(mqtt_host, redis_host, blob_folder=BLOBS)
+mqtttoredis('indi_client01', mqtt_host, redis_host, blob_folder=BLOBS)
 
