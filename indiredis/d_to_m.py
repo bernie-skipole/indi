@@ -151,7 +151,7 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                 # check if data read is a b'<getProperties ... />' snooping request
                 if data.startswith(b'<getProperties '):
                     # sets flags in the driver that it is snooping
-                    root = ET.fromstring(data)
+                    root = ET.fromstring(data.decode("utf-8"))
                     driver.setsnoop(root)
                     devicename = root.get("device")
                     if devicename and (devicename in _DRIVERDICT):

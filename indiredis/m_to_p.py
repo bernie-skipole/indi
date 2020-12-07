@@ -50,7 +50,7 @@ class _Connections:
         self.cons = {}
 
     def add_connection(self, sockport):
-        self.cons[sockport] = (collections.deque(maxlen=5), {}, {})
+        self.cons[sockport] = (collections.deque(maxlen=50), {}, {})
 
     def del_connection(self, sockport):
         if sockport in self.cons:
@@ -58,7 +58,7 @@ class _Connections:
 
     def append(self, message):
         "Message received from MQTT, append it to each connection deque to send out of port"
-        root = ET.fromstring(message)
+        root = ET.fromstring(message.decode("utf-8"))
         for value in self.cons.values():
             if self.checkBlobs(value[1], value[2], root):
                 # message can be sent on this port
@@ -74,7 +74,7 @@ class _Connections:
         "enableBLOB message has arrived on the port from the client, record the enableBLOB status for the connection"
         if sockport not in self.cons:
             return
-        root = ET.fromstring(message)
+        root = ET.fromstring(message.decode("utf-8"))
         if root.tag != "enableBLOB":
             return
         device = root.get("device")    # name of Device
