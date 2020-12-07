@@ -9,6 +9,8 @@ import sys, collections, threading, asyncio
 
 from time import sleep
 
+import xml.etree.ElementTree as ET
+
 MQTT_AVAILABLE = True
 try:
     import paho.mqtt.client as mqtt
@@ -36,27 +38,31 @@ _STARTTAGS = tuple(b'<' + tag for tag in TAGS)
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in TAGS)
 
 
-
-# A single instance of this class is used to keep track of connections
+# A single instance of this _Connections class is used to keep track of connections
 # and hold data received from MQTT to send it on to every connected client 
 
 class _Connections:
 
     def __init__(self):
-        # cons is a dictionary of {sockport : (from_mqtt_deque, blobstatus), ...}
+        # cons is a dictionary of {sockport : (from_mqtt_deque, enabledevices, enableproperties), ...}
+        # enabledevices is a dictionary of {devicename:BLOBstatus,...}
+        # enableproperties is a dictionary of {(devicename, propertyname):BLOBstatus,...}
         self.cons = {}
 
     def add_connection(self, sockport):
-        self.cons[sockport] = (collections.deque(maxlen=5), "Never")
+        self.cons[sockport] = (collections.deque(maxlen=5), {}, {})
 
     def del_connection(self, sockport):
         if sockport in self.cons:
             del self.cons[sockport]
 
     def append(self, message):
-        "Message received from MQTT, append it to each connection deque"
-        for queue, blobstatus in self.cons.values():
-            queue.append(message)
+        "Message received from MQTT, append it to each connection deque to send out of port"
+        root = ET.fromstring(message)
+        for value in self.cons.values():
+            if self.checkBlobs(value[1], value[2], root):
+                # message can be sent on this port
+                value[0].append(message)
 
     def pop(self, sockport):
         "Get next message, if any from sockport deque, if no message return None"
@@ -64,19 +70,80 @@ class _Connections:
         if value and value[0]:
             return value[0].popleft()
 
-# This instance is filled with data received from MQTT, and for each connection
+    def set_enableBLOB(self, sockport, message):
+        "enableBLOB message has arrived on the port from the client, record the enableBLOB status for the connection"
+        if sockport not in self.cons:
+            return
+        root = ET.fromstring(message)
+        if root.tag != "enableBLOB":
+            return
+        device = root.get("device")    # name of Device
+        if not device:
+            return
+        name = root.get("name")        # name of Property
+        status = root.text
+        # received enableBLOB status must be one of Never or Also or Only
+        if status not in ["Never", "Also", "Only"]:
+            return
+        value = self.cons[sockport]
+        if name:
+            value[2][device,name] = status
+        else:
+            value[2][device] = status
+
+    def checkBlobs(self, enabledevices, enableproperties, root):
+        "Returns True or False, True if the message is accepted, False otherwise"
+        device = root.get("device")    # name of Device
+        name = root.get("name")        # name of Property
+        if name and (not device):
+            # illegal
+            return False
+        if name and ((device, name) in enableproperties):
+            value = enableproperties[device, name]
+            if root.tag == "setBLOBVector":
+                if value == "Never":
+                    return False
+                else:
+                    return True
+            else:
+                # something other than a BLOB
+                if value == "Only":
+                    return False
+                else:
+                    return True
+        # device,name may, or may not, be given, but are not in enableproperties
+        # so maybe device is in enabledevices
+        value = enabledevices.get(device)
+        if root.tag == "setBLOBVector":
+            if (value == "Only") or (value == "Also"):
+                return True
+            else:
+                # value could be Never, or None - which is equivalent to Never for Blobs
+                return False
+        else:
+            # something other than a BLOB
+            if value == "Only":
+                # Anything other than a Blob is not allowed
+                return False
+            else:
+                # value could be None, Never or Also = all of which allow non-blobs
+                return True
+      
+
+
+# This instance of _Connections is filled with data received from MQTT, and for each connection
 # the data is popped and written to the port, and hence to the connected client
 
-_FROM_MQTT = _Connections()
+_CONNECTIONS = _Connections()
 
 
 ### MQTT Handlers for mqtttoport
 
 def _mqtttoport_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
-    # we have received a message from attached instruments via MQTT, append it to _FROM_MQTT
-    global _FROM_MQTT
-    _FROM_MQTT.append(message.payload)
+    # we have received a message from attached instruments via MQTT, append it to _CONNECTIONS
+    global _CONNECTIONS
+    _CONNECTIONS.append(message.payload)
  
 
 def _mqtttoport_on_connect(client, userdata, flags, rc):
@@ -100,10 +167,10 @@ def _mqtttoport_on_disconnect(client, userdata, rc):
 
 async def _txtoport(writer, sockport):
     "Receive data from mqtt and write to port"
-    global _FROM_MQTT
+    global _CONNECTIONS
     # sockport is the port integer of the connection
     while True:
-        from_mqtt = _FROM_MQTT.pop(sockport)
+        from_mqtt = _CONNECTIONS.pop(sockport)
         if from_mqtt:
             # Send the next message to the port
             writer.write(from_mqtt)
@@ -113,9 +180,9 @@ async def _txtoport(writer, sockport):
             await asyncio.sleep(0.5)
 
 
-async def _rxfromport(reader):
+async def _rxfromport(reader, sockport):
     "Receive data at the port from the client, and send to mqtt by appending message to _TO_MQTT"
-    global _TO_MQTT
+    global _TO_MQTT, _CONNECTIONS
     # get received data, and put it into message
     message = b''
     messagetagnumber = None
@@ -125,8 +192,6 @@ async def _rxfromport(reader):
             data = await reader.readuntil(separator=b'>')
         except asyncio.LimitOverrunError:
             data = await reader.read(n=32000)
-        #except asyncio.streams.IncompleteReadError:
-        #    break
         if not message:
             # data is expected to start with <tag, first strip any newlines
             data = data.strip()
@@ -154,11 +219,14 @@ async def _rxfromport(reader):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
+            if message.startswith(b"<enableBLOB"):
+                # enableBLOB has arrived, record the instruction
+                _CONNECTIONS.set_enableBLOB(sockport, message)
+            # and append it to _TO_MQTT for sending to the MQTT network
             _TO_MQTT.append(message)
             # and start again, waiting for a new message
             message = b''
             messagetagnumber = None
-
 
 
 class _SenderToMQTT():
@@ -183,14 +251,14 @@ class _SenderToMQTT():
 
 
 
-async def handle_data(reader, writer):
-    global _FROM_MQTT
+async def _handle_data(reader, writer):
+    global _CONNECTIONS
     print("INDI client connected")
     sockip, sockport = writer.get_extra_info('socket').getpeername()
-    _FROM_MQTT.add_connection(sockport)
+    _CONNECTIONS.add_connection(sockport)
     # sockport is the port integer of the connection
     sent = _txtoport(writer, sockport)
-    received = _rxfromport(reader)
+    received = _rxfromport(reader, sockport)
     task_sent = asyncio.ensure_future(sent)
     task_received = asyncio.ensure_future(received)
     try:
@@ -199,7 +267,7 @@ async def handle_data(reader, writer):
         task_sent.cancel()
         task_received.cancel()
     print("INDI client disconnected")
-    _FROM_MQTT.del_connection(sockport)
+    _CONNECTIONS.del_connection(sockport)
 
 
 
@@ -261,7 +329,7 @@ def mqtttoport(mqtt_id, mqttserver, port=7624):
     # now create the listenning socket
 
     loop = asyncio.get_event_loop()
-    coro = asyncio.start_server(handle_data, '127.0.0.1', port, loop=loop)
+    coro = asyncio.start_server(_handle_data, '127.0.0.1', port, loop=loop)
     server = loop.run_until_complete(coro)
 
     # Serve requests until Ctrl+C is pressed
