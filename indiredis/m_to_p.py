@@ -60,10 +60,9 @@ class _Connections:
 
     def pop(self, sockport):
         "Get next message, if any from sockport deque, if no message return None"
-        if sockport in self.cons:
-            queue, blobstatus = self.cons
-            if queue:
-                return queue.popleft()
+        value = self.cons.get(sockport)
+        if value and value[0]:
+            return value[0].popleft()
 
 # This instance is filled with data received from MQTT, and for each connection
 # the data is popped and written to the port, and hence to the connected client
