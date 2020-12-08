@@ -343,7 +343,7 @@ def mqtttoport(mqtt_id, mqttserver, port=7624):
     # now create the listenning socket
 
     loop = asyncio.get_event_loop()
-    coro = asyncio.start_server(_handle_data, '127.0.0.1', port, loop=loop)
+    coro = asyncio.start_server(_handle_data, 'localhost', port, loop=loop)
     server = loop.run_until_complete(coro)
 
     # Serve requests until Ctrl+C is pressed
