@@ -56,9 +56,9 @@ _SENDSNOOPPROPERTIES = {}
 
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to indiserver. Limit length to five items - an arbitrary setting
+# sent to indiserver. Limit length to 20 items - an arbitrary setting
 
-_TO_INDI = collections.deque(maxlen=5)
+_TO_INDI = collections.deque(maxlen=20)
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
 
@@ -80,7 +80,11 @@ def _inditomqtt_on_message(client, userdata, message):
         return
     # On receiving a getproperties on snoop_control/#, checks the name, property to be snooped
     if message.topic.startswith(userdata["snoop_control_topic"]+"/"):
-        root = ET.fromstring(message.payload.decode("utf-8"))
+        try:
+            root = ET.fromstring(message.payload.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         if root.tag != "getProperties":
             # only getProperties listenned to on snoop_control_topic
             return
@@ -106,7 +110,11 @@ def _inditomqtt_on_message(client, userdata, message):
             else:
                 _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_mqtt_id,))
     if message.payload.startswith(b"delProperty"):
-        root = ET.fromstring(message.payload.decode("utf-8"))
+        try:
+            root = ET.fromstring(message.payload.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         _remove(root)
     # we have received a message from the mqtt server, put it into the _TO_INDI buffer
     _TO_INDI.append(message.payload)
@@ -193,7 +201,13 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                root = ET.fromstring(message.decode("utf-8"))
+                try:
+                    root = ET.fromstring(message.decode("utf-8"))
+                except Exception:
+                    # possible malformed
+                    message = b''
+                    messagetagnumber = None
+                    continue
                 devicename = root.get("device")
                 # Run '_sendtomqtt' in the default loop's executor:
                 result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
@@ -230,7 +244,13 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            root = ET.fromstring(message.decode("utf-8"))
+            try:
+                root = ET.fromstring(message.decode("utf-8"))
+            except Exception:
+                # possible malformed
+                message = b''
+                messagetagnumber = None
+                continue
             devicename = root.get("device")
             # Run '_sendtomqtt' in the default loop's executor:
             result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)

@@ -23,9 +23,9 @@ except:
     REDIS_AVAILABLE = False
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to indiserver. Limit length to five items - an arbitrary setting
+# sent to indiserver. Limit length to 20 items - an arbitrary setting
 
-_TO_INDI = collections.deque(maxlen=5)
+_TO_INDI = collections.deque(maxlen=20)
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
 
@@ -75,7 +75,13 @@ async def _rxfromindi(reader, loop, rconn):
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                root = ET.fromstring(message.decode("utf-8"))
+                try:
+                    root = ET.fromstring(message.decode("utf-8"))
+                except Exception:
+                    # possible malformed
+                    message = b''
+                    messagetagnumber = None
+                    continue
                 result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
                 # result is None, or the device name if a defxxxx was received
                 # and start again, waiting for a new message
@@ -89,7 +95,13 @@ async def _rxfromindi(reader, loop, rconn):
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
             # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-            root = ET.fromstring(message.decode("utf-8"))
+            try:
+                root = ET.fromstring(message.decode("utf-8"))
+            except Exception:
+                # possible malformed
+                message = b''
+                messagetagnumber = None
+                continue
             result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
             # result is None, or the device name if a defxxxx was received
             # and start again, waiting for a new message

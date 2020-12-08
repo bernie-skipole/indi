@@ -19,7 +19,7 @@ except:
 
 # This dequeue has the right side filled from data received at the port from the client
 # and the left side is popped and published to MQTT.
-_TO_MQTT = collections.deque(maxlen=5)
+_TO_MQTT = collections.deque(maxlen=20)
 
 
 # All xml data received on the port from the client should be contained in one of the following tags
@@ -44,37 +44,51 @@ _ENDTAGS = tuple(b'</' + tag + b'>' for tag in TAGS)
 class _Connections:
 
     def __init__(self):
-        # cons is a dictionary of {sockport : (from_mqtt_deque, enabledevices, enableproperties), ...}
+        # cons is a dictionary of {connum : (from_mqtt_deque, enabledevices, enableproperties), ...}
+        # connection number - connum - is an integer, a new one being set with every new connection
         # enabledevices is a dictionary of {devicename:BLOBstatus,...}
         # enableproperties is a dictionary of {(devicename, propertyname):BLOBstatus,...}
         self.cons = {}
+        # self._connum is used to create a new connection number, by being incremented when a new connection is made
+        self._connum = 0
 
-    def add_connection(self, sockport):
-        self.cons[sockport] = (collections.deque(maxlen=50), {}, {})
+    def new_connection(self):
+        "Create a new connection, and return the connection number"
+        self._connum += 1
+        self.cons[self._connum] = (collections.deque(maxlen=50), {}, {})
+        return self._connum
 
-    def del_connection(self, sockport):
-        if sockport in self.cons:
-            del self.cons[sockport]
+    def del_connection(self, connum):
+        if connum in self.cons:
+            del self.cons[connum]
 
     def append(self, message):
         "Message received from MQTT, append it to each connection deque to send out of port"
-        root = ET.fromstring(message.decode("utf-8"))
+        try:
+            root = ET.fromstring(message.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         for value in self.cons.values():
             if self.checkBlobs(value[1], value[2], root):
                 # message can be sent on this port
                 value[0].append(message)
 
-    def pop(self, sockport):
-        "Get next message, if any from sockport deque, if no message return None"
-        value = self.cons.get(sockport)
+    def pop(self, connum):
+        "Get next message, if any from connum deque, if no message return None"
+        value = self.cons.get(connum)
         if value and value[0]:
             return value[0].popleft()
 
-    def set_enableBLOB(self, sockport, message):
+    def set_enableBLOB(self, connum, message):
         "enableBLOB message has arrived on the port from the client, record the enableBLOB status for the connection"
-        if sockport not in self.cons:
+        if connum not in self.cons:
             return
-        root = ET.fromstring(message.decode("utf-8"))
+        try:
+            root = ET.fromstring(message.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         if root.tag != "enableBLOB":
             return
         device = root.get("device")    # name of Device
@@ -85,7 +99,7 @@ class _Connections:
         # received enableBLOB status must be one of Never or Also or Only
         if status not in ["Never", "Also", "Only"]:
             return
-        value = self.cons[sockport]
+        value = self.cons[connum]
         if name:
             value[2][device,name] = status
         else:
@@ -165,12 +179,12 @@ def _mqtttoport_on_disconnect(client, userdata, rc):
     userdata['comms'] = False
 
 
-async def _txtoport(writer, sockport):
+async def _txtoport(writer, connum):
     "Receive data from mqtt and write to port"
     global _CONNECTIONS
-    # sockport is the port integer of the connection
+    # connum is the port integer of the connection
     while True:
-        from_mqtt = _CONNECTIONS.pop(sockport)
+        from_mqtt = _CONNECTIONS.pop(connum)
         if from_mqtt:
             # Send the next message to the port
             writer.write(from_mqtt)
@@ -180,7 +194,7 @@ async def _txtoport(writer, sockport):
             await asyncio.sleep(0.5)
 
 
-async def _rxfromport(reader, sockport):
+async def _rxfromport(reader, connum):
     "Receive data at the port from the client, and send to mqtt by appending message to _TO_MQTT"
     global _TO_MQTT, _CONNECTIONS
     # get received data, and put it into message
@@ -221,7 +235,7 @@ async def _rxfromport(reader, sockport):
             # the message is complete, handle message here
             if message.startswith(b"<enableBLOB"):
                 # enableBLOB has arrived, record the instruction
-                _CONNECTIONS.set_enableBLOB(sockport, message)
+                _CONNECTIONS.set_enableBLOB(connum, message)
             # and append it to _TO_MQTT for sending to the MQTT network
             _TO_MQTT.append(message)
             # and start again, waiting for a new message
@@ -253,12 +267,12 @@ class _SenderToMQTT():
 
 async def _handle_data(reader, writer):
     global _CONNECTIONS
+    # info = writer.get_extra_info('socket').getpeername()
     print("INDI client connected")
-    sockip, sockport = writer.get_extra_info('socket').getpeername()
-    _CONNECTIONS.add_connection(sockport)
-    # sockport is the port integer of the connection
-    sent = _txtoport(writer, sockport)
-    received = _rxfromport(reader, sockport)
+    connum = _CONNECTIONS.new_connection()
+    # connum is an integer, connection number, referring to the connection
+    sent = _txtoport(writer, connum)
+    received = _rxfromport(reader, connum)
     task_sent = asyncio.ensure_future(sent)
     task_received = asyncio.ensure_future(received)
     try:
@@ -267,7 +281,7 @@ async def _handle_data(reader, writer):
         task_sent.cancel()
         task_received.cancel()
     print("INDI client disconnected")
-    _CONNECTIONS.del_connection(sockport)
+    _CONNECTIONS.del_connection(connum)
 
 
 

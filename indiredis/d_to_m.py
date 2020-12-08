@@ -51,7 +51,10 @@ def _driverstomqtt_on_message(client, userdata, message):
     if message.topic == userdata["pubsnoopcontrol"]:
         # The message received on the snoop control topic, is one this device has transmitted, ignore it
         return
-    root = ET.fromstring(message.payload.decode("utf-8"))
+    try:
+        root = ET.fromstring(message.payload.decode("utf-8"))
+    except Exception:
+        return
     # On receiving a getproperties on snoop_control/#, checks the name, property to be snooped
     if message.topic.startswith(userdata["snoop_control_topic"]+"/"):
         if root.tag != "getProperties":
@@ -151,7 +154,11 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                 # check if data read is a b'<getProperties ... />' snooping request
                 if data.startswith(b'<getProperties '):
                     # sets flags in the driver that it is snooping
-                    root = ET.fromstring(data.decode("utf-8"))
+                    try:
+                        root = ET.fromstring(data.decode("utf-8"))
+                    except Exception:
+                        # possible malformed
+                        continue
                     driver.setsnoop(root)
                     devicename = root.get("device")
                     if devicename and (devicename in _DRIVERDICT):
@@ -167,7 +174,13 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                root = ET.fromstring(message.decode("utf-8"))
+                try:
+                    root = ET.fromstring(message.decode("utf-8"))
+                except Exception:
+                    # possible malformed
+                    message = b''
+                    messagetagnumber = None
+                    continue
                 # check if this driver is allowed to send BLOBs, or only send BLOBS
                 if driver.checkBlobs(root):
                     devicename = root.get("device")
@@ -209,7 +222,13 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            root = ET.fromstring(message.decode("utf-8"))
+            try:
+                root = ET.fromstring(message.decode("utf-8"))
+            except Exception:
+                # possible malformed
+                message = b''
+                messagetagnumber = None
+                continue
             if driver.checkBlobs(root):
                 devicename = root.get("device")
                 # Run '_sendtomqtt' in the default loop's executor:
@@ -411,7 +430,7 @@ class _Driver:
     def __init__(self, driver):
         self.executable = driver
         # inque is a deque used to send data to the device
-        self.inque = collections.deque(maxlen=10)
+        self.inque = collections.deque(maxlen=20)
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
         # Blobs enabled or not

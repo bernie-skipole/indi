@@ -64,7 +64,11 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
                 # check if data received is a b'<getProperties ... />' snooping request
                 if data.startswith(b'<getProperties '):
                     # sets flags in the driver that it is snooping
-                    root = ET.fromstring(data)
+                    try:
+                        root = ET.fromstring(data.decode("utf-8"))
+                    except Exception:
+                        # possible malformed
+                        continue
                     driver.setsnoop(root)
                 # data is either a getProperties, or does not start with a recognised tag, so ignore it
                 # and continue waiting for a valid message start
@@ -74,7 +78,12 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
             # either further children of this tag are coming, or maybe its a single tag ending in "/>"
             if message.endswith(b'/>'):
                 # the message is complete, handle message here
-                root = ET.fromstring(message.decode("utf-8"))
+                try:
+                    root = ET.fromstring(message.decode("utf-8"))
+                except Exception:
+                    message = b''
+                    messagetagnumber = None
+                    continue
                 # if this is to be sent to other devices via snooping mechanism, then copy the read
                 # message to other divers inque
                 driver.snoopsend(driverlist, message, root)
@@ -97,7 +106,12 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
         message += data
         if message.endswith(_ENDTAGS[messagetagnumber]):
             # the message is complete, handle message here
-            root = ET.fromstring(message.decode("utf-8"))
+            try:
+                root = ET.fromstring(message.decode("utf-8"))
+            except Exception:
+                message = b''
+                messagetagnumber = None
+                continue
             # if this is to be sent to other devices via snooping mechanism, then copy the read
             # message to other divers inque
             driver.snoopsend(driverlist, message, root)
@@ -273,7 +287,7 @@ class _Driver:
     def __init__(self, driver):
         self.executable = driver
         # inque is a deque used to send data to the device
-        self.inque = collections.deque(maxlen=10)
+        self.inque = collections.deque(maxlen=20)
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
         # Blobs enabled or not
@@ -428,7 +442,11 @@ class _Sender:
     def append(self, data):
         "This data is appended to any driver.inque if the message is relevant to that driver"
         global _DRIVERDICT
-        root = ET.fromstring(data.decode("utf-8"))
+        try:
+            root = ET.fromstring(data.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
 

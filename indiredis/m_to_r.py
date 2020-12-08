@@ -34,7 +34,11 @@ from . import toindi, fromindi, tools
 def _mqtttoredis_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
     # we have received a message from the indiserver, load it into redis
-    root = ET.fromstring(message.payload.decode("utf-8"))
+    try:
+        root = ET.fromstring(message.payload.decode("utf-8"))
+    except Exception:
+        # possible malformed
+        return
     fromindi.receive_from_indiserver(message.payload, root, userdata["rconn"] )
  
 

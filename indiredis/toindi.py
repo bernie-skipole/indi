@@ -77,7 +77,11 @@ class SenderLoop():
         "data published by the client, to be sent to indiserver"
         # a message is published by the client, giving the command
         data = message['data']
-        root = ET.fromstring(data.decode("utf-8"))
+        try:
+            root = ET.fromstring(data.decode("utf-8"))
+        except Exception:
+            # possible malformed
+            return
         if root.tag == "newTextVector":
             self._set_busy(root)
         elif root.tag == "newNumberVector":
