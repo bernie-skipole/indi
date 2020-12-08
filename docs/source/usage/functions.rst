@@ -14,7 +14,7 @@ For example::
 
     indi_host = indi_server(host='localhost', port=7624)
     redis_host = redis_server(host='localhost', port=6379)
-    mqtt_host = mqtt_server('indi_server01', host='localhost', port=1883)
+    mqtt_host = mqtt_server(host='localhost', port=1883)
 
 These variables 'indi_host', 'redis_host' and 'mqtt_host' are then used as inputs to further functions which require definitions of the hosts.
 
@@ -111,13 +111,13 @@ Example Python script running on the machine with indiserver and the connected i
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
     indi_host = indi_server(host='localhost', port=7624)
-    mqtt_host = mqtt_server('indi_server01', host='10.34.167.1', port=1883)
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
 
     # blocking call which runs the service, communicating between indiserver and mqtt
 
-    inditomqtt(indi_host, mqtt_host)
+    inditomqtt(indi_host, 'indi_server01', mqtt_host)
 
-Substitute your own MQTT server ip address for 10.34.167.1, and your own client id for 'indi_server01'.
+Substitute your own MQTT server ip address for 10.34.167.1, and your own mqtt id for 'indi_server01'.
 
 .. _driverstomqtt:
 
@@ -134,15 +134,15 @@ Example Python script running on the machine with the connected instruments::
 
     # define the host/port where the MQTT server is listenning, this function returns a named tuple.
 
-    mqtt_host = mqtt_server('indi_drivers01', host='10.34.167.1', port=1883)
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
 
     # blocking call which runs the service, communicating between drivers and mqtt
 
-    driverstomqtt(["indi_simulator_telescope", "indi_simulator_ccd"], mqtt_host)
+    driverstomqtt(["indi_simulator_telescope", "indi_simulator_ccd"], 'indi_drivers01', mqtt_host)
 
     # The list of two simulated drivers shown above should be replaced by a list of your own drivers.
 
-Substitute your own MQTT server ip address for 10.34.167.1, and your own client id for 'indi_drivers01'.
+Substitute your own MQTT server ip address for 10.34.167.1, and your own mqtt id for 'indi_drivers01'.
 
 .. _mqtttoredis:
 
@@ -161,15 +161,39 @@ Example Python script running at the redis server::
 
     # define the hosts/ports where servers are listenning, these functions return named tuples.
 
-    mqtt_host = mqtt_server('indi_client01', host='10.34.167.1', port=1883)
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
     redis_host = redis_server(host='localhost', port=6379)
 
     # blocking call which runs the service, communicating between mqtt and redis
 
-    mqtttoredis(mqtt_host, redis_host, blob_folder='/path/to/blob_folder')
+    mqtttoredis('indi_client01', mqtt_host, redis_host, blob_folder='/path/to/blob_folder')
 
 
-Set the blob_folder to a directory of your choice and substitute your own MQTT server ip address for 10.34.167.1, and client id for 'indi_client01'.
+Set the blob_folder to a directory of your choice and substitute your own MQTT server ip address for 10.34.167.1, and mqtt id for 'indi_client01'.
+
+.. _mqtttoport:
+
+indiredis.mqtttoport
+^^^^^^^^^^^^^^^^^^^^^
+
+Transfers XML data between the MQTT server and a server port, which can connect to a traditional INDI client.
+
+.. autofunction:: indiredis.mqtttoport
+
+Example Python script::
+
+    from indiredis import mqtttoport, mqtt_server
+
+    # define the mqtt server
+
+    mqtt_host = mqtt_server(host='10.34.167.1', port=1883)
+
+    # blocking call which runs the service, communicating between mqtt and the port
+
+    mqtttoport("indi_port01", mqtt_host, port=7624)
+
+
+Substitute your own MQTT server ip address for 10.34.167.1, and mqtt id for 'indi_port01'.
 
 .. _web_client:
 

@@ -98,6 +98,11 @@ Receives/transmitts XML data between the drivers and an MQTT server which ultima
 Receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
 
 
+**indiredis.mqtttoport()**
+
+Opens a server port. If a client is connected, forwards data from MQTT to the client, if data received from the client, passes it to MQTT.
+
+
 **indiredis.tools**
 
 The tools module contains a set of Python functions, which your own Python script may use if convenient. These read the indi devices and properties from redis, returning Python lists and dictionaries, and provides functions to transmit indi commands by publishing to redis.
