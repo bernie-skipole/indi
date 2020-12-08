@@ -25,11 +25,6 @@ These variables 'indi_host', 'redis_host' and 'mqtt_host' are then used as input
 .. autofunction:: indiredis.mqtt_server
 
 
-To be specific, the client_id should be unique for every connection to the MQTT network.
-
-When choosing a client id, consider using a prefix, to avoid clashing with other users of the MQTT broker,
-such as indi_server01, or indi_client01.
-
 The to_indi_topic should be a string, the same string should be used for every connection, so, for example, clients will send data
 with this topic, and servers/drivers will subscribe to the topic to receive that data.
 
@@ -118,6 +113,11 @@ Example Python script running on the machine with indiserver and the connected i
     inditomqtt(indi_host, 'indi_server01', mqtt_host)
 
 Substitute your own MQTT server ip address for 10.34.167.1, and your own mqtt id for 'indi_server01'.
+
+To be specific, the mqtt_id should be unique for every connection to the MQTT network.
+
+When choosing an mqtt_id, consider using a prefix, to avoid clashing with other users of the MQTT broker,
+such as indi_server01, or indi_client01.
 
 .. _driverstomqtt:
 
