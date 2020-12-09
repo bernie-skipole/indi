@@ -19,7 +19,7 @@ except:
 
 # This dequeue has the right side filled from data received at the port from the client
 # and the left side is popped and published to MQTT.
-_TO_MQTT = collections.deque(maxlen=20)
+_TO_MQTT = collections.deque()
 
 
 # All xml data received on the port from the client should be contained in one of the following tags
@@ -55,7 +55,7 @@ class _Connections:
     def new_connection(self):
         "Create a new connection, and return the connection number"
         self._connum += 1
-        self.cons[self._connum] = (collections.deque(maxlen=50), {}, {})
+        self.cons[self._connum] = (collections.deque(), {}, {})
         return self._connum
 
     def del_connection(self, connum):
@@ -73,6 +73,11 @@ class _Connections:
             if self.checkBlobs(value[1], value[2], root):
                 # message can be sent on this port
                 value[0].append(message)
+
+    def clear(self):
+        "clear dequeue buffers"
+        for value in self.cons.values():
+            value[0].clear()
 
     def pop(self, connum):
         "Get next message, if any from connum deque, if no message return None"
@@ -162,7 +167,9 @@ def _mqtttoport_on_message(client, userdata, message):
 
 def _mqtttoport_on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
-
+    global _TO_MQTT, _CONNECTIONS
+    _TO_MQTT.clear()  # - start with fresh empty _TO_MQTT buffer, and _CONNECTIONS buffers
+    _CONNECTIONS.clear()
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
@@ -176,6 +183,9 @@ def _mqtttoport_on_connect(client, userdata, flags, rc):
 
 def _mqtttoport_on_disconnect(client, userdata, rc):
     "The MQTT client has disconnected, set userdata['comms'] = False"
+    global _TO_MQTT, _CONNECTIONS
+    _TO_MQTT.clear()  # - empty _TO_MQTT buffer, and _CONNECTIONS buffers
+    _CONNECTIONS.clear()
     userdata['comms'] = False
 
 

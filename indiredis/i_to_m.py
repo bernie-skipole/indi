@@ -56,9 +56,9 @@ _SENDSNOOPPROPERTIES = {}
 
 
 # The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to indiserver. Limit length to 20 items - an arbitrary setting
+# sent to indiserver.
 
-_TO_INDI = collections.deque(maxlen=20)
+_TO_INDI = collections.deque()
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
 

@@ -430,7 +430,7 @@ class _Driver:
     def __init__(self, driver):
         self.executable = driver
         # inque is a deque used to send data to the device
-        self.inque = collections.deque(maxlen=20)
+        self.inque = collections.deque()
         # when initialised, always start with a getProperties
         self.inque.append(b'<getProperties version="1.7" />')
         # Blobs enabled or not
