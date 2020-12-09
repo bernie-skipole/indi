@@ -19,7 +19,7 @@ except:
 
 # This dequeue has the right side filled from data received at the port from the client
 # and the left side is popped and published to MQTT.
-_TO_MQTT = collections.deque()
+_TO_MQTT = collections.deque(maxlen=100)
 
 
 # All xml data received on the port from the client should be contained in one of the following tags
