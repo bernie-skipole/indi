@@ -167,9 +167,8 @@ def _mqtttoport_on_message(client, userdata, message):
 
 def _mqtttoport_on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
-    global _TO_MQTT, _CONNECTIONS
-    _TO_MQTT.clear()  # - start with fresh empty _TO_MQTT buffer, and _CONNECTIONS buffers
-    _CONNECTIONS.clear()
+    global _TO_MQTT
+    _TO_MQTT.clear()  # - start with fresh empty _TO_MQTT buffer
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
@@ -183,9 +182,8 @@ def _mqtttoport_on_connect(client, userdata, flags, rc):
 
 def _mqtttoport_on_disconnect(client, userdata, rc):
     "The MQTT client has disconnected, set userdata['comms'] = False"
-    global _TO_MQTT, _CONNECTIONS
-    _TO_MQTT.clear()  # - empty _TO_MQTT buffer, and _CONNECTIONS buffers
-    _CONNECTIONS.clear()
+    global _TO_MQTT
+    _TO_MQTT.clear()  # - empty _TO_MQTT buffer
     userdata['comms'] = False
 
 
