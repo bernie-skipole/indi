@@ -128,8 +128,6 @@ def _inditomqtt_on_connect(client, userdata, flags, rc):
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe( to_indi, 2 )
-
         if userdata["subscribe_list"]:
             # subscribe to those remote id's listed
             subscribe_list = list((userdata["to_indi_topic"] + "/" + remote_id, 2) for remote_id in userdata["subscribe_list"] )
