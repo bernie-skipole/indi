@@ -50,8 +50,15 @@ def _mqtttoport_on_connect(client, userdata, flags, rc):
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        # subscribe to topic userdata["from_indi_topic"]
-        client.subscribe( userdata["from_indi_topic"], 2 )
+        # subscribe to topic userdata["from_indi_topic"] and any remote mqtt_id's in subscribe_list
+        if userdata["subscribe_list"]:
+            # subscribe to those remote id's listed
+            subscribe_list = list((userdata["from_indi_topic"] + "/" + remote_id, 2) for remote_id in userdata["subscribe_list"] )
+            # gives a list of [(topic1,2),(topic2,2),(topic3,2)]
+            client.subscribe( subscribe_list )
+        else:
+            # subscribe to all remote id's
+            client.subscribe( userdata["from_indi_topic"] + "/#", 2 )
         print("MQTT client connected")
     else:
         userdata['comms'] = False
@@ -178,7 +185,7 @@ class _SocketHandler:
     def __init__(self, mqtt_client, userdata, loop):
         "Sets the mqtt client and topic"
         self.mqtt_client = mqtt_client
-        self.topic = userdata["to_indi_topic"]
+        self.topic = userdata["to_indi_topic"] + "/" + userdata["mqtt_id"]
         self.userdata = userdata
         self.loop = loop
         # self.connections holds data received from MQTT
@@ -274,13 +281,17 @@ class _SocketHandler:
 
 
 
-def mqtttoport(mqtt_id, mqttserver, port=7624):
-    """Blocking call that provides the mqtt - port connection
+def mqtttoport(mqtt_id, mqttserver, subscribe_list=[], port=7624):
+    """Blocking call that provides the mqtt - port connection. If subscribe list is empty
+    then this function subscribes to received data from all remote mqtt_id's. If it
+    contains a list of mqtt_id's, then only subscribes to their data.
 
     :param mqtt_id: A unique string, identifying this connection
     :type mqtt_id: String
     :param mqttserver: Named Tuple providing the mqtt server parameters
     :type mqttserver: namedtuple
+    :param subscribe_list: List of remote mqtt_id's to subscribe to.
+    :type subscribe_list: List
     :param port: Port to listen at, default 7624
     :type port: integer
     """
@@ -306,8 +317,10 @@ def mqtttoport(mqtt_id, mqttserver, port=7624):
 
     # create an mqtt client and connection
     userdata={ "comms"           : False,        # an indication mqtt connection is working
+               "mqtt_id"         : mqtt_id,
                "to_indi_topic"   : mqttserver.to_indi_topic,
                "from_indi_topic" : mqttserver.from_indi_topic,
+               "subscribe_list"  : subscribe_list,
                "connections"     : connections
              }
 

@@ -49,8 +49,15 @@ def _mqtttoredis_on_connect(client, userdata, flags, rc):
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        # subscribe to topic userdata["from_indi_topic"]
-        client.subscribe( userdata["from_indi_topic"], 2 )
+        # subscribe to topic userdata["from_indi_topic"] and any remote mqtt_id's in subscribe_list
+        if userdata["subscribe_list"]:
+            # subscribe to those remote id's listed
+            subscribe_list = list((userdata["from_indi_topic"] + "/" + remote_id, 2) for remote_id in userdata["subscribe_list"] )
+            # gives a list of [(topic1,2),(topic2,2),(topic3,2)]
+            client.subscribe( subscribe_list )
+        else:
+            # subscribe to all remote id's
+            client.subscribe( userdata["from_indi_topic"] + "/#", 2 )
         print("MQTT client connected")
     else:
         userdata['comms'] = False
@@ -70,7 +77,7 @@ class _SenderToMQTT():
     def __init__(self, mqtt_client, userdata):
         "Sets the client and topic"
         self.mqtt_client = mqtt_client
-        self.topic = userdata["to_indi_topic"]
+        self.topic = userdata["to_indi_topic"] + "/" + userdata["mqtt_id"]
         self.userdata = userdata
 
     def append(self, data):
@@ -83,7 +90,7 @@ class _SenderToMQTT():
         # is published, and the data is discarded
 
 
-def mqtttoredis(mqtt_id, mqttserver, redisserver, log_lengths={}, blob_folder=''):
+def mqtttoredis(mqtt_id, mqttserver, redisserver, subscribe_list=[], log_lengths={}, blob_folder=''):
     """Blocking call that provides the mqtt - redis connection
 
     :param mqtt_id: A unique string, identifying this connection
@@ -92,6 +99,8 @@ def mqtttoredis(mqtt_id, mqttserver, redisserver, log_lengths={}, blob_folder=''
     :type mqttserver: namedtuple
     :param redisserver: Named Tuple providing the redis server parameters
     :type redisserver: namedtuple
+    :param subscribe_list: List of remote mqtt_id's to subscribe to.
+    :type subscribe_list: List
     :param log_lengths: provides number of logs to store
     :type log_lengths: dictionary
     :param blob_folder: Folder where Blobs will be stored
@@ -141,8 +150,10 @@ def mqtttoredis(mqtt_id, mqttserver, redisserver, log_lengths={}, blob_folder=''
 
     # create an mqtt client and connection
     userdata={ "comms"           : False,        # an indication mqtt connection is working
+               "mqtt_id"         : mqtt_id,
                "to_indi_topic"   : mqttserver.to_indi_topic,
                "from_indi_topic" : mqttserver.from_indi_topic,
+               "subscribe_list"  : subscribe_list,
                "redisserver"     : redisserver,
                "rconn"           : rconn }
 

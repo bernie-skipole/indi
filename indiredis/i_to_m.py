@@ -124,11 +124,12 @@ def _inditomqtt_on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
     global _TO_INDI
     _TO_INDI.clear()  # - start with fresh empty _TO_INDI buffer
+    to_indi = userdata["to_indi_topic"] + "/#"  ###    more to do here to specify which clients to subscribe to
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe( userdata["to_indi_topic"], 2 )
+        client.subscribe( to_indi, 2 )
 
         # Every device subscribes to snoop_control/# being the snoop_contol topic and all subtopics
         client.subscribe( userdata["snoopcontrol"], 2 )
@@ -136,10 +137,7 @@ def _inditomqtt_on_connect(client, userdata, flags, rc):
         # and to snoop_data/mqtt_id
         client.subscribe( userdata["snoopdata"], 2 )
 
-        print(f"""MQTT connected. Subscribed to:
-{userdata["to_indi_topic"]} - Receiving data from clients
-{userdata["snoopcontrol"]} - Receiving snoop getProperties from other devices
-{userdata["snoopdata"]} - Receiving snooped data sent to this device by other devices""")
+        print(f"""MQTT connected""")
     else:
         userdata['comms'] = False
 
@@ -174,7 +172,7 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
     # get received data, and put it into message
     message = b''
     messagetagnumber = None
-    topic = userdata["from_indi_topic"]
+    topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
     while True:
         # get blocks of data from the indiserver
         try:
@@ -285,15 +283,17 @@ async def _rxfromindi(reader, loop, userdata, mqtt_client):
 async def _indiconnection(loop, userdata, mqtt_client, indiserver):
     "coroutine to create the connection and start the sender and receiver"
     reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    _message(userdata["from_indi_topic"], mqtt_client, f"Connected to {indiserver.host}:{indiserver.port}")
+    _message(userdata["from_indi_topic"] + "/" + userdata["mqtt_id"], mqtt_client, f"Connected to {indiserver.host}:{indiserver.port}")
     sent = _txtoindi(writer)
     received = _rxfromindi(reader, loop, userdata, mqtt_client)
     await asyncio.gather(sent, received)
 
 
 
-def inditomqtt(indiserver, mqtt_id, mqttserver):
-    """Blocking call that provides the indiserver - mqtt connection
+def inditomqtt(indiserver, mqtt_id, mqttserver, subscribe_list=[]):
+    """Blocking call that provides the indiserver - mqtt connection. If subscribe list is empty
+    then this function subscribes to received data from all remote mqtt_id's. If it
+    contains a list of mqtt_id's, then only subscribes to their data.
 
     :param indiserver: Named Tuple providing the indiserver parameters
     :type indiserver: namedtuple
@@ -301,6 +301,8 @@ def inditomqtt(indiserver, mqtt_id, mqttserver):
     :type mqtt_id: String
     :param mqttserver: Named Tuple providing the mqtt server parameters
     :type mqttserver: namedtuple
+    :param subscribe_list: List of remote mqtt_id's to subscribe to
+    :type subscribe_list: List
     """
 
     global _TO_INDI
@@ -328,7 +330,8 @@ def inditomqtt(indiserver, mqtt_id, mqttserver):
                "mqtt_id"             : mqtt_id,
                "snoopdata"           : mqttserver.snoop_data_topic + "/" + mqtt_id,
                "snoopcontrol"        : mqttserver.snoop_control_topic + "/#",            # used to receive other's getproperty
-               "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqtt_id    # used when publishing a getproperty
+               "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqtt_id,   # used when publishing a getproperty
+               "subscribe_list"      : subscribe_list
               }
 
     mqtt_client = mqtt.Client(client_id=mqtt_id, userdata=userdata)
@@ -354,10 +357,10 @@ def inditomqtt(indiserver, mqtt_id, mqttserver):
         try:
             loop.run_until_complete(_indiconnection(loop, userdata, mqtt_client, indiserver))
         except ConnectionRefusedError:
-            _message(mqttserver.from_indi_topic, mqtt_client, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
+            _message(mqttserver.from_indi_topic + "/" + userdata["mqtt_id"], mqtt_client, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         except asyncio.IncompleteReadError:
-            _message(mqttserver.from_indi_topic, mqtt_client, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...")
+            _message(mqttserver.from_indi_topic + "/" + userdata["mqtt_id"], mqtt_client, f"Connection failed on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
         else:
             loop.close()

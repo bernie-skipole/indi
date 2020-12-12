@@ -96,22 +96,20 @@ def _driverstomqtt_on_message(client, userdata, message):
 def _driverstomqtt_on_connect(client, userdata, flags, rc):
     "The callback for when the mqtt client receives a CONNACK response from the MQTT server, renew subscriptions"
     userdata["datatodriver"].clear()  # - start with fresh empty driver buffers
+    to_indi = userdata["to_indi_topic"] + "/#"  ###    more to do here to specify which clients to subscribe to
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe( userdata["to_indi_topic"], 2 )
+        client.subscribe( to_indi, 2 )
 
-        # Every device subscribes to snoop_control/# being the snoop_contol topic and all subtopics
+        # Every device subscribes to snoop_control/# being the snoop_control topic and all subtopics
         client.subscribe( userdata["snoopcontrol"], 2 )
 
         # and to snoop_data/mqtt_id
         client.subscribe( userdata["snoopdata"], 2 )
 
-        print(f"""MQTT connected. Subscribed to:
-{userdata["to_indi_topic"]} - Receiving data from clients
-{userdata["snoopcontrol"]} - Receiving snoop getProperties from other devices
-{userdata["snoopdata"]} - Receiving snooped data sent to this device by other devices""")
+        print(f"""MQTT connected""")
     else:
         userdata['comms'] = False
 
@@ -135,7 +133,7 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
     # get read data from driver, and put it into message
     message = b''
     messagetagnumber = None
-    topic = userdata["from_indi_topic"]
+    topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
     driverlist = userdata["driverlist"]
     while True:
         # get blocks of data from the driver
@@ -291,6 +289,7 @@ async def _driverconnections(loop, userdata, mqtt_client):
     # driverlist is a list of _Driver objects
     driverlist = userdata["driverlist"]
     tasks = []
+    topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
     for driver in driverlist:
         proc = await asyncio.create_subprocess_exec(
             driver.executable,                      # the driver executable to be run
@@ -301,17 +300,19 @@ async def _driverconnections(loop, userdata, mqtt_client):
         tasks.append(_reader(proc.stdout, driver, loop, userdata, mqtt_client))
         tasks.append(_writer(proc.stdin, driver))
         tasks.append(_perror(proc.stderr))
-        _message(userdata["from_indi_topic"], mqtt_client, f"Driver {driver.executable} started")
+        _message(topic, mqtt_client, f"Driver {driver.executable} started")
         
-    _message(userdata["from_indi_topic"], mqtt_client, "Drivers started, waiting for data")
+    _message(topic, mqtt_client, "Drivers started, waiting for data")
     # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
     await asyncio.gather(*tasks)
 
 
 
 
-def driverstomqtt(drivers, mqtt_id, mqttserver):
-    """Blocking call that provides the drivers - mqtt connection
+def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
+    """Blocking call that provides the drivers - mqtt connection. If subscribe list is empty
+    then this function subscribes to received data from all remote client mqtt_id's. If it
+    contains a list of mqtt_id's, then only subscribes to their data.
 
     :param drivers: List of executable drivers
     :type drivers: List
@@ -320,6 +321,8 @@ def driverstomqtt(drivers, mqtt_id, mqttserver):
     :type drivers: List
     :param mqttserver: Named Tuple providing the mqtt server parameters
     :type mqttserver: namedtuple
+    :param subscribe_list: List of remote mqtt_id's to subscribe to
+    :type subscribe_list: List
     """
 
     if not MQTT_AVAILABLE:
@@ -356,7 +359,8 @@ def driverstomqtt(drivers, mqtt_id, mqttserver):
                "snoopcontrol"        : mqttserver.snoop_control_topic + "/#",                         # used to receive other's getproperty
                "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqtt_id,   # used when publishing a getproperty
                "datatodriver"        : datatodriver,
-               "driverlist"          : driverlist
+               "driverlist"          : driverlist,
+               "subscribe_list"      : subscribe_list
               }
 
     mqtt_client = mqtt.Client(client_id=mqtt_id, userdata=userdata)
@@ -380,7 +384,7 @@ def driverstomqtt(drivers, mqtt_id, mqttserver):
         try:
             loop.run_until_complete(_driverconnections(loop, userdata, mqtt_client))
         except FileNotFoundError as e:
-            _message(userdata["from_indi_topic"], mqtt_client, str(e))
+            _message(userdata["from_indi_topic"] + "/" + userdata["mqtt_id"], mqtt_client, str(e))
             sleep(2)
             break
         finally:
