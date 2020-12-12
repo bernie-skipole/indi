@@ -124,14 +124,22 @@ def _inditomqtt_on_connect(client, userdata, flags, rc):
     "The callback for when the client receives a CONNACK response from the MQTT server, renew subscriptions"
     global _TO_INDI
     _TO_INDI.clear()  # - start with fresh empty _TO_INDI buffer
-    to_indi = userdata["to_indi_topic"] + "/#"  ###    more to do here to specify which clients to subscribe to
     if rc == 0:
         userdata['comms'] = True
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         client.subscribe( to_indi, 2 )
 
-        # Every device subscribes to snoop_control/# being the snoop_contol topic and all subtopics
+        if userdata["subscribe_list"]:
+            # subscribe to those remote id's listed
+            subscribe_list = list((userdata["to_indi_topic"] + "/" + remote_id, 2) for remote_id in userdata["subscribe_list"] )
+            # gives a list of [(topic1,2),(topic2,2),(topic3,2)]
+            client.subscribe( subscribe_list )
+        else:
+            # subscribe to all remote id's
+            client.subscribe( userdata["to_indi_topic"] + "/#", 2 )
+
+        # Every device subscribes to snoop_control/# being the snoop_control topic and all subtopics
         client.subscribe( userdata["snoopcontrol"], 2 )
 
         # and to snoop_data/mqtt_id
