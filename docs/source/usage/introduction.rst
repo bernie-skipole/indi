@@ -62,7 +62,7 @@ python3 -m pip install --no-deps indiredis
 Importing indiredis
 ^^^^^^^^^^^^^^^^^^^
 
-indiredis can be imported into your own scripts, rather than executed with python3 -m. This is particularly aimed at helping the developer create their own GUI's or controlling scripts, perhaps more specialised than the web client included.
+indiredis can be imported into your own scripts, rather than executed with python3 -m. This is particularly aimed at developers wishing to connect instruments via an MQTT server, and perhaps creating their own GUI clients or controlling scripts.
 
 The indiredis package provides the following which can be used by your own script:
 

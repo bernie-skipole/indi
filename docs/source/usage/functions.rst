@@ -73,6 +73,8 @@ indiredis.driverstoredis
 
 .. autofunction:: indiredis.driverstoredis
 
+For further information on the log_lengths parameter see :ref:`log_lengths`.
+
 A minimal script using defaults to run driverstoredis could be::
 
     from indiredis import driverstoredis, redis_server
@@ -168,6 +170,8 @@ Intended to be run on the same server running a redis service, typically with th
 An INDI client which receives XML data from the MQTT server and converts to redis key-value storage, and reads data published to redis, and sends to the MQTT server.
 
 .. autofunction:: indiredis.mqtttoredis
+
+For further information on the log_lengths parameter see :ref:`log_lengths`.
 
 Example Python script running at the redis server::
 
