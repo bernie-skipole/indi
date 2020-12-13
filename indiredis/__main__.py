@@ -26,7 +26,7 @@ import sys, os, threading, argparse
 from . import inditoredis, indi_server, redis_server, indiwsgi
 
 
-version = "0.1.3"
+version = "0.1.4"
 
 if __name__ == "__main__":
 
