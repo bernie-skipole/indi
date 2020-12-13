@@ -94,14 +94,14 @@ MQTT Networking
 As an alternative to inditoredis or driverstoredis, the functions below provide communications via an MQTT server.
 
 The MQTT network transmits data between drivers and clients, and also sends snooping data between devices.
-Each of the functions requires a unique mqtt_id which is a string identifying the attachment to the network. Each function
-can also take a list 'subscribe_list' which indicates the remote units it 'listens to'.
+Each of the functions requires a unique mqtt_id which is a string identifying the attachment to the MQTT network.
+Each function can also take a 'subscribe_list' which indicates the remote connections it 'listens to'.
 
 For example, the functions mqtttoredis and mqtttoport are 'client connections' and their subscribe_list should contain
 the mqtt_id's of the driver functions (inditomqtt and driverstomqtt) which those clients wish to connect to.
 
-Similarly inditomqtt and driverstomqtt should have subscribe_list's which contain the client end mqtt_id's which connect to them.
-For most simple cases, the lists can all be left empty, which allows all connections - so the clients will see all attached devices.
+Similarly inditomqtt and driverstomqtt should have subscribe_list's which contain the client mqtt_id's which connect to them.
+For most simple cases, the lists can all be left empty, which, as default, allows all connections - so the clients will see all attached devices.
 
 
 .. _inditomqtt:
@@ -194,7 +194,7 @@ Set the blob_folder to a directory of your choice and substitute your own MQTT s
 indiredis.mqtttoport
 ^^^^^^^^^^^^^^^^^^^^^
 
-Transfers XML data between the MQTT server and a server port, which can connect to a traditional INDI client.
+Transfers XML data between the MQTT server and a server port, which, in turn, can connect to an INDI client.
 
 .. autofunction:: indiredis.mqtttoport
 
