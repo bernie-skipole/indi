@@ -12,6 +12,7 @@ indiredis - an INDI Client
    usage/tools.rst
    usage/references.rst
    usage/license.rst
+   usage/appendix.rst
 
 
 Indices and tables
