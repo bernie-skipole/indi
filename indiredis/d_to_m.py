@@ -367,7 +367,14 @@ def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
                "pubsnoopcontrol"     : mqttserver.snoop_control_topic + "/" + mqtt_id,   # used when publishing a getproperty
                "datatodriver"        : datatodriver,
                "driverlist"          : driverlist,
-               "subscribe_list"      : subscribe_list
+               "subscribe_list"      : subscribe_list,
+
+               "driverdict"          : {},                    # a dictionary of {devicename: _Driver instance, ...}
+               "sendsnoopall"        : set(),                 # a set of mqtt_id's which want all data sent to them
+               "sendsnoopdevices"    : {},  # a dictionary of {devicename: set of mqtt_id's, ...}
+                                            # which are those connections which snoop the given devicename
+               "sendsnoopproperties" : {}   # a dictionary of {(devicename,propertyname): set of mqtt_id's, ...}
+                                            # which are those connections which snoop the given device/property
               }
 
     mqtt_client = mqtt.Client(client_id=mqtt_id, userdata=userdata)
