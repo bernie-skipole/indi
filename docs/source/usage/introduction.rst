@@ -34,7 +34,7 @@ For further usage information, including setting ports and hosts, try::
 Installation
 ^^^^^^^^^^^^
 
-Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver with drivers (apt-get install indi-bin). If you are using the MQTT functions you will also need an MQTT server on your network (apt-get install mosquitto). 
+Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver with drivers (apt-get install indi-bin). If you are using the MQTT functions you will also need an MQTT server on your network (apt-get install mosquitto) or for testing you could use a public free server, see  :ref:`references`. 
 
 For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:
 

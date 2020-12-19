@@ -33,4 +33,17 @@ https://github.com/eclipse/paho.mqtt.python
 
 https://github.com/andymccurdy/redis-py
 
+Free public MQTT brokers
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+These MQTT brokers could be used for testing rather than setting up your own MQTT server. They are public test servers, and may - or may not - be working, nothing critical or confidential should be sent to them!
+
+test.mosquitto.org
+
+broker.hivemq.com
+
+mqtt.eclipseprojects.io
+
+
+
 
