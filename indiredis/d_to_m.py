@@ -21,24 +21,10 @@ try:
 except:
     MQTT_AVAILABLE = False
 
-# Global _DRIVERDICT is a dictionary of {devicename: _Driver instance, ...}
-_DRIVERDICT = {}
-
-# _SENDSNOOPALL is a set of mqtt_id's which want all data sent to them
-_SENDSNOOPALL = set()
-
-# _SENDSNOOPDEVICES is a dictionary of {devicename: set of mqtt_id's, ...} which are those connections which snoop the given devicename
-_SENDSNOOPDEVICES = {}
-
-# _SENDSNOOPDEVICES is a dictionary of {(devicename,propertyname): set of mqtt_id's, ...} which are those connections which snoop the given device/property
-_SENDSNOOPPROPERTIES = {}
-
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
-
 _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
-
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
@@ -47,7 +33,8 @@ _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 def _driverstomqtt_on_message(client, userdata, message):
     "Callback when an MQTT message is received"
-    global _DRIVERDICT, _SENDSNOOPALL, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
+    sendsnoopdevices = userdata["sendsnoopdevices"]
+    sendsnoopproperties = userdata["sendsnoopproperties"]
     if message.topic == userdata["pubsnoopcontrol"]:
         # The message received on the snoop control topic, is one this device has transmitted, ignore it
         return
@@ -68,19 +55,19 @@ def _driverstomqtt_on_message(client, userdata, message):
         snooptopic, remote_mqtt_id = message.topic.split("/", maxsplit=1)
         if not devicename:
             # Its a snoop everything request
-            _SENDSNOOPALL.add(remote_mqtt_id)
+            userdata["sendsnoopall"].add(remote_mqtt_id)
         elif not propertyname:
             # Its a snoop device request
-            if devicename in _SENDSNOOPDEVICES:
-                _SENDSNOOPDEVICES[devicename].add(remote_mqtt_id)
+            if devicename in sendsnoopdevices:
+                sendsnoopdevices[devicename].add(remote_mqtt_id)
             else:
-                _SENDSNOOPDEVICES[devicename] = set((remote_mqtt_id,))
+                sendsnoopdevices[devicename] = set((remote_mqtt_id,))
         else:
             # Its a snoop device/property request
-            if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-                _SENDSNOOPPROPERTIES[devicename,propertyname].add(remote_mqtt_id)
+            if (devicename,propertyname) in sendsnoopproperties:
+                sendsnoopproperties[devicename,propertyname].add(remote_mqtt_id)
             else:
-                _SENDSNOOPPROPERTIES[devicename,propertyname] = set((remote_mqtt_id,))
+                sendsnoopproperties[devicename,propertyname] = set((remote_mqtt_id,))
         # we have received a snoop getProperties from another device via the mqtt server, send it to the drivers
         userdata["datatodriver"].senddata(message.payload, root)
         return
@@ -88,6 +75,8 @@ def _driverstomqtt_on_message(client, userdata, message):
         # This is snoop data sent from other devices connected elsewhere on the mqtt network to this connection
         # having topic "snoop_data_topic/mqtt_id", where mqtt_id is this connection mqtt_id
         userdata["datatodriver"].snoopdata(message.payload, root)
+        if root.tag == "delProperty":
+            _remove(root, userdata)
         return
     # we have received a message from a connection via the mqtt server, send it to the drivers
     userdata["datatodriver"].senddata(message.payload, root)
@@ -133,51 +122,134 @@ def _sendtomqtt(payload, topic, mqtt_client):
     result.wait_for_publish()
 
 
-async def _reader(stdout, driver, loop, userdata, mqtt_client):
-    """Reads data from stdout which is the output stream of the driver
-       and send it via _sendtomqtt"""
-    global _DRIVERDICT, _SENDSNOOPALL, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
-    # get read data from driver, and put it into message
-    message = b''
-    messagetagnumber = None
-    topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
-    driverlist = userdata["driverlist"]
-    while True:
-        # get blocks of data from the driver
-        try:
-            data = await stdout.readuntil(separator=b'>')
-        except asyncio.LimitOverrunError:
-            data = await stdout.read(n=32000)
-        if not message:
-            # data is expected to start with <tag, first strip any newlines
-            data = data.strip()
-            for index, st in enumerate(_STARTTAGS):
-                if data.startswith(st):
-                    messagetagnumber = index
-                    break
-            else:
-                # check if data read is a b'<getProperties ... />' snooping request
-                if data.startswith(b'<getProperties '):
-                    # sets flags in the driver that it is snooping
+class _DriverHandler:
+
+    def __init__(self, loop, userdata, mqtt_client):
+        "Sets the userdata"
+        self.userdata = userdata
+        self.loop = loop
+        self.mqtt_client = mqtt_client
+        self.topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
+        self.snoop_data_topic = userdata["snoop_data_topic"] + "/"                 # this will always have a remote mqtt_id appended
+        self.datatodriver = userdata['datatodriver']
+        self.driverdict = userdata['driverdict']
+        self.driverlist = userdata["driverlist"]
+        self.sendsnoopall = userdata["sendsnoopall"]
+        self.sendsnoopdevices = userdata["sendsnoopdevices"]
+        self.sendsnoopproperties = userdata["sendsnoopproperties"]
+
+
+    async def handle_data(self):
+        """Create a subprocess for each driver; redirect the standard in, out, err to coroutines"""
+        # self.driverlist is a list of _Driver objects
+        tasks = []
+        for driver in self.driverlist:
+            proc = await asyncio.create_subprocess_exec(
+                driver.executable,                      # the driver executable to be run
+                stdout=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE)
+
+            tasks.append(self.reader(proc.stdout, driver))
+            tasks.append(self.writer(proc.stdin, driver))
+            tasks.append(self.perror(proc.stderr))
+            _message(self.topic, self.mqtt_client, f"Driver {driver.executable} started")
+            
+        _message(self.topic, self.mqtt_client, "Drivers started, waiting for data")
+        # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
+        await asyncio.gather(*tasks)
+
+
+    async def reader(self, stdout, driver):
+        """Reads data from stdout which is the output stream of the driver
+           and send it via _sendtomqtt"""
+        # get read data from driver, and put it into message
+        message = b''
+        messagetagnumber = None
+        while True:
+            # get blocks of data from the driver
+            try:
+                data = await stdout.readuntil(separator=b'>')
+            except asyncio.LimitOverrunError:
+                data = await stdout.read(n=32000)
+            if not message:
+                # data is expected to start with <tag, first strip any newlines
+                data = data.strip()
+                for index, st in enumerate(_STARTTAGS):
+                    if data.startswith(st):
+                        messagetagnumber = index
+                        break
+                else:
+                    # check if data read is a b'<getProperties ... />' snooping request
+                    if data.startswith(b'<getProperties '):
+                        # sets flags in the driver that it is snooping
+                        try:
+                            root = ET.fromstring(data.decode("utf-8"))
+                        except Exception:
+                            # possible malformed
+                            continue
+                        driver.setsnoop(root)
+                        devicename = root.get("device")
+                        if devicename and (devicename in self.driverdict):
+                            # its a local devicename, so no need to send getproperties to mqtt, continue with next message
+                            continue                    
+                        # send a snoop request on topic snoop_control/mqtt_id where mqtt_id is its own id
+                        result = await self.loop.run_in_executor(None, _sendtomqtt, data, self.userdata["pubsnoopcontrol"], self.mqtt_client)
+                    # data is either a getProperties, or does not start with a recognised tag, so ignore it
+                    # and continue waiting for a valid message start
+                    continue
+                # set this data into the received message
+                message = data
+                # either further children of this tag are coming, or maybe its a single tag ending in "/>"
+                if message.endswith(b'/>'):
+                    # the message is complete, handle message here
                     try:
-                        root = ET.fromstring(data.decode("utf-8"))
+                        root = ET.fromstring(message.decode("utf-8"))
                     except Exception:
                         # possible malformed
+                        message = b''
+                        messagetagnumber = None
                         continue
-                    driver.setsnoop(root)
-                    devicename = root.get("device")
-                    if devicename and (devicename in _DRIVERDICT):
-                        # its a local devicename, so no need to send getproperties to mqtt, continue with next message
-                        continue                    
-                    # send a snoop request on topic snoop_control/mqtt_id where mqtt_id is its own id
-                    result = await loop.run_in_executor(None, _sendtomqtt, data, userdata["pubsnoopcontrol"], mqtt_client)
-                # data is either a getProperties, or does not start with a recognised tag, so ignore it
-                # and continue waiting for a valid message start
+                    # check if this driver is allowed to send BLOBs, or only send BLOBS
+                    if driver.checkBlobs(root):
+                        devicename = root.get("device")
+                        # Run '_sendtomqtt' in the default loop's executor:
+                        result = await self.loop.run_in_executor(None, _sendtomqtt, message, self.topic, self.mqtt_client)
+                        # if this is to be sent to other drivers via snooping mechanism, then copy the read
+                        # message to other drivers inque
+                        driver.snoopsend(self.driverlist, message, root)
+                        # also may need to be sent to other drivers connected by mqtt
+                        for mqtt_id in self.sendsnoopall:
+                            # these connections snoop everything
+                            snooptopic = self.snoop_data_topic + mqtt_id
+                            result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
+                        if devicename in self.driverdict:
+                            if devicename in self.sendsnoopdevices:
+                                # list of mqtt_id's which snoop this devicename
+                                for mqtt_id in self.sendsnoopdevices[devicename]:
+                                    snooptopic = self.snoop_data_topic + mqtt_id
+                                    result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
+                            propertyname = root.get("name")
+                            if propertyname:
+                                if (devicename,propertyname) in self.sendsnoopproperties:
+                                    # list of mqtt_id's which snoop this devicename/propertyname
+                                    for mqtt_id in self.sendsnoopproperties[devicename,propertyname]:
+                                        snooptopic = self.snoop_data_topic + mqtt_id
+                                        result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
+                    # and start again, waiting for a new message
+                    if devicename and (devicename not in self.driverdict):
+                        self.driverdict[devicename] = driver
+                    if root.tag == "delProperty":
+                        # remove this device/property from snooping records
+                        _remove(root, self.userdata)
+                    message = b''
+                    messagetagnumber = None
+                # and read either the next message, or the children of this tag
                 continue
-            # set this data into the received message
-            message = data
-            # either further children of this tag are coming, or maybe its a single tag ending in "/>"
-            if message.endswith(b'/>'):
+            # To reach this point, the message is in progress, with a messagetagnumber set
+            # keep adding the received data to message, until an endtag is reached
+            message += data
+            if message.endswith(_ENDTAGS[messagetagnumber]):
                 # the message is complete, handle message here
                 try:
                     root = ET.fromstring(message.decode("utf-8"))
@@ -186,134 +258,58 @@ async def _reader(stdout, driver, loop, userdata, mqtt_client):
                     message = b''
                     messagetagnumber = None
                     continue
-                # check if this driver is allowed to send BLOBs, or only send BLOBS
                 if driver.checkBlobs(root):
                     devicename = root.get("device")
                     # Run '_sendtomqtt' in the default loop's executor:
-                    result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
+                    result = await self.loop.run_in_executor(None, _sendtomqtt, message, self.topic, self.mqtt_client)
                     # if this is to be sent to other drivers via snooping mechanism, then copy the read
                     # message to other drivers inque
-                    driver.snoopsend(driverlist, message, root)
+                    driver.snoopsend(self.driverlist, message, root)
                     # also may need to be sent to other drivers connected by mqtt
-                    for mqtt_id in _SENDSNOOPALL:
+                    for mqtt_id in self.sendsnoopall:
                         # these connections snoop everything
-                        snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                        result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
-                    if devicename in _DRIVERDICT:
-                        if devicename in _SENDSNOOPDEVICES:
+                        snooptopic = self.snoop_data_topic + mqtt_id
+                        result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
+                    if devicename in self.driverdict:
+                        # find the connections which snoop this devicename
+                        if devicename in self.sendsnoopdevices:
                             # list of mqtt_id's which snoop this devicename
-                            for mqtt_id in _SENDSNOOPDEVICES[devicename]:
-                                snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                                result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+                            for mqtt_id in self.sendsnoopdevices[devicename]:
+                                snooptopic = self.snoop_data_topic + mqtt_id
+                                result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
                         propertyname = root.get("name")
                         if propertyname:
-                            if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
+                            if (devicename,propertyname) in self.sendsnoopproperties:
                                 # list of mqtt_id's which snoop this devicename/propertyname
-                                for mqtt_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
-                                    snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                                    result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
+                                for mqtt_id in self.sendsnoopproperties[devicename,propertyname]:
+                                    snooptopic = self.snoop_data_topic + mqtt_id
+                                    result = await self.loop.run_in_executor(None, _sendtomqtt, message, snooptopic, self.mqtt_client)
                 # and start again, waiting for a new message
-                if devicename and (devicename not in _DRIVERDICT):
-                    _DRIVERDICT[devicename] = driver
+                if devicename and (devicename not in self.driverdict):
+                    self.driverdict[devicename] = driver
                 if root.tag == "delProperty":
                     # remove this device/property from snooping records
-                    _remove(driverlist, root)
+                    _remove(root, self.userdata)
                 message = b''
                 messagetagnumber = None
-            # and read either the next message, or the children of this tag
-            continue
-        # To reach this point, the message is in progress, with a messagetagnumber set
-        # keep adding the received data to message, until an endtag is reached
-        message += data
-        if message.endswith(_ENDTAGS[messagetagnumber]):
-            # the message is complete, handle message here
-            try:
-                root = ET.fromstring(message.decode("utf-8"))
-            except Exception:
-                # possible malformed
-                message = b''
-                messagetagnumber = None
-                continue
-            if driver.checkBlobs(root):
-                devicename = root.get("device")
-                # Run '_sendtomqtt' in the default loop's executor:
-                result = await loop.run_in_executor(None, _sendtomqtt, message, topic, mqtt_client)
-                # if this is to be sent to other drivers via snooping mechanism, then copy the read
-                # message to other drivers inque
-                driver.snoopsend(driverlist, message, root)
-                # also may need to be sent to other drivers connected by mqtt
-                for mqtt_id in _SENDSNOOPALL:
-                    # these connections snoop everything
-                    snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                    result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
-                if devicename in _DRIVERDICT:
-                    # find the connections which snoop this devicename
-                    if devicename in _SENDSNOOPDEVICES:
-                        # list of mqtt_id's which snoop this devicename
-                        for mqtt_id in _SENDSNOOPDEVICES[devicename]:
-                            snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                            result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
-                    propertyname = root.get("name")
-                    if propertyname:
-                        if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-                            # list of mqtt_id's which snoop this devicename/propertyname
-                            for mqtt_id in _SENDSNOOPPROPERTIES[devicename,propertyname]:
-                                snooptopic = userdata["snoop_data_topic"] + "/" + mqtt_id
-                                result = await loop.run_in_executor(None, _sendtomqtt, message, snooptopic, mqtt_client)
-            # and start again, waiting for a new message
-            if devicename and (devicename not in _DRIVERDICT):
-                _DRIVERDICT[devicename] = driver
-            if root.tag == "delProperty":
-                # remove this device/property from snooping records
-                _remove(driverlist, root)
-            message = b''
-            messagetagnumber = None
 
+    async def writer(self, stdin, driver):
+        """Writes data to stdin by reading it from the driver.inque"""
+        while True:
+            if driver.inque:
+                # Send binary xml to the driver stdin
+                bxml = driver.inque.popleft()
+                stdin.write(bxml)
+                await stdin.drain()
+            else:
+                # no message to send, do an async pause
+                await asyncio.sleep(0.5)
 
-
-async def _writer(stdin, driver):
-    """Writes data to stdin by reading it from the driver.inque"""
-    while True:
-        if driver.inque:
-            # Send binary xml to the driver stdin
-            bxml = driver.inque.popleft()
-            stdin.write(bxml)
-            await stdin.drain()
-        else:
-            # no message to send, do an async pause
-            await asyncio.sleep(0.5)
-
-
-async def _perror(stderr):
-    """Reads data from the driver stderr"""
-    while True:
-        data = await stderr.readline()
-        print(data.decode('ascii').rstrip())
-
-
-async def _driverconnections(loop, userdata, mqtt_client):
-    """Create a subprocess for each driver; redirect the standard in, out, err to coroutines"""
-    # driverlist is a list of _Driver objects
-    driverlist = userdata["driverlist"]
-    tasks = []
-    topic = userdata["from_indi_topic"] + "/" + userdata["mqtt_id"]
-    for driver in driverlist:
-        proc = await asyncio.create_subprocess_exec(
-            driver.executable,                      # the driver executable to be run
-            stdout=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE)
-
-        tasks.append(_reader(proc.stdout, driver, loop, userdata, mqtt_client))
-        tasks.append(_writer(proc.stdin, driver))
-        tasks.append(_perror(proc.stderr))
-        _message(topic, mqtt_client, f"Driver {driver.executable} started")
-        
-    _message(topic, mqtt_client, "Drivers started, waiting for data")
-    # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
-    await asyncio.gather(*tasks)
-
-
+    async def perror(self, stderr):
+        """Reads data from the driver stderr"""
+        while True:
+            data = await stderr.readline()
+            print(data.decode('ascii').rstrip())
 
 
 def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
@@ -346,8 +342,11 @@ def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
     else:
         driverlist = list( _Driver(driver) for driver in drivers )
 
+    # a dictionary of {devicename: _Driver instance, ...}
+    driverdict = {}
+
     # _DataToDriver object, used to send data to the drivers 
-    datatodriver = _DataToDriver(driverlist)
+    datatodriver = _DataToDriver(driverlist, driverdict)
 
     # wait for two seconds before starting, to give mqtt and other servers
     # time to start up
@@ -369,7 +368,7 @@ def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
                "driverlist"          : driverlist,
                "subscribe_list"      : subscribe_list,
 
-               "driverdict"          : {},                    # a dictionary of {devicename: _Driver instance, ...}
+               "driverdict"          : driverdict,            # a dictionary of {devicename: _Driver instance, ...}
                "sendsnoopall"        : set(),                 # a set of mqtt_id's which want all data sent to them
                "sendsnoopdevices"    : {},  # a dictionary of {devicename: set of mqtt_id's, ...}
                                             # which are those connections which snoop the given devicename
@@ -394,9 +393,13 @@ def driverstomqtt(drivers, mqtt_id, mqttserver, subscribe_list=[]):
 
     # now start eventloop to read and write to the drivers
     loop = asyncio.get_event_loop()
+
+    driverconnections = _DriverHandler(loop, userdata, mqtt_client)
+
+
     while True:
         try:
-            loop.run_until_complete(_driverconnections(loop, userdata, mqtt_client))
+            loop.run_until_complete(driverconnections.handle_data())
         except FileNotFoundError as e:
             _message(userdata["from_indi_topic"] + "/" + userdata["mqtt_id"], mqtt_client, str(e))
             sleep(2)
@@ -418,9 +421,12 @@ def _message(topic, mqtt_client, message):
     return
 
 
-def _remove(driverlist, root):
+def _remove(root, userdata):
     "A delProperty is received or being sent, remove this device/property from snooping records"
-    global _DRIVERDICT, _SENDSNOOPDEVICES, _SENDSNOOPPROPERTIES
+    sendsnoopdevices = userdata["sendsnoopdevices"]
+    sendsnoopproperties = userdata["sendsnoopproperties"]
+    driverdict = userdata["driverdict"]
+    driverlist = userdata["driverlist"]
     if root.tag != "delProperty":
         return
     devicename = root.get("device")
@@ -428,16 +434,16 @@ def _remove(driverlist, root):
         return
     propertyname = root.get("name")
     if propertyname:
-        if (devicename,propertyname) in _SENDSNOOPPROPERTIES:
-            del _SENDSNOOPPROPERTIES[devicename,propertyname]
+        if (devicename,propertyname) in sendsnoopproperties:
+            del sendsnoopproperties[devicename,propertyname]
         for driver in driverlist:
             driver.delproperty(devicename,propertyname)
         return
     # devicename only
-    if devicename in _DRIVERDICT:
-        del _DRIVERDICT[devicename]
-    if devicename in _SENDSNOOPDEVICES:
-        del _SENDSNOOPDEVICES[devicename]
+    if devicename in driverdict:
+        del driverdict[devicename]
+    if devicename in sendsnoopdevices:
+        del sendsnoopdevices[devicename]
     for driver in driverlist:
         driver.deldevice(devicename)
 
@@ -596,12 +602,12 @@ class _DataToDriver:
      on to the required driver inque's which causes the data to be
      transmitted on to the drivers via the _writer coroutine"""
 
-    def __init__(self, driverlist):
+    def __init__(self, driverlist, driverdict):
         self.driverlist = driverlist
+        self.driverdict = driverdict
 
     def senddata(self, data, root):
         "This data is appended to any driver.inque if the message is relevant to that driver"
-        global _DRIVERDICT
         devicename = root.get("device")    # name of Device, could be None if the data
                                            # does not specify it
         if root.tag == "enableBLOB":
@@ -609,17 +615,17 @@ class _DataToDriver:
                 # a devicename must be associated with a enableBLOB, if not given discard
                 return
             # given the name, enable the driver
-            if devicename in _DRIVERDICT:
-                driver = _DRIVERDICT[devicename]
+            if devicename in self.driverdict:
+                driver = self.driverdict[devicename]
                 driver.setenabled(devicename, root.get("name"), root.text.strip())
             return
         if not devicename:
             # could be a general getProperties, add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
-        elif devicename in _DRIVERDICT:
+        elif devicename in self.driverdict:
             # so a devicename is specified, and the associated driver is known
-            driver = _DRIVERDICT[devicename]
+            driver = self.driverdict[devicename]
             driver.append(data)
 
     def snoopdata(self, data, root):
@@ -630,8 +636,7 @@ class _DataToDriver:
             # the driver snoopreceive method adds it to the driver inque
             # if the driver is snooping this device/property
             driver.snoopreceive(data, device, name)
-        if root.tag == "delProperty":
-            _remove(self.driverlist, root)
+
 
     def clear(self):
         "Clears inques"
