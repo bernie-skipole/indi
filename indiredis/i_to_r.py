@@ -22,57 +22,93 @@ try:
 except:
     REDIS_AVAILABLE = False
 
-# The _TO_INDI dequeue has the right side filled from redis and the left side
-# sent to indiserver.
-
-_TO_INDI = collections.deque(maxlen=100)
-
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
-
 _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
-
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
-async def _txtoindi(writer):
-    while True:
-        if _TO_INDI:
-            # Send the next message to the indiserver
-            to_indi = _TO_INDI.popleft()
-            writer.write(to_indi)
-            await writer.drain()
-        else:
-            # no message to send, do an async pause
-            await asyncio.sleep(0.5)
+class _PortHandler:
+    "Creates a connection and sends an receives to the indiserver port"
+
+    def __init__(self, loop, rconn, indiserver):
+        "Stores the argument values, and creates a collections.deque object"
+        self.loop = loop
+        self.rconn = rconn
+        self.indiserver = indiserver
+        self.to_indi = collections.deque(maxlen=100)
+
+        # The to_indi dequeue has the right side filled from redis via toindi.SenderLoop
+        # which monitors the traffic published to redis  and appends it to this deque
+        # and the left side is sent to indiserver via this objects txtoindi method
 
 
-async def _rxfromindi(reader, loop, rconn):
-    # get received data, and put it into message
-    message = b''
-    messagetagnumber = None
-    while True:
-        # get blocks of data from the indiserver
-        try:
-            data = await reader.readuntil(separator=b'>')
-        except asyncio.LimitOverrunError:
-            data = await reader.read(n=32000)
-        if not message:
-            # data is expected to start with <tag, first strip any newlines
-            data = data.strip()
-            for index, st in enumerate(_STARTTAGS):
-                if data.startswith(st):
-                    messagetagnumber = index
-                    break
+    async def handle_data(self):
+        "coroutine to create the connection and start the sender and receiver"
+        # start by openning a connection
+        reader, writer = await asyncio.open_connection(self.indiserver.host, self.indiserver.port)
+        _message(self.rconn, f"Connected to {self.indiserver.host}:{self.indiserver.port}")
+        await asyncio.gather(self.txtoindi(writer), self.rxfromindi(reader))
+
+
+    async def txtoindi(self, writer):
+        "Monitors to_indi deque and if it has data, pops it and uses writer to send it"
+        while True:
+            if self.to_indi:
+                # Send the next message to the indiserver
+                writer.write(self.to_indi.popleft())
+                await writer.drain()
             else:
-                # data does not start with a recognised tag, so ignore it
-                # and continue waiting for a valid message start
+                # no message to send, do an async pause
+                await asyncio.sleep(0.5)
+
+
+    async def rxfromindi(self, reader):
+        # get received data, and put it into message
+        message = b''
+        messagetagnumber = None
+        while True:
+            # get blocks of data from the indiserver
+            try:
+                data = await reader.readuntil(separator=b'>')
+            except asyncio.LimitOverrunError:
+                data = await reader.read(n=32000)
+            if not message:
+                # data is expected to start with <tag, first strip any newlines
+                data = data.strip()
+                for index, st in enumerate(_STARTTAGS):
+                    if data.startswith(st):
+                        messagetagnumber = index
+                        break
+                else:
+                    # data does not start with a recognised tag, so ignore it
+                    # and continue waiting for a valid message start
+                    continue
+                # set this data into the received message
+                message = data
+                # either further children of this tag are coming, or maybe its a single tag ending in "/>"
+                if message.endswith(b'/>'):
+                    # the message is complete, handle message here
+                    # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+                    try:
+                        root = ET.fromstring(message.decode("utf-8"))
+                    except Exception:
+                        # possible malformed
+                        message = b''
+                        messagetagnumber = None
+                        continue
+                    result = await self.loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, self.rconn)
+                    # result is None, or the device name if a defxxxx was received
+                    # and start again, waiting for a new message
+                    message = b''
+                    messagetagnumber = None
+                # and read either the next message, or the children of this tag
                 continue
-            # set this data into the received message
-            message = data
-            # either further children of this tag are coming, or maybe its a single tag ending in "/>"
-            if message.endswith(b'/>'):
+            # To reach this point, the message is in progress, with a messagetagnumber set
+            # keep adding the received data to message, until an endtag is reached
+            message += data
+            if message.endswith(_ENDTAGS[messagetagnumber]):
                 # the message is complete, handle message here
                 # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
                 try:
@@ -82,41 +118,11 @@ async def _rxfromindi(reader, loop, rconn):
                     message = b''
                     messagetagnumber = None
                     continue
-                result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
+                result = await self.loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, self.rconn)
                 # result is None, or the device name if a defxxxx was received
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
-            # and read either the next message, or the children of this tag
-            continue
-        # To reach this point, the message is in progress, with a messagetagnumber set
-        # keep adding the received data to message, until an endtag is reached
-        message += data
-        if message.endswith(_ENDTAGS[messagetagnumber]):
-            # the message is complete, handle message here
-            # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-            try:
-                root = ET.fromstring(message.decode("utf-8"))
-            except Exception:
-                # possible malformed
-                message = b''
-                messagetagnumber = None
-                continue
-            result = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
-            # result is None, or the device name if a defxxxx was received
-            # and start again, waiting for a new message
-            message = b''
-            messagetagnumber = None
-
-
-async def _indiconnection(loop, rconn, indiserver):
-    "coroutine to create the connection and start the sender and receiver"
-    # start by sending a getproperties
-    reader, writer = await asyncio.open_connection(indiserver.host, indiserver.port)
-    _message(rconn, f"Connected to {indiserver.host}:{indiserver.port}")
-    sent = _txtoindi(writer)
-    received = _rxfromindi(reader, loop, rconn)
-    await asyncio.gather(sent, received)
 
 
 def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
@@ -131,8 +137,6 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     :param blob_folder: Folder where Blobs will be stored
     :type blob_folder: String
     """
-
-    global _TO_INDI
 
     if not REDIS_AVAILABLE:
         print("Error - Unable to import the Python redis package")
@@ -167,20 +171,23 @@ def inditoredis(indiserver, redisserver, log_lengths={}, blob_folder=''):
     # on startup, clear all redis keys
     tools.clearredis(rconn, redisserver)
 
-    # Create a SenderLoop object, with the _TO_INDI dequeue and redis connection
-    senderloop = toindi.SenderLoop(_TO_INDI, rconn, redisserver)
-    # run senderloop - which is blocking, so run in its own thread
-    run_toindi = threading.Thread(target=senderloop)
-    # and start senderloop in its thread
-    run_toindi.start()
-    # the senderloop will place data to transmit to indiserver in the _TO_INDI dequeue
     # Now create a loop to tx and rx to the indiserver port
     loop = asyncio.get_event_loop()
+    indiconnection = _PortHandler(loop, rconn, indiserver)
+
+    # Create a SenderLoop object, with the indiconnection.to_indi dequeue and redis connection
+    senderloop = toindi.SenderLoop(indiconnection.to_indi, rconn, redisserver)
+    # run senderloop - which is blocking, so run in its own thread
+    run_toindi = threading.Thread(target=senderloop)
+    # and start senderloop in its thread, this monitors data published via redis, and appends
+    # it to indiconnection.to_indi, where it will be sent on to the indi connection
+    run_toindi.start()
+
     while True:
-        _TO_INDI.clear()
-        _TO_INDI.append(b'<getProperties version="1.7" />')
+        indiconnection.to_indi.clear()
+        indiconnection.to_indi.append(b'<getProperties version="1.7" />')
         try:
-            loop.run_until_complete(_indiconnection(loop, rconn, indiserver))
+            loop.run_until_complete(indiconnection.handle_data())
         except ConnectionRefusedError:
             _message(rconn, f"Connection refused on {indiserver.host}:{indiserver.port}, re-trying...")
             sleep(5)
