@@ -22,61 +22,112 @@ try:
 except:
     REDIS_AVAILABLE = False
 
-# Global _DRIVERDICT is a dictionary of {devicename: _Driver instance, ...}
-
-_DRIVERDICT = {}
-
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
-
 _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 
 
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
-
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
-async def _reader(stdout, driver, driverlist, loop, rconn):
-    """Reads data from stdout which is the output stream of the driver
-       and send it via fromindi.receive_from_indiserver - which sets data into redis
-       and returns the devicename if found.
-       the devicename and driver is set into _DRIVERDICT"""
-    global _DRIVERDICT
 
-    # get received data, and put it into message
-    message = b''
-    messagetagnumber = None
-    while True:
-        # get blocks of data from the driver
-        try:
-            data = await stdout.readuntil(separator=b'>')
-        except asyncio.LimitOverrunError:
-            data = await stdout.read(n=32000)
-        if not message:
-            # data is expected to start with <tag, first strip any newlines
-            data = data.strip()
-            for index, st in enumerate(_STARTTAGS):
-                if data.startswith(st):
-                    messagetagnumber = index
-                    break
-            else:
-                # check if data received is a b'<getProperties ... />' snooping request
-                if data.startswith(b'<getProperties '):
-                    # sets flags in the driver that it is snooping
+class _DriverHandler:
+
+    def __init__(self, loop, driverlist, devicedict, rconn):
+        "Sets the data used by the data handler"
+        self.loop = loop
+        self.devicedict = devicedict
+        self.driverlist = driverlist
+        self.rconn = rconn
+
+
+    async def handle_data(self):
+        """Create a subprocess for each driver; redirect the standard in, out, err to coroutines"""
+        tasks = []
+        # self.driverlist is a list of _Driver objects
+        for driver in self.driverlist:
+            proc = await asyncio.create_subprocess_exec(
+                driver.executable,                      # the driver executable to be run
+                stdout=asyncio.subprocess.PIPE,
+                stdin=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE)
+
+            tasks.append(self.reader(proc.stdout, driver))
+            tasks.append(self.writer(proc.stdin, driver))
+            tasks.append(self.perror(proc.stderr))
+            _message(self.rconn, f"Driver {driver.executable} started")
+            
+        _message(self.rconn, "Drivers started, waiting for data")
+        # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
+        await asyncio.gather(*tasks)
+
+    async def self.reader(stdout, driver):
+        """Reads data from stdout which is the output stream of the driver
+           and send it via fromindi.receive_from_indiserver - which sets data into redis
+           the devicename and driver is set into self.devicedict"""
+ 
+        # get received data, and put it into message
+        message = b''
+        messagetagnumber = None
+        while True:
+            # get blocks of data from the driver
+            try:
+                data = await stdout.readuntil(separator=b'>')
+            except asyncio.LimitOverrunError:
+                data = await stdout.read(n=32000)
+            if not message:
+                # data is expected to start with <tag, first strip any newlines
+                data = data.strip()
+                for index, st in enumerate(_STARTTAGS):
+                    if data.startswith(st):
+                        messagetagnumber = index
+                        break
+                else:
+                    # check if data received is a b'<getProperties ... />' snooping request
+                    if data.startswith(b'<getProperties '):
+                        # sets flags in the driver that it is snooping
+                        try:
+                            root = ET.fromstring(data.decode("utf-8"))
+                        except Exception:
+                            # possible malformed
+                            continue
+                        driver.setsnoop(root)
+                    # data is either a getProperties, or does not start with a recognised tag, so ignore it
+                    # and continue waiting for a valid message start
+                    continue
+                # set this data into the received message
+                message = data
+                # either further children of this tag are coming, or maybe its a single tag ending in "/>"
+                if message.endswith(b'/>'):
+                    # the message is complete, handle message here
                     try:
-                        root = ET.fromstring(data.decode("utf-8"))
+                        root = ET.fromstring(message.decode("utf-8"))
                     except Exception:
-                        # possible malformed
+                        message = b''
+                        messagetagnumber = None
                         continue
-                    driver.setsnoop(root)
-                # data is either a getProperties, or does not start with a recognised tag, so ignore it
-                # and continue waiting for a valid message start
+                    # if this is to be sent to other devices via snooping mechanism, then copy the read
+                    # message to other drivers inque
+                    driver.snoopsend(self.driverlist, message, root)
+                    if driver.checkBlobs(root):
+                        # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
+                        devicename = await self.loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, self.rconn)
+                        # result is None, or the device name if a defxxxx was received
+                        if devicename and (devicename not in self.devicedict):
+                            self.devicedict[devicename] = driver
+                    if root.tag == "delProperty":
+                        # remove this device/property from snooping records
+                        _remove(root, self.driverlist, self.devicedict)
+                    # and start again, waiting for a new message
+                    message = b''
+                    messagetagnumber = None
+                # and read either the next message, or the children of this tag
                 continue
-            # set this data into the received message
-            message = data
-            # either further children of this tag are coming, or maybe its a single tag ending in "/>"
-            if message.endswith(b'/>'):
+            # To reach this point, the message is in progress, with a messagetagnumber set
+            # keep adding the received data to message, until an endtag is reached
+            message += data
+            if message.endswith(_ENDTAGS[messagetagnumber]):
                 # the message is complete, handle message here
                 try:
                     root = ET.fromstring(message.decode("utf-8"))
@@ -86,88 +137,38 @@ async def _reader(stdout, driver, driverlist, loop, rconn):
                     continue
                 # if this is to be sent to other devices via snooping mechanism, then copy the read
                 # message to other divers inque
-                driver.snoopsend(driverlist, message, root)
+                driver.snoopsend(self.driverlist, message, root)
                 if driver.checkBlobs(root):
                     # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                    devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
+                    devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, self.rconn)
                     # result is None, or the device name if a defxxxx was received
-                    if devicename and (devicename not in _DRIVERDICT):
-                        _DRIVERDICT[devicename] = driver
+                    if devicename and (devicename not in self.devicedict):
+                        self.devicedict[devicename] = driver
                 if root.tag == "delProperty":
                     # remove this device/property from snooping records
-                    _remove(driverlist, root)
+                    _remove(root, self.driverlist, self.devicedict)
                 # and start again, waiting for a new message
                 message = b''
                 messagetagnumber = None
-            # and read either the next message, or the children of this tag
-            continue
-        # To reach this point, the message is in progress, with a messagetagnumber set
-        # keep adding the received data to message, until an endtag is reached
-        message += data
-        if message.endswith(_ENDTAGS[messagetagnumber]):
-            # the message is complete, handle message here
-            try:
-                root = ET.fromstring(message.decode("utf-8"))
-            except Exception:
-                message = b''
-                messagetagnumber = None
-                continue
-            # if this is to be sent to other devices via snooping mechanism, then copy the read
-            # message to other divers inque
-            driver.snoopsend(driverlist, message, root)
-            if driver.checkBlobs(root):
-                # Run 'fromindi.receive_from_indiserver' in the default loop's executor:
-                devicename = await loop.run_in_executor(None, fromindi.receive_from_indiserver, message, root, rconn)
-                # result is None, or the device name if a defxxxx was received
-                if devicename and (devicename not in _DRIVERDICT):
-                    _DRIVERDICT[devicename] = driver
-            if root.tag == "delProperty":
-                # remove this device/property from snooping records
-                _remove(driverlist, root)
-            # and start again, waiting for a new message
-            message = b''
-            messagetagnumber = None
 
 
-async def _writer(stdin, driver):
-    """Writes data to stdin by reading it from the driver.inque"""
-    while True:
-        if driver.inque:
-            # Send binary xml to the driver stdin
-            bxml = driver.inque.popleft()
-            stdin.write(bxml)
-            await stdin.drain()
-        else:
-            # no message to send, do an async pause
-            await asyncio.sleep(0.5)
+    async def writer(self, stdin, driver):
+        """Writes data to stdin by reading it from the driver.inque"""
+        while True:
+            if driver.inque:
+                # Send binary xml to the driver stdin
+                bxml = driver.inque.popleft()
+                stdin.write(bxml)
+                await stdin.drain()
+            else:
+                # no message to send, do an async pause
+                await asyncio.sleep(0.5)
 
-
-async def _perror(stderr):
-    """Reads data from the driver stderr"""
-    while True:
-        data = await stderr.readline()
-        print(data.decode('ascii').rstrip())
-
-
-async def _driverconnections(driverlist, loop, rconn):
-    """Create a subprocess for each driver; redirect the standard in, out, err to coroutines
-       driverlist is a list of _Driver objects"""
-    tasks = []
-    for driver in driverlist:
-        proc = await asyncio.create_subprocess_exec(
-            driver.executable,                      # the driver executable to be run
-            stdout=asyncio.subprocess.PIPE,
-            stdin=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE)
-
-        tasks.append(_reader(proc.stdout, driver, driverlist, loop, rconn))
-        tasks.append(_writer(proc.stdin, driver))
-        tasks.append(_perror(proc.stderr))
-        _message(rconn, f"Driver {driver.executable} started")
-        
-    _message(rconn, "Drivers started, waiting for data")
-    # with a whole load of tasks for each driver - readers, writers and error printers, now gather and run them 'simultaneously'
-    await asyncio.gather(*tasks)
+    async def perror(self, stderr):
+        """Reads data from the driver stderr"""
+        while True:
+            data = await stderr.readline()
+            print(data.decode('ascii').rstrip())
 
 
 
@@ -223,22 +224,27 @@ def driverstoredis(drivers, redisserver, log_lengths={}, blob_folder=''):
     else:
         driverlist = list( _Driver(driver) for driver in drivers )
 
-    # sender object, used to append data, and to send it
-    sender = _Sender(driverlist)
+    # devicedict is a dictionary of {devicename: _Driver instance, ...}
+    devicedict = {}
 
-    # Create a SenderLoop object, with the _Sender object and redis connection
-    senderloop = toindi.SenderLoop(sender, rconn, redisserver)
+    # _DataToDriver object, used to send data to the drivers 
+    datatodriver = _DataToDriver(driverlist, devicedict)
+
+    # Create a SenderLoop object, with the _DataToDriver object and redis connection
+    senderloop = toindi.SenderLoop(datatodriver, rconn, redisserver)
     # run senderloop - which is blocking, so run in its own thread
     run_sender = threading.Thread(target=senderloop)
     # and start senderloop in its thread
     run_sender.start()
 
     # now start eventloop to read and write to the drivers
-
     loop = asyncio.get_event_loop()
+
+    driverconnections = _DriverHandler(loop, driverlist, devicedict, rconn)
+
     while True:
         try:
-            loop.run_until_complete(_driverconnections(driverlist, loop, rconn))
+            loop.run_until_complete(driverconnections.handle_data())
         except FileNotFoundError as e:
             _message(rconn, str(e))
             sleep(2)
@@ -260,9 +266,8 @@ def _message(rconn, message):
     return
 
 
-def _remove(driverlist, root):
+def _remove(root, driverlist, devicedict):
     "A delProperty has been received, remove the given device/property from snoops and blob enables"
-    global _DRIVERDICT
     if root.tag != "delProperty":
         return
     device = root.get("device")    # name of Device
@@ -275,8 +280,8 @@ def _remove(driverlist, root):
             driver.delproperty(device, name)
         return
     # no property name, remove all mentions of this device name
-    if device in _DRIVERDICT:
-        del _DRIVERDICT[device]
+    if device in devicedict:
+        del devicedict[device]
     for driver in driverlist:
         driver.deldevice(device)
 
@@ -431,17 +436,17 @@ class _Driver:
 
 
 
-class _Sender:
+class _DataToDriver:
     """An object, with an append method, which gets data appended, which in turn
      gets added here to the required driver inque's which causes the data to be
      transmitted on to the drivers via the _writer coroutine"""
 
-    def __init__(self, driverlist):
+    def __init__(self, driverlist, devicedict):
         self.driverlist = driverlist
+        self.devicedict = devicedict
 
     def append(self, data):
         "This data is appended to any driver.inque if the message is relevant to that driver"
-        global _DRIVERDICT
         try:
             root = ET.fromstring(data.decode("utf-8"))
         except Exception:
@@ -455,8 +460,8 @@ class _Sender:
                 # a devicename must be associated with a enableBLOB, if not given discard
                 return
             # given the name, enable the driver
-            if devicename in _DRIVERDICT:
-                driver = _DRIVERDICT[devicename]
+            if devicename in self.devicedict:
+                driver = self.devicedict[devicename]
                 driver.setenabled(devicename, root.get("name"), root.text.strip())
             return
 
@@ -464,9 +469,9 @@ class _Sender:
             # add to all inque's
             for driver in self.driverlist:
                 driver.append(data)
-        elif devicename in _DRIVERDICT:
+        elif devicename in self.devicedict:
             # so a devicename is specified, and the associated driver is known
-            driver = _DRIVERDICT[devicename]
+            driver = self.devicedict[devicename]
             driver.append(data)
         else:
             # this could be data from another device meant to be snooped by this device
