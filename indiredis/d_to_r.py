@@ -434,12 +434,10 @@ class _Driver:
             self.append(message)
 
 
-
-
 class _DataToDriver:
     """An object, with an append method, which gets data appended, which in turn
      gets added here to the required driver inque's which causes the data to be
-     transmitted on to the drivers via the _writer coroutine"""
+     transmitted on to the drivers via the DriverHandler.writer coroutine"""
 
     def __init__(self, driverlist, devicedict):
         self.driverlist = driverlist

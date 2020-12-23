@@ -600,7 +600,7 @@ class _Driver:
 class _DataToDriver:
     """An object, which receives data, and which in turn sends it 
      on to the required driver inque's which causes the data to be
-     transmitted on to the drivers via the _writer coroutine"""
+     transmitted on to the drivers via the DriverHandler.writer coroutine"""
 
     def __init__(self, driverlist, devicedict):
         self.driverlist = driverlist

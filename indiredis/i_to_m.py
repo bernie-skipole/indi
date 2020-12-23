@@ -23,11 +23,9 @@ except:
     MQTT_AVAILABLE = False
 
 # _STARTTAGS is a tuple of ( b'<defTextVector', ...  ) data received will be tested to start with such a starttag
-
 _STARTTAGS = tuple(b'<' + tag for tag in fromindi.TAGS)
 
 # _ENDTAGS is a tuple of ( b'</defTextVector>', ...  ) data received will be tested to end with such an endtag
-
 _ENDTAGS = tuple(b'</' + tag + b'>' for tag in fromindi.TAGS)
 
 
