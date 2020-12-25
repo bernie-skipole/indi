@@ -7,7 +7,7 @@ from os.path import isfile, join
 
 from skipole import FailPage
 
-from ... import tools
+from indi_mr import tools
 
 ## hiddenfields are
 #

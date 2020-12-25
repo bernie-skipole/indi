@@ -7,7 +7,7 @@ from zlib import adler32
 
 from skipole import FailPage
 
-from ... import tools
+from indi_mr import tools
 
 from .setvalues import set_state
 

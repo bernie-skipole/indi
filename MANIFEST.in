@@ -1,2 +1,2 @@
-recursive-include indiredis/indiwsgi/webdemo *
+recursive-include indiredis/webdemo *
 

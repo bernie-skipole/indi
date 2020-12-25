@@ -7,16 +7,17 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="indiredis",
-    version="0.1.4",
+    version="0.2.0",
     author="Bernard Czenkusz",
     author_email="bernie@skipole.co.uk",
-    description="An INDI client for general Instrument control, converting between the INDI protocol and redis storage. It also includes functions for transferring the INDI protocol via MQTT. If the package is run, it provides a web service for controlling instruments. If imported, it provides tools to read/write to redis and MQTT, and hence the INDI protocol, for use by your own Python applications.",
+    description="An INDI web client for general Instrument control. If the package is run, it provides a web service for controlling instruments. If imported, it provides functions which can be adapted to your own web server.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/bernie-skipole/indi",
-    packages=['indiredis', 'indiredis.indiwsgi', 'indiredis.indiwsgi.webcode'],
+    packages=['indiredis', 'indiredis.webcode'],
     include_package_data=True,
     install_requires=[
+          'indi-mr',
           'paho-mqtt',
           'redis',
           'skipole',

@@ -7,7 +7,7 @@ import gzip
 
 from skipole import FailPage
 
-from ... import tools
+from indi_mr import tools
 
 ## hiddenfields are
 #

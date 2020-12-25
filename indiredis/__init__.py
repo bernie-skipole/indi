@@ -1,156 +1,146 @@
 
 """
-Defines functions to create named tuples for the indi, redis and mqtt servers.
-
-Provides blocking functions used to run the conversion between the INDI protocol
-and redis storage, and for transferring INDI data over MQTT.
-
-inditoredis:
-   Receives XML data from indiserver on port 7624 and stores in redis.
-   Reads data published via redis, and outputs to port 7624 and indiserver.
-
-driverstoredis:
-   Given a list of drivers, runs them and stores received XML data in redis.
-   Reads data published via redis, and outputs to the drivers. Does not require
-   indiserver.
-
-inditomqtt:
-   Receives XML data from indiserver on port 7624 and publishes via MQTT.
-   Receives data from MQTT, and outputs to port 7624 and indiserver.
-
-driverstomqtt:
-   Given a list of drivers, runs them and publishes received XML data via MQTT.
-   Reads data published via MQTT, and outputs to the drivers. Does not require
-   indiserver.
-
-mqtttoredis:
-   Receives XML data from MQTT and stores in redis.
-   Reads data published via redis, and outputs to MQTT.
-
-mqtttoport:
-    Opens a server port. If a client is connected, forwards data from MQTT
-    to the client, if data received from the client, passes it to MQTT.
-
-"""
-
-import collections
+This module provides a WSGI web application. This can be run by a wsgi complient web server.
+""" 
 
 
-# make the functions inditoredis, inditomqtt, mqtttoredis, driverstoredis
-# available to scripts importing this module
-from .i_to_r import inditoredis
-from .i_to_m import inditomqtt
-from .m_to_r import mqtttoredis
-from .m_to_p import mqtttoport
-from .d_to_r import driverstoredis
-from .d_to_m import driverstomqtt
+import os, sys, pathlib
+
+from datetime import datetime
 
 
+SKIPOLE_AVAILABLE = True
+try:
+    from skipole import WSGIApplication, use_submit_list
+    from skipole import skis
+except:
+    SKIPOLE_AVAILABLE = False
 
-# define namedtuples to hold server parameters
+from indi_mr import tools
 
-IndiServer = collections.namedtuple('IndiServer', ['host', 'port'])
-RedisServer = collections.namedtuple('RedisServer', ['host', 'port', 'db', 'password', 'keyprefix', 'to_indi_channel', 'from_indi_channel'])
-MQTTServer = collections.namedtuple('MQTTServer', ['host', 'port', 'username', 'password', 'to_indi_topic', 'from_indi_topic',
-                                                   'snoop_control_topic', 'snoop_data_topic'])
+PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
+PROJECT = 'webdemo'
 
 
-# my test mqttserver ip = '10.34.167.1'
+def _start_call(called_ident, skicall):
+    "When a call is initially received this function is called."
+    if called_ident is None:
+        # Return None = url not found, if no called_ident, except if getting a file from blobs
+        if skicall.path.startswith("/blobs/"):
+            path = pathlib.Path(skicall.path)
+            # there should be three elements / blobs and filename
+            if len(path.parts) != 3:
+                return
+            skicall.page_data['mimetype'] = "application/octet-stream"
+            blob_folder = skicall.proj_data["blob_folder"]
+            if not blob_folder:
+                return
+            # blob_folder is a pathlib.Path object, returning this serves the file from the blob_folder
+            return blob_folder / path.name
+        return
+
+    if skicall.ident_data:
+        # if ident_data exists, it should optionally be
+        # the device name and property group to be displayed
+        # with two checksums
+        # checksum1 - flags if the page has been changed
+        # checksum2 - flags if an html refresh is needed, rather than json update
+        # set these into skicall.call_data
+        sessiondata = skicall.ident_data.split("/n")
+        checksum1 = sessiondata[0]
+        if checksum1:
+            skicall.call_data["checksum1"] = int(checksum1)
+        checksum2 = sessiondata[1]
+        if checksum2:
+            skicall.call_data["checksum2"] = int(checksum2)
+        device = sessiondata[2]
+        if device:
+            skicall.call_data["device"] = device
+        group = sessiondata[3]
+        if group:
+            skicall.call_data["group"] = group
+    return called_ident
 
 
-# Functions which return the appropriate named tuple. Provides defaults and enforces values
+try:
+    @use_submit_list
+    def _submit_data(skicall):
+        "This function is called when a Responder wishes to submit data for processing in some manner"
+        return
+except NameError:
+    # if skipole is not imported @use_submit_list will flag a NameError 
+    SKIPOLE_AVAILABLE = False
 
-def indi_server(host='localhost', port=7624):
-    """Creates a named tuple to hold indi server parameters
 
-    :param host: The name or ip address of the indiserver, defaults to localhost
-    :type host: String
-    :param port: The port number of the indiserver, defaults to standard port 7624
-    :type port: Integer
-    :return: A named tuple with host and port named elements
-    :rtype: collections.namedtuple
+def _end_call(page_ident, page_type, skicall):
+    """This function is called at the end of a call prior to filling the returned page with skicall.page_data"""
+    if "status" in skicall.call_data:
+        # display a modal status message
+        skicall.page_data["status", "para_text"] = skicall.call_data["status"]
+        skicall.page_data["status", "hide"] = False
+
+    # set device and group into a string to be sent as ident_data
+        # with two checksums
+        # checksum1 - flags if the page has been changed
+        # checksum2 - flags if an html refresh is needed, rather than json update
+    # checksum1 is a checksum of the data shown on the page (using zlib.adler32(data))
+    if 'checksum1' in skicall.call_data:
+        identstring = str(skicall.call_data['checksum1']) + "/n"
+    else:
+        identstring = "/n"
+    if 'checksum2' in skicall.call_data:
+        identstring += str(skicall.call_data['checksum2']) + "/n"
+    else:
+        identstring += "/n"
+    if "device" in skicall.call_data:
+        identstring += skicall.call_data["device"] + "/n"
+    else:
+        identstring += "/n"
+    if "group" in skicall.call_data:
+        identstring += skicall.call_data["group"]
+
+    # set this string to ident_data
+    skicall.page_data['ident_data'] = identstring
+    
+
+
+def make_wsgi_app(redisserver, blob_folder='', url="/"):
+    """Create a wsgi application which can be served by a WSGI compatable web server.
+    Reads and writes to redis stores created by indi-mr
+
+    :param redisserver: Named Tuple providing the redis server parameters
+    :type redisserver: namedtuple
+    :param blob_folder: Folder where Blobs will be stored
+    :type blob_folder: String
+    :param url: URL at which the web service is served
+    :type url: String
+    :return: A WSGI callable application
+    :rtype: skipole.WSGIApplication
     """
-    if (not port) or (not isinstance(port, int)):
-        raise ValueError("The port must be an integer, 7624 is default")
-    return IndiServer(host, port)
+    if not SKIPOLE_AVAILABLE:
+        return
 
+    if blob_folder:
+        blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
 
-def redis_server(host='localhost', port=6379, db=0, password='', keyprefix='indi_', to_indi_channel='to_indi', from_indi_channel='from_indi'):
-    """Creates a named tuple to hold redis server parameters
+    # The web service needs a redis connection, available in tools
+    rconn = tools.open_redis(redisserver)
+    proj_data = {"rconn":rconn, "redisserver":redisserver, "blob_folder":blob_folder}
+    application = WSGIApplication(project=PROJECT,
+                                  projectfiles=PROJECTFILES,
+                                  proj_data=proj_data,
+                                  start_call=_start_call,
+                                  submit_data=_submit_data,
+                                  end_call=_end_call,
+                                  url=url)
 
-    The to_indi_channel string is used as the channel which a client can use to publish data to redis and hence to
-    indiserver. It can be any string you prefer which does not clash with any other channels you may be using with redis.
+    if url.endswith("/"):
+        skisurl = url + "lib"
+    else:
+        skisurl = url + "/lib"
 
-    The from_indi_channel string must be different from the to_indi_channel string. It is used as the channel on
-    which received XML data is published which the client can optionally listen to.
-
-    :param host: The name or ip address of the redis server, defaults to localhost
-    :type host: String
-    :param port: The port number of the redis server, defaults to standard port 6379
-    :type port: Integer
-    :param db: The redis database, defaults to 0
-    :type db: Integer
-    :param password: The redis password, defaults to none used.
-    :type password: String
-    :param keyprefix: A string to use as a prefix on all redis keys created.
-    :type keyprefix: String
-    :param to_indi_channel: Redis channel used to publish data to indiserver.
-    :type to_indi_channel: String
-    :param from_indi_channel: Redis channel used to publish alerts.
-    :type from_indi_channel: String
-    :return: A named tuple with above parameters as named elements
-    :rtype: collections.namedtuple
-    """
-    if (not to_indi_channel) or (not from_indi_channel) or (to_indi_channel == from_indi_channel):
-        raise ValueError("Redis channels must exist and must be different from each other.")
-    if (not port) or (not isinstance(port, int)):
-        raise ValueError("The port must be an integer, 6379 is default")
-    return RedisServer(host, port, db, password, keyprefix, to_indi_channel, from_indi_channel)
-
-
-def mqtt_server(host='localhost', port=1883, username='', password='', to_indi_topic='to_indi', from_indi_topic='from_indi',
-                snoop_control_topic='snoop_control', snoop_data_topic='snoop_data',):
-    """Creates a named tuple to hold MQTT parameters
-
-    The topic strings are used as MQTT topics which pass data across the MQTT network, each must be different from
-    each other, and should not clash with other topic's you may be using for non-indi communication via your
-    MQTT broker.
-
-    :param host: The name or ip address of the mqtt server, defaults to localhost
-    :type host: String
-    :param port: The port number of the mqtt server, defaults to standard port 1883
-    :type port: Integer
-    :param username: The mqtt username, defaults to none used
-    :type username: String
-    :param password: The mqtt password, defaults to none used.
-    :type password: String
-    :param to_indi_topic: A string to use as the mqtt topic to send data towards indiserver.
-    :type to_indi_topic: String
-    :param from_indi_topic: A string to use as the mqtt topic to send data from indiserver.
-    :type from_indi_topic: String
-    :param snoop_control_topic: A topic carrying snoop getProperties requests
-    :type snoop_control_topic: String
-    :param snoop_data_topic: A topic carrying snoop data
-    :type snoop_data_topic: String
-    :return: A named tuple with above parameters as named elements
-    :rtype: collections.namedtuple
-    """
-
-    topics = set((to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic))
-    if len(topics) != 4:
-       raise ValueError("The MQTT topics must be different from each other.")
-
-    for t in topics:
-        if (not t) or (not isinstance(t, str)):
-            raise ValueError("The MQTT topics must be non-empty strings.")
-
-    if (not port) or (not isinstance(port, int)):
-        raise ValueError("The port must be an integer, 1883 is default")
-    return MQTTServer(host, port, username, password, to_indi_topic, from_indi_topic, snoop_control_topic, snoop_data_topic)
-
-
-
-
-
+    skis_application = skis.makeapp()
+    application.add_project(skis_application, url=skisurl)
+    return application
 
 
