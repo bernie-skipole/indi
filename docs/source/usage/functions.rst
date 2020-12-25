@@ -1,12 +1,10 @@
 The indiredis package
 =====================
 
-This module requires Python3 packages indi-mr, skipole, waitress and redis, available from Pypi.
-
 .. automodule:: indiredis
 
-Functions in indiredis
-^^^^^^^^^^^^^^^^^^^^^^
+make_wsgi_app
+^^^^^^^^^^^^^
 
 .. autofunction:: indiredis.make_wsgi_app
 
@@ -62,11 +60,11 @@ In terminal three, run the following web service::
     # set the blob_folder to a directory of your choice
     application = make_wsgi_app(redis_host, blob_folder='/path/to/blob_folder')
     if application is None:
-        print("Are you sure the skipole framework is installed?")
+        print("ERROR: Are you sure the skipole framework is installed?")
         sys.exit(1)
 
     # blocking call which serves the application with the python waitress web server
-    serve(application, host=127.0.0.1, port=8000)
+    serve(application, host="localhost", port=8000)
 
 Then, from your web browser connect to localhost:8000
 
@@ -100,11 +98,11 @@ and the web service can be run by a single script::
     # create a wsgi application
     application = make_wsgi_app(redis_host, blob_folder=BLOBS)
     if application is None:
-        print("Are you sure the skipole framework is installed?")
+        print("ERROR:Are you sure the skipole framework is installed?")
         sys.exit(1)
 
     # serve the application with the python waitress web server in its own thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':8000})
     # and start it
     webapp.start()
 
@@ -138,11 +136,11 @@ And a further example using the driverstoredis function, which does not need ind
     # create a wsgi application
     application = make_wsgi_app(redis_host, blob_folder=BLOBS)
     if application is None:
-        print("Are you sure the skipole framework is installed?")
+        print("ERROR:Are you sure the skipole framework is installed?")
         sys.exit(1)
 
     # serve the application with the python waitress web server in its own thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'127.0.0.1', 'port':8000})
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':8000})
     # and start it
     webapp.start()
 

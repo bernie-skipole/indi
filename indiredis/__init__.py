@@ -1,6 +1,17 @@
 
 """
-This module provides a WSGI web application. This can be run by a wsgi complient web server.
+This package provides a WSGI web application. This can be run by a wsgi complient web server.
+
+The package is highly dependent on the indi-mr package, which includes functions to
+convert XML data received from indiserver to values stored in redis.
+
+Running indiredis with the python3 -m option, imports and runs the indi-mr function
+inditoredis, and creates a wsgi web application with the function make_wsgi_app().
+
+Finally it serves the web application with the Python waitress web server.
+
+Instead of running this indiredis package, you could import it, and then run
+make_wsgi_app() in your own script with your preferred web server.
 """ 
 
 
