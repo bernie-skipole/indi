@@ -21,7 +21,7 @@ This runs the script __main__.py within indiredis, and serves the client at loca
 
 You can also try::
 
-    python3 -m indiredis -h
+    python3 -m indiredis --help
 
 For help on the full set of arguments available.
 
@@ -71,6 +71,10 @@ Then, from your web browser connect to localhost:8000
 Wait a few seconds, and the devices, with their properties, should be discovered and displayed.
 
 To end the program, press Ctrl-c a few times in the terminal.
+
+For further information on the functions provided by indi_mr, see the documentation at:
+
+https://indi-mr.readthedocs.io
 
 A further example, still with indiserver running in another terminal, which shows how inditoredis
 and the web service can be run by a single script::

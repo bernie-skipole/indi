@@ -34,6 +34,10 @@ For debian systems you may need apt-get install python3-pip, and then use whiche
 
 > python3 -m pip install indiredis
 
+Or - if you just want to install it with your own user permissions only:
+
+> python3 -m pip install --user indiredis
+
 Using a virtual environment may be preferred, if you need further information on pip and virtual environments, try:
 
 https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/
@@ -42,11 +46,11 @@ The above pip command should automatically pull in the following packages:
 
 indi-mr - converts between the XML data received via the indiserver port and redis storage
 
-skipole - required for the built in web service.
+skipole - framework used to build the web pages.
 
-waitress - Python web server, not needed if you are creating your own gui, or using a different web server.
+waitress - Python web server.
 
-redis - Python redis client, needed.
+redis - Python redis client.
 
 ## Security
 
