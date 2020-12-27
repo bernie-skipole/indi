@@ -176,7 +176,8 @@ And a further example using the driverstoredis function, which does not need ind
     # and start driverstoredis
     driverstoredis(["indi_simulator_telescope", "indi_simulator_ccd"], redis_host, blob_folder=BLOBS)
 
-**INDI over MQTT**
+INDI over MQTT
+^^^^^^^^^^^^^^
 
 The project indi-mr includes functions for transmitting INDI data via an MQTT broker. For complete information
 see the indi-mr documentation. The example below shows how it could be used with the indiredis client.
@@ -242,7 +243,8 @@ The blocking function mqtttoredis converts the INDI data received via MQTT to re
 is served by the indiredis client running in its own thread.
 
 
-**Web client limitation**
+Web client limitation
+^^^^^^^^^^^^^^^^^^^^^
 
 The web client employs a browser refresh every ten seconds, so data changes which update at a faster rate
 will jump rather than change smoothly.
