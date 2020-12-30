@@ -1,0 +1,166 @@
+
+
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Introduction &#8212; indiredis 0.2.0 documentation</title>
+    <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The indiredis package" href="functions.html" />
+    <link rel="prev" title="indiredis - an INDI Client" href="../index.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="functions.html" title="The indiredis package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="indiredis - an INDI Client"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">indiredis 0.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="indiredis">
+<h2>indiredis<a class="headerlink" href="#indiredis" title="Permalink to this headline">¶</a></h2>
+<p>This Python3 package provides an INDI web client for general Instrument control.</p>
+<p>INDI - Instrument Neutral Distributed Interface.</p>
+<p>The package does not include indiserver or drivers, but is compatable with them.</p>
+<p>For further information on INDI, see <a class="reference internal" href="references.html#references"><span class="std std-ref">References</span></a>.</p>
+<p>Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.</p>
+<p>Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">indiserver</span> <span class="o">-</span><span class="n">v</span> <span class="n">indi_simulator_telescope</span> <span class="n">indi_simulator_ccd</span>
+</pre></div>
+</div>
+<p>Usage of this client is then:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">indiredis</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blobfolder</span>
+</pre></div>
+</div>
+<p>The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB’s (Binary Large Objects), such as images will be stored, it will be created if it does not exist. Then connecting with a browser to <a class="reference external" href="http://localhost:8000">http://localhost:8000</a> should enable you to view and control the connected instruments.</p>
+<p>For further usage information, including setting ports and hosts, try:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">indiredis</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Server dependencies: A redis server (For debian systems; apt-get install redis-server), and indiserver with drivers (apt-get install indi-bin).</p>
+<p>For debian systems you may need apt-get install python3-pip, and then use whichever variation of the pip command required by your environment, one example being:</p>
+<p>python3 -m pip install indiredis</p>
+<p>Or - if you just want to install it with your own user permissions only:</p>
+<p>python3 -m pip install –user indiredis</p>
+<p>Using a virtual environment may be preferred, if you need further information on pip and virtual environments, try:</p>
+<p><a class="reference external" href="https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/">https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/</a></p>
+<p>The above pip command should automatically pull in the following packages:</p>
+<p>indi-mr - converts between the XML data received via the indiserver port and redis storage</p>
+<p>skipole - framework used to build the web pages.</p>
+<p>waitress - Python web server.</p>
+<p>redis - Python redis client.</p>
+</div>
+<div class="section" id="security">
+<h2>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h2>
+<p>Only open communications are defined in this package, security and authentication are not considered.</p>
+<p>The web service provided here does not apply any authentication.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#indiredis">indiredis</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#security">Security</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">indiredis - an INDI Client</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="functions.html"
+                        title="next chapter">The indiredis package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/usage/introduction.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="functions.html" title="The indiredis package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="indiredis - an INDI Client"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">indiredis 0.2.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Bernard Czenkusz.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
+    </div>
+  </body>
+</html>
