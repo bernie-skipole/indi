@@ -1,9 +1,9 @@
 {
 "url": "/",
 "default_language": "en",
-"brief": "General indiredis website",
-"version": "0.2.0",
-"skipole": "5.1.2",
+"brief": "indiredis web client",
+"version": "0.3.0",
+"skipole": "5.2.0",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
@@ -143,6 +143,14 @@
 "class": "w3-theme-d1"
 },
 "parts": [
+[
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Line",
+"show": true
+}
+],
 [
 "Part",
 {
@@ -2902,7 +2910,7 @@
 "parts": [
 [
 "Text",
-"INDI Client demonstrator"
+"INDI Client"
 ]
 ]
 }
@@ -2971,6 +2979,14 @@
 }
 ],
 [
+"ClosedPart",
+{
+"tag_name": "hr",
+"brief": "Line",
+"show": true
+}
+],
+[
 "Part",
 {
 "tag_name": "h2",
@@ -2983,6 +2999,20 @@
 "Devices:"
 ]
 ]
+}
+],
+[
+"Widget",
+{
+"class": "paras.ParaText",
+"name": "devicelist",
+"brief": "Message showing no devices yet received",
+"fields": {
+"para_text": "No devices have been found .. waiting for update.",
+"show": true,
+"widget_class": "",
+"widget_style": ""
+}
 }
 ],
 [
@@ -3615,9 +3645,7 @@
 "RespondPage": {
 "class": "SubmitData",
 "original_args": {
-"allowed_callers": [
-4003
-],
+"allowed_callers": [],
 "fail_ident": 4003,
 "submit_list": [
 "webcode",

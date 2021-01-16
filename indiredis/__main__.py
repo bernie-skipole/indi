@@ -27,7 +27,7 @@ from waitress import serve
 from . import make_wsgi_app
 
 
-version = "0.2.0"
+version = "0.3.0"
 
 if __name__ == "__main__":
 
@@ -59,6 +59,15 @@ if __name__ == "__main__":
     if application is None:
         print("ERROR: Are you sure the skipole framework is installed?")
         sys.exit(1)
+
+    ###################### Remove for deployment ##################################
+    #                                                                              #
+    #from skipole import skiadmin, set_debug                                       #
+    #set_debug(True)                                                               #
+    #skiadmin_application = skiadmin.makeapp(editedprojname='webdemo')             #
+    #application.add_project(skiadmin_application, url='/skiadmin')                #
+    #                                                                              #
+    ###############################################################################
 
     # serve the application with the python waitress web server in another thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':args.port})

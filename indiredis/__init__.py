@@ -36,18 +36,16 @@ PROJECT = 'webdemo'
 def _start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if called_ident is None:
-        # Return None = url not found, if no called_ident, except if getting a file from blobs
-        if skicall.path.startswith("/blobs/"):
-            path = pathlib.Path(skicall.path)
-            # there should be three elements / blobs and filename
-            if len(path.parts) != 3:
-                return
-            skicall.page_data['mimetype'] = "application/octet-stream"
-            blob_folder = skicall.proj_data["blob_folder"]
-            if not blob_folder:
-                return
-            # blob_folder is a pathlib.Path object, returning this serves the file from the blob_folder
-            return blob_folder / path.name
+        # the url path which this project is served on
+        projectpath = skicall.projectpaths()[skicall.project]
+        if projectpath.endswith("/"):
+            blobpath = projectpath + "blobs"
+        else:
+            blobpath = projectpath + "/blobs"
+        # blobs are served at projectpath/blobs
+        servedfile = skicall.map_url_to_server(blobpath, skicall.proj_data["blob_folder"])
+        if servedfile:
+            return servedfile
         return
 
     if skicall.ident_data:
@@ -152,6 +150,7 @@ def make_wsgi_app(redisserver, blob_folder='', url="/"):
 
     skis_application = skis.makeapp()
     application.add_project(skis_application, url=skisurl)
+
     return application
 
 

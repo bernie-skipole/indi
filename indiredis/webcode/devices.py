@@ -46,6 +46,7 @@ def devicelist(skicall):
             skicall.page_data['message', 'para_text'] = message + "\n\nAwaiting device information."
         else:
             skicall.page_data['message', 'para_text'] = "Awaiting device information."
+        skicall.page_data['devicelist', 'para_text'] = "No devices have been found .. waiting for update."
         # publish getProperties
         getProperties(skicall)
         checksum1 += skicall.page_data['message', 'para_text']
@@ -53,6 +54,7 @@ def devicelist(skicall):
         bindata = checksum1.encode('utf-8', errors='ignore')
         skicall.call_data["checksum1"] = adler32(bindata)
         return
+    skicall.page_data['devicelist', 'para_text'] = "Follow the link to manage each instrument."
     # devices is a list of known devices
     skicall.page_data['device','multiplier'] = len(devices)
     for index,devicename in enumerate(devices):
