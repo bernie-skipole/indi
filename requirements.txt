@@ -1,4 +1,4 @@
-indiredis>=0.3.0
+indiredis>=0.3.1
 indi-mr>=0.2.1
 paho-mqtt>=1.5.1
 redis>=3.5.3
