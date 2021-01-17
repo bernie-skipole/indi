@@ -36,14 +36,8 @@ PROJECT = 'webdemo'
 def _start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if called_ident is None:
-        # the url path which this project is served on
-        projectpath = skicall.projectpaths()[skicall.project]
-        if projectpath.endswith("/"):
-            blobpath = projectpath + "blobs"
-        else:
-            blobpath = projectpath + "/blobs"
-        # blobs are served at projectpath/blobs
-        servedfile = skicall.map_url_to_server(blobpath, skicall.proj_data["blob_folder"])
+        # blobs are served at /projectpath/blobs
+        servedfile = skicall.map_url_to_server("blobs", skicall.proj_data["blob_folder"], "application/octet-stream")
         if servedfile:
             return servedfile
         return
