@@ -1,2 +1,2 @@
-recursive-include indiredis/webdemo *
+recursive-include indiredis/indiredis *
 
