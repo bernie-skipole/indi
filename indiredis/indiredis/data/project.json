@@ -2,7 +2,7 @@
 "url": "/",
 "default_language": "en",
 "brief": "indiredis web client",
-"version": "0.3.1",
+"version": "0.3.2",
 "skipole": "5.2.1",
 "specialpages": {
 "blobfolder": 14,
@@ -1201,7 +1201,7 @@
 "ident": 1008,
 "brief": "Links to .../static/css/w3-theme-ski.css",
 "FilePage": {
-"filepath": "webdemo/static/css/w3-theme-ski.css",
+"filepath": "indiredis/static/css/w3-theme-ski.css",
 "enable_cache": true,
 "mimetype": "text/css"
 }
@@ -1219,7 +1219,7 @@
 "ident": 3001,
 "brief": "skipole logo",
 "FilePage": {
-"filepath": "webdemo/static/images/logo.svg",
+"filepath": "indiredis/static/images/logo.svg",
 "enable_cache": true,
 "mimetype": "image/svg+xml"
 }
@@ -1228,7 +1228,7 @@
 "ident": 3002,
 "brief": "skipole icon",
 "FilePage": {
-"filepath": "webdemo/static/images/logo_icon16.svg",
+"filepath": "indiredis/static/images/logo_icon16.svg",
 "enable_cache": true,
 "mimetype": "image/svg+xml"
 }
@@ -3037,13 +3037,11 @@
 }
 ],
 [
-"SectionPlaceHolder",
+"ClosedPart",
 {
-"brief": "footer with link to skipole",
-"section_name": "footer",
-"placename": "footer",
-"multiplier": 0,
-"mtag": "div"
+"tag_name": "hr",
+"brief": "Line",
+"show": true
 }
 ]
 ]

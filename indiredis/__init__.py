@@ -30,7 +30,7 @@ except:
 from indi_mr import tools
 
 PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
-PROJECT = 'webdemo'
+PROJECT = 'indiredis'
 
 
 def _start_call(called_ident, skicall):
