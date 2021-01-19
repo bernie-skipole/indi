@@ -888,7 +888,8 @@ def _show_blobvector(skicall, index, ad):
             if eld['filepath']:
                 path = pathlib.Path(eld['filepath'])
                 col2.append(path.name)
-                col2_link_idents.append(f"blobs/{path.name}")
+                blobpath = skicall.makepath("blobs", path.name)
+                col2_link_idents.append(blobpath)
             else:
                 col2.append("")
                 col2_link_idents.append("")
@@ -930,7 +931,8 @@ def _show_blobvector(skicall, index, ad):
             if eld['filepath']:
                 path = pathlib.Path(eld['filepath'])
                 col2.append(path.name)
-                col2_links.append(f"blobs/{path.name}")
+                blobpath = skicall.makepath("blobs", path.name)
+                col2_links.append(blobpath)
         skicall.page_data['property_'+str(index),'bvelements', 'col1'] = col1
         if col2:
             skicall.page_data['property_'+str(index),'bvelements', 'col2'] = col2
