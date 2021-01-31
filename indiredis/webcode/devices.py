@@ -1056,14 +1056,12 @@ def check_for_device_change(skicall):
         if ad['perm'] == "wo":
             continue             # if write only, should be no change from indiserver to display
         elif ad['perm'] == "rw":
-            # permission is rw
+            # permission is rw, number displayed updated, but not number in the input field as
+            # this interfers with the users typing in a new number
             col2 = []
-            inputdict = {}
             for eld in element_list:
                 col2.append(eld['formatted_number'])
-                inputdict[_safekey(eld['name'])] = eld['formatted_number']
             skicall.page_data['property_'+str(index),'nvinputtable', 'col2'] = col2
-            skicall.page_data['property_'+str(index),'nvinputtable', 'inputdict'] = inputdict
         else:
             # permission is ro
             col2 = []

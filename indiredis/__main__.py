@@ -62,10 +62,10 @@ if __name__ == "__main__":
 
     ###################### Remove for deployment ##################################
     #                                                                              #
-    #from skipole import skiadmin, set_debug                                       #
-    #set_debug(True)                                                               #
-    #skiadmin_application = skiadmin.makeapp(editedprojname='indiredis')           #
-    #application.add_project(skiadmin_application, url='/skiadmin')                #
+    from skipole import skiadmin, set_debug                                       #
+    set_debug(True)                                                               #
+    skiadmin_application = skiadmin.makeapp(editedprojname='indiredis')           #
+    application.add_project(skiadmin_application, url='/skiadmin')                #
     #                                                                              #
     ###############################################################################
 
