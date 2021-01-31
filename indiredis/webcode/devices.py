@@ -992,7 +992,12 @@ def check_for_device_change(skicall):
         return
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
-    pdict, checksum1, checksum2 = _read_redis(skicall)
+    try:
+        pdict, checksum1, checksum2 = _read_redis(skicall)
+    except FailPage:
+        skicall.page_data['JSONtoHTML'] = 'home'
+        return
+
     devicename = pdict["devicename"]
     if (checksum1 == skicall.call_data['checksum1']) and (checksum2 == skicall.call_data['checksum2']):
         # generated checksums are equal to the received checksums so
