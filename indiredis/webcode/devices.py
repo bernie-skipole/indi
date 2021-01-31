@@ -786,13 +786,20 @@ def _show_lightvector(skicall, index, ad):
         return
     # No permission value for lightvectors
     # display label : value in a table
-    col1 = []
-    col2 = []
+    skicall.page_data['property_'+str(index),'lvelements', 'titles'] = ["", "State"]
+    contents = []
     for eld in element_list:
-        col1.append(eld['label'] + ":")
-        col2.append(eld['value'])
-    skicall.page_data['property_'+str(index),'lvelements', 'col1'] = col1
-    skicall.page_data['property_'+str(index),'lvelements', 'col2'] = col2
+        contents.append([eld['label'] + ":", "black", ""]) # pale yellow is "#ffffcc"
+        if eld['value'] == "Idle":
+            contents.append([eld['value'], "white", "grey"])
+        if eld['value'] == "Ok":
+            contents.append([eld['value'], "white", "green"])
+        if eld['value'] == "Busy":
+            contents.append([eld['value'], "white", "yellow"])
+        if eld['value'] == "Alert":
+            contents.append([eld['value'], "white", "red"])
+    skicall.page_data['property_'+str(index),'lvelements', 'contents'] = contents
+
 
 
 

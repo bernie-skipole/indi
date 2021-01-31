@@ -2,7 +2,7 @@
 "url": "/",
 "default_language": "en",
 "brief": "indiredis web client",
-"version": "0.3.5",
+"version": "0.3.6",
 "skipole": "5.2.1",
 "specialpages": {
 "blobfolder": 14,
@@ -955,18 +955,16 @@
 [
 "Widget",
 {
-"class": "tables.TwoColTable1",
+"class": "tables.ColorTable1",
 "name": "lvelements",
 "brief": "Table of light vector elements",
 "fields": {
-"col1": [],
-"col2": [],
+"titles": [],
+"contents": [],
 "even_class": "",
-"header_class": "w3-theme-d2",
+"header_class": "w3-hide",
 "odd_class": "",
 "show": true,
-"title1": "",
-"title2": "",
 "widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
