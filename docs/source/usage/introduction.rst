@@ -15,6 +15,8 @@ For further information on INDI, see :ref:`references`.
 
 Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
+The package can be imported, or run directly with the python -m option. For example:
+
 Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run::
 
     indiserver -v indi_simulator_telescope indi_simulator_ccd
@@ -29,6 +31,12 @@ The directory /path/to/blobfolder should be a path to a directory of your choice
 For further usage information, including setting ports and hosts, try::
 
     python3 -m indiredis --help
+
+
+Importing the package
+^^^^^^^^^^^^^^^^^^^^^
+
+The indiredis client reads and writes to redis, and creates a web served client. It uses indi-mr (available from PyPi) to communicate between indiserver and redis. If imported into your own scripts, other options are available. INDI drivers can communicate to redis populated by other functions provided by indi-mr, including via MQTT. See further examples in this documentation, and also the indi-mr documents.
 
 
 Installation
