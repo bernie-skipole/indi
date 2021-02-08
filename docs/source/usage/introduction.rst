@@ -15,7 +15,16 @@ For further information on INDI, see :ref:`references`.
 
 Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
-The package can be imported, or run directly with the python -m option. For example:
+The package can be imported, or run directly with the python -m option.
+
+The package is associated with the package indi-mr, which provides functions communicating between INDI instrument drivers and a redis database, indi-mr functions can be used which run drivers directly, or input can be taken from a server port such as that provided by indiserver, or via MQTT. Once indi-mr is used to populate redis, then a client can be created which reads and writes to redis (using functions from the indi_mr.tools module), and hence control the attached instruments.
+
+This indiredis provides the function make_wsgi_app() which is such a client. It produces a WSGI application, which if served with a WSGI compliant web server provides an INDI web client. If you import indiredis and indi-mr, you have the choice of communicating to instruments with any of the tools provided by indi-mr, and serving the application with a web server of your choice.
+
+If you run indiredis with the python -m option, then a script is run which imports the waitress web server, and indi-mr.inditoredis, which communicates to indiserver,
+and provides an INDI web client.
+
+ For example:
 
 Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run::
 
@@ -31,12 +40,6 @@ The directory /path/to/blobfolder should be a path to a directory of your choice
 For further usage information, including setting ports and hosts, try::
 
     python3 -m indiredis --help
-
-
-Importing the package
-^^^^^^^^^^^^^^^^^^^^^
-
-The indiredis client reads and writes to redis, and creates a web served client. It uses indi-mr (available from PyPi) to communicate between indiserver and redis. If imported into your own scripts, other options are available. INDI drivers can communicate to redis populated by other functions provided by indi-mr, including via MQTT. See further examples in this documentation, and also the indi-mr documents.
 
 
 Installation
