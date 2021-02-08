@@ -27,7 +27,7 @@ from waitress import serve
 from . import make_wsgi_app
 
 
-version = "0.3.8"
+version = "0.3.9"
 
 if __name__ == "__main__":
 
