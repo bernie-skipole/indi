@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="indiredis",
-    version="0.4.0",
+    version="0.4.1",
     author="Bernard Czenkusz",
     author_email="bernie@skipole.co.uk",
     description="An INDI web client for general Instrument control. If the package is run, it provides a web service for controlling instruments. If imported, it provides functions which can be adapted to your own web server.",

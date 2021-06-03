@@ -64,7 +64,7 @@ The web service provided here does not apply any authentication.
 
 ## Documentation
 
-Detailed information is available at:
+If the package is imported into your own scripts, it provides functions which can be adapted to your own web server. Detailed information is available at:
 
 https://indiredis.readthedocs.io
 
