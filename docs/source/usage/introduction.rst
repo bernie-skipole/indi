@@ -17,9 +17,7 @@ Though INDI is generally used for astronomical instruments, it can work with any
 
 The package can be imported, or run directly with the python -m option.
 
-The package is associated with the package indi-mr, which provides functions communicating between INDI instrument drivers and a redis database, indi-mr functions can be used which run drivers directly, or input can be taken from a server port such as that provided by indiserver, or via MQTT. Once indi-mr is used to populate redis, then a client can be created which reads and writes to redis (using functions from the indi_mr.tools module), and hence control the attached instruments.
-
-This indiredis provides the function make_wsgi_app() which is such a client. It produces a WSGI application, which if served with a WSGI compliant web server provides an INDI web client. If you import indiredis and indi-mr, you have the choice of communicating to instruments with any of the tools provided by indi-mr, and serving the application with a web server of your choice.
+The package is associated with the package indi-mr, which provides functions communicating between INDI instrument drivers and a redis database.
 
 If you run indiredis with the python -m option, then a script is run which imports the waitress web server, and indi-mr.inditoredis, which communicates to indiserver,
 and provides an INDI web client.
