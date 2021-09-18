@@ -6,7 +6,7 @@ indiredis - an INDI Client
 .. toctree::
    :maxdepth: 2
 
-   usage/introduction
+   usage/introduction.rst
    usage/functions.rst
    usage/references.rst
    usage/license.rst

@@ -23,7 +23,7 @@ from datetime import datetime
 SKIPOLE_AVAILABLE = True
 try:
     from skipole import WSGIApplication, use_submit_list
-    from skipole import skis
+    from skipole import skis, ServeFile
 except:
     SKIPOLE_AVAILABLE = False
 
@@ -37,9 +37,9 @@ def _start_call(called_ident, skicall):
     "When a call is initially received this function is called."
     if called_ident is None:
         # blobs are served at /projectpath/blobs
-        servedfile = skicall.map_url_to_server("blobs", skicall.proj_data["blob_folder"], "application/octet-stream")
+        servedfile = skicall.map_url_to_server("blobs", skicall.proj_data["blob_folder"])
         if servedfile:
-            return servedfile
+            raise ServeFile(servedfile, mimetype="application/octet-stream")
         return
 
     if skicall.ident_data:

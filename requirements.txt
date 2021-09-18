@@ -1,5 +1,5 @@
 indi-mr>=0.2.3
 paho-mqtt>=1.5.1
 redis>=3.5.3
-skipole>=5.2.1
+skipole>=5.4.1
 waitress>=1.4.4
