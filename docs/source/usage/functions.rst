@@ -36,6 +36,7 @@ which displays::
     optional arguments:
       -h, --help            show this help message and exit
       -p PORT, --port PORT  Port of the web service (default 8000).
+      --host HOST           Listenning IP address of the web service (default localhost).
       --iport IPORT         Port of the indiserver (default 7624).
       --ihost IHOST         Hostname of the indiserver (default localhost).
       --rport RPORT         Port of the redis server (default 6379).
