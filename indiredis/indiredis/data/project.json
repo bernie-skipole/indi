@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "indiredis web client",
-"version": "0.4.2",
-"skipole": "5.4.1",
+"version": "0.4.3",
+"skipole": "5.5.2",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,

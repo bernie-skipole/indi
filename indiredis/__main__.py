@@ -27,7 +27,7 @@ from waitress import serve
 from . import make_wsgi_app
 
 
-version = "0.4.2"
+version = "0.4.3"
 
 if __name__ == "__main__":
 
@@ -36,6 +36,7 @@ if __name__ == "__main__":
         description="INDI web client communicating to indiserver and saving data to redis and to a BLOB directory.")
     parser.add_argument("blobdirectorypath", help="Path of the directory where BLOB's will be set")
     parser.add_argument("-p", "--port", type=int, default=8000, help="Port of the web service (default 8000).")
+    parser.add_argument("--host", default="localhost", help="Listenning IP address of the web service (default localhost).")
     parser.add_argument("--iport", type=int, default=7624, help="Port of the indiserver (default 7624).")
     parser.add_argument("--ihost", default="localhost", help="Hostname of the indiserver (default localhost).")
     parser.add_argument("--rport", type=int, default=6379, help="Port of the redis server (default 6379).")
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     ###############################################################################
 
     # serve the application with the python waitress web server in another thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':args.port})
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
     webapp.start()
 
     # and start the blocking function inditoredis
