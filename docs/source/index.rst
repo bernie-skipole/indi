@@ -10,6 +10,7 @@ indiredis - an INDI Client
    usage/functions.rst
    usage/references.rst
    usage/license.rst
+   usage/docker.rst
 
 
 Indices and tables
