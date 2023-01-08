@@ -15,7 +15,7 @@ should enable you to view and control the connected instruments.
 """
 
 
-import sys, os, threading, argparse
+import threading, argparse
 
 from indi_mr import inditoredis, indi_server, redis_server
 
@@ -57,18 +57,6 @@ if __name__ == "__main__":
 
     # create a wsgi application
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
-    if application is None:
-        print("ERROR: Are you sure the skipole framework is installed?")
-        sys.exit(1)
-
-    ###################### Remove for deployment ##################################
-    #                                                                              #
-    #from skipole import skiadmin, set_debug                                       #
-    #set_debug(True)                                                               #
-    #skiadmin_application = skiadmin.makeapp(editedprojname='indiredis')           #
-    #application.add_project(skiadmin_application, url='/skiadmin')                #
-    #                                                                              #
-    ###############################################################################
 
     # serve the application with the python waitress web server in another thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})

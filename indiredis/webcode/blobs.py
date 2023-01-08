@@ -1,18 +1,8 @@
 
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
-from os import listdir
-from os.path import isfile, join
+from os.path import isfile
 
-
-from skipole import FailPage
-
-from indi_mr import tools
-
-## hiddenfields are
-#
-# propertyname
-# sectionindex
 
 def _safekey(key):
     """Provides a base64 encoded key from a given key"""
