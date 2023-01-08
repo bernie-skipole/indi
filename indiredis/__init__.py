@@ -15,17 +15,11 @@ make_wsgi_app() in your own script with your preferred web server.
 """ 
 
 
-import os, sys, pathlib
+import os, pathlib
 
 from datetime import datetime
 
-
-SKIPOLE_AVAILABLE = True
-try:
-    from skipole import WSGIApplication, use_submit_list
-    from skipole import skis, ServeFile
-except:
-    SKIPOLE_AVAILABLE = False
+from skipole import WSGIApplication, use_submit_list, skis, ServeFile
 
 from indi_mr import tools
 
@@ -65,14 +59,10 @@ def _start_call(called_ident, skicall):
     return called_ident
 
 
-try:
-    @use_submit_list
-    def _submit_data(skicall):
-        "This function is called when a Responder wishes to submit data for processing in some manner"
-        return
-except NameError:
-    # if skipole is not imported @use_submit_list will flag a NameError 
-    SKIPOLE_AVAILABLE = False
+@use_submit_list
+def _submit_data(skicall):
+    "This function is called when a Responder wishes to submit data for processing in some manner"
+    return
 
 
 def _end_call(page_ident, page_type, skicall):
@@ -120,8 +110,6 @@ def make_wsgi_app(redisserver, blob_folder='', url="/"):
     :return: A WSGI callable application
     :rtype: skipole.WSGIApplication
     """
-    if not SKIPOLE_AVAILABLE:
-        return
 
     if blob_folder:
         blob_folder = pathlib.Path(blob_folder).expanduser().resolve()

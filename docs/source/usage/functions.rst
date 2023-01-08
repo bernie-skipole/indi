@@ -71,7 +71,6 @@ In terminal two, run inditoredis with the following script::
 
 In terminal three, run the following web service::
 
-    import sys
     from indi_mr import redis_server
     from indiredis import make_wsgi_app
 
@@ -85,9 +84,6 @@ In terminal three, run the following web service::
     # create a wsgi application, which requires the redis_host tuple and
     # set the blob_folder to a directory of your choice
     application = make_wsgi_app(redis_host, blob_folder='/path/to/blob_folder')
-    if application is None:
-        print("ERROR: Are you sure the skipole framework is installed?")
-        sys.exit(1)
 
     # blocking call which serves the application with the python waitress web server
     serve(application, host="localhost", port=8000)
@@ -105,7 +101,7 @@ https://indi-mr.readthedocs.io
 A further example, still with indiserver running in another terminal, which shows how inditoredis
 and the web service can be run by a single script::
 
-    import threading, sys
+    import threading
 
     from indi_mr import inditoredis, indi_server, redis_server
 
@@ -127,9 +123,6 @@ and the web service can be run by a single script::
 
     # create a wsgi application
     application = make_wsgi_app(redis_host, blob_folder=BLOBS)
-    if application is None:
-        print("ERROR:Are you sure the skipole framework is installed?")
-        sys.exit(1)
 
     # serve the application with the python waitress web server in its own thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':8000})
@@ -147,7 +140,7 @@ accepting host, port, blob_folder, etc., as script arguments.
 
 And a further example using the driverstoredis function, which does not need indiserver::
 
-    import threading, sys
+    import threading
 
     from indi_mr import driverstoredis, redis_server
 
@@ -165,9 +158,6 @@ And a further example using the driverstoredis function, which does not need ind
 
     # create a wsgi application
     application = make_wsgi_app(redis_host, blob_folder=BLOBS)
-    if application is None:
-        print("ERROR:Are you sure the skipole framework is installed?")
-        sys.exit(1)
 
     # serve the application with the python waitress web server in its own thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':8000})
@@ -176,6 +166,7 @@ And a further example using the driverstoredis function, which does not need ind
 
     # and start driverstoredis
     driverstoredis(["indi_simulator_telescope", "indi_simulator_ccd"], redis_host, blob_folder=BLOBS)
+
 
 INDI over MQTT
 ^^^^^^^^^^^^^^
@@ -208,7 +199,7 @@ The above script uses the blocking function driverstomqtt to run the drivers, an
 INDI data via MQTT. At the central site where the redis and web servers are, the following is run::
 
 
-    import threading, sys
+    import threading
 
     from indi_mr import mqtttoredis, mqtt_server, redis_server
 
@@ -227,9 +218,6 @@ INDI data via MQTT. At the central site where the redis and web servers are, the
 
     # create a wsgi application
     application = make_wsgi_app(redis_host, blob_folder=BLOBS)
-    if application is None:
-        print("ERROR:Are you sure the skipole framework is installed?")
-        sys.exit(1)
 
     # serve the application with the python waitress web server in its own thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':'localhost', 'port':8000})
