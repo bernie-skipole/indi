@@ -59,9 +59,6 @@ In another directory, create a Dockerfile::
 
     FROM python:latest
 
-    # Here we define '/application' as base directory in the image.
-    WORKDIR /application
-
     # install dependencies
     RUN pip install --no-cache-dir indiredis
 
