@@ -9,18 +9,13 @@ This Python3 package provides an INDI web client for general Instrument control.
 
 INDI - Instrument Neutral Distributed Interface.
 
-The package does not include indiserver or drivers, but is compatable with them.
+The package does not include indiserver or drivers, but is compatable with them. indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on a port for connecting clients.
 
 For further information on INDI, see :ref:`references`.
 
-Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
+Though the INDI protocol is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
-The package can be imported, or run directly with the python -m option.
-
-The package is associated with the package indi-mr, which provides functions communicating between INDI instrument drivers and a redis database.
-
-If you run indiredis with the python -m option, then a script is run which imports the waitress web server, and indi-mr.inditoredis, which communicates to indiserver,
-and provides an INDI web client.
+If you run indiredis with the python -m option, then the application is run which communicates to indiserver, and provides an INDI web client.
 
  For example:
 
@@ -34,6 +29,8 @@ Usage of this client is then::
 
 
 The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images will be stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
+
+This web client requires a redis server, which stores the instrument data.
 
 For further usage information, including setting ports and hosts, try::
 
