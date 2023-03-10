@@ -346,6 +346,12 @@
 "widget_class": "w3-table w3-theme-d1 w3-border w3-bordered"
 }
 },
+"lists": {
+"FileList": {
+"button_class": "w3-button w3-block w3-black w3-left-align",
+"button_style": "margin-left:auto;width:60%;margin-right:auto;"
+}
+},
 "logins": {
 "NamePasswd1": {
 "button_class": "w3-button w3-theme-d4 w3-margin",

@@ -2,8 +2,8 @@
 "url": "/",
 "default_language": "en",
 "brief": "indiredis web client",
-"version": "0.4.4",
-"skipole": "5.5.2",
+"version": "0.5.0",
+"skipole": "5.5.9",
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
@@ -959,12 +959,12 @@
 "name": "lvelements",
 "brief": "Table of light vector elements",
 "fields": {
-"titles": [],
 "contents": [],
 "even_class": "",
 "header_class": "w3-hide",
 "odd_class": "",
 "show": true,
+"titles": [],
 "widget_class": "w3-table w3-bordered w3-centered",
 "widget_style": ""
 }
@@ -2704,15 +2704,15 @@
 [
 "Widget",
 {
-"class": "headers.NavButtons2",
+"class": "lists.FileList",
 "name": "bloblinks",
-"brief": "List of links for downloading blobs",
+"brief": "Lists and allows download of files",
 "fields": {
-"button_class": "w3-bar-item w3-button w3-padding-16",
-"button_style": "",
-"nav_links": [],
+"button_class": "w3-button w3-block w3-black w3-left-align",
+"button_style": "margin-left:auto;width:60%;margin-right:auto;",
+"file_links": [],
 "show": true,
-"widget_class": "w3-bar-block w3-black",
+"widget_class": "",
 "widget_style": ""
 }
 }
@@ -2944,6 +2944,31 @@
 [
 "Widget",
 {
+"class": "links.ButtonLink1",
+"name": "callblobfolder",
+"brief": "Calls blobfolder to list blobs",
+"fields": {
+"button_text": "BLOB folder",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "blobfolder",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": "width:20em;"
+}
+}
+],
+[
+"Widget",
+{
 "class": "error_messages.ErrorPara",
 "name": "top_error",
 "brief": "Default error widget for the page",
@@ -3028,7 +3053,8 @@
 "section_name": "device",
 "placename": "device",
 "multiplier": 0,
-"mtag": "div"
+"mtag": "div",
+"show": true
 }
 ]
 ]
@@ -3618,7 +3644,8 @@
 "section_name": "property",
 "placename": "property",
 "multiplier": 0,
-"mtag": "div"
+"mtag": "div",
+"show": true
 }
 ]
 ]

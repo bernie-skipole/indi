@@ -21,6 +21,10 @@ def _fromsafekey(safekey):
 def setup(skicall):
     "Fills in the blobs management page"
 
+    if not skicall.ident_data:
+        # there is no device properties information
+        skicall.page_data['backtoproperties', 'show'] = False
+
     blob_folder = skicall.proj_data["blob_folder"]
     if not blob_folder:
         skicall.page_data['nothingfound', 'show'] = True
@@ -36,16 +40,15 @@ def setup(skicall):
 
     # The widget has links formed from a list of lists
     # 0 : The url, label or ident of the target page of the link
-    # 1 : The displayed text of the link
-    # 2 : If True, ident is appended to link even if there is no get field
-    # 3 : The get field data to send with the link
+    # 1 : The displayed filename of the link
+    # 2 : If True, download attribute is set in the link    
 
     blobfiles.sort(reverse=True)
     bloblinks = []
     for bf in blobfiles:
         # create a link to blobs/blobfile
-        bloblinks.append([ "blobs/" + bf, bf, False, ""])
-    skicall.page_data['bloblinks', 'nav_links'] = bloblinks
+        bloblinks.append([ "blobs/" + bf, bf, True])
+    skicall.page_data['bloblinks', 'file_links'] = bloblinks
 
 
 

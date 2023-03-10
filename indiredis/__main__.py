@@ -27,7 +27,7 @@ from waitress import serve
 from . import make_wsgi_app
 
 
-version = "0.4.4"
+version = "0.5.0"
 
 if __name__ == "__main__":
 
@@ -57,6 +57,12 @@ if __name__ == "__main__":
 
     # create a wsgi application
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
+
+    #### for development #####################
+    #from skilift import make_skiadmin
+    #skiadmin_application = make_skiadmin(editedprojname='indiredis', examples="http://www.webparametrics.co.uk/skiwidgets/")
+    #application.add_project(skiadmin_application, url='/skiadmin')
+    ##########################################
 
     # serve the application with the python waitress web server in another thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
