@@ -3,11 +3,11 @@ The indiredis package
 
 .. automodule:: indiredis
 
-make_wsgi_app
-^^^^^^^^^^^^^
 
-.. autofunction:: indiredis.make_wsgi_app
 
+
+Command line
+^^^^^^^^^^^^
 
 This particular client application is general purpose, learning all instrument properties from the
 redis store.
@@ -51,8 +51,87 @@ which displays::
       --version             show program's version number and exit
 
 
-If you want to import indiredis and run your own web server in your own script, further examples are
-given below which can be adapted to your own system.
+Apart from the command line, indiredis can be imported which makes the following functions available.
+
+
+runclient
+^^^^^^^^^
+
+.. autofunction:: indiredis.runclient
+
+
+This can be used in your own python script, for example::
+
+    import indiredis
+    
+    # blocking call
+    indiredis.runclient("/path/to/configfile")
+
+and this would run the web client.
+
+The configfile has format::
+
+    [PARAMETERS]
+    # Set this to the folder where Blobs will be stored
+    blob_folder = path/to/blob/folder
+    # Leave the password empty or set it to a hashed password
+    # string which will be required to access the web pages
+    hashedpassword
+    # web service host and port
+    host = localhost
+    port = 8000
+    # indi server host and port
+    ihost = localhost
+    iport = 7624
+    # redis server host and port
+    rhost = localhost
+    rport = 6379
+    # Prefix applied to redis keys
+    prefix = indi_
+    # Redis channel used to publish data to indiserver
+    toindipub = to_indi
+    # Redis channel on which data is published from indiserver 
+    fromindipub = from_indi
+
+It should be noted this has a password option, if set to nothing, as shown above, no password is applied, however if set as::
+
+    hashedpassword = hashstring
+
+Where the string is the hash of a password, then the web site will show a login page, and will require the password to be submitted.
+
+The hash can be created using::
+
+    import hashlib
+    password = "mypassword"
+    print(hashlib.sha512( password.encode('utf-8') ).hexdigest())
+
+And the result copied to the config file. This has the advantage that no password is stored in clear on the server.
+
+As well as creating the config file manually, you could use the following function.
+
+
+confighelper
+^^^^^^^^^^^^
+
+.. autofunction:: indiredis.confighelper
+
+
+Typically, in the REPL you would run::
+
+    import indiredis
+    indiredis.confighelper("/path/to/new/configfile")
+    
+You will be asked for each parameter, this function will do the password hashing, and will finally produce the config file.
+
+
+make_wsgi_app
+^^^^^^^^^^^^^
+
+.. autofunction:: indiredis.make_wsgi_app
+
+
+make_wsgi_app can be used if you want run your own web server in your own script, further examples are
+given below which can be adapted to your own system
 
 Open three terminals.
 
