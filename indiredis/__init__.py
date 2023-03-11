@@ -15,13 +15,15 @@ make_wsgi_app() in your own script with your preferred web server.
 """ 
 
 
-import os, pathlib, time
+import os, sys, pathlib, time, configparser, hashlib, threading
 
 from datetime import datetime
 
-from skipole import WSGIApplication, use_submit_list, skis, ServeFile, set_debug
+from waitress import serve
 
-from indi_mr import tools
+from skipole import WSGIApplication, use_submit_list, skis, ServeFile
+
+from indi_mr import tools, inditoredis, indi_server, redis_server
 
 PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
 PROJECT = 'indiredis'
@@ -148,6 +150,8 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
     :type blob_folder: String
     :param url: URL at which the web service is served
     :type url: String
+    :param hashedpassword: Hashed password or empty value
+    :type hashedpassword: String
     :return: A WSGI callable application
     :rtype: skipole.WSGIApplication
     """
@@ -182,5 +186,270 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
     application.add_project(skis_application, url=skisurl)
 
     return application
+    
+
+# The function confighelper helps generate a config file which should look like:
+
+#  [PARAMETERS]
+#  # Set this to the folder where Blobs will be stored
+#  blob_folder = path/to/blob/folder
+#  # Leave the password empty or set it to a hashed password
+#  # string which will be required to access the web pages
+#  hashedpassword
+#  # web service host and port
+#  host = localhost
+#  port = 8000
+#  # indi server host and port
+#  ihost = localhost
+#  iport = 7624
+#  # redis server host and port
+#  rhost = localhost
+#  rport = 6379
+#  # Prefix applied to redis keys
+#  prefix = indi_
+#  # Redis channel used to publish data to indiserver
+#  toindipub = to_indi
+#  # Redis channel on which data is published from indiserver 
+#  fromindipub = from_indi
+
+
+
+def confighelper(path):
+    """This generates a config file and is normally run in the python REPL,
+    path should be the path of the file you wish to make, and should not
+    already exist. You will be asked a series of questions and then the
+    file will be generated.
+       
+    :param path: path of the file to be generated
+    :type path: String
+    """
+    
+    hp = "localhost:8000"
+    ihp = "localhost:7624"
+    rhp = "localhost:6379"
+    prefix = "indi_"
+    toindipub = "to_indi"
+    fromindipub = "from_indi"
+
+    # the path should be to a directory which exits, but not an existing file
+
+    configfile = os.path.abspath(os.path.expanduser(path))
+    if os.path.exists(configfile):
+        print(f"Error: {configfile} already exists!")
+        sys.exit(1)
+
+    configdir = os.path.dirname(configfile)
+    if not os.path.isdir(configdir):
+        print(f"Error: the directory {configdir} has not been found!")
+        sys.exit(1)
+
+    while True:
+        print("Type in the host and port where the web service will be served,\nas colon separated host:number")
+        newhp = input("Currently : " + hp + "\nEnter to accept, or input new value>")
+        if not newhp:
+            newhp = hp
+        if ":" not in newhp:
+            print("Invalid web host:port")
+            continue
+        try:
+            host,port = newhp.split(":")
+            port = int(port)
+        except:
+            print("Invalid web host:port")
+            continue
+        print("Value set at : " + newhp + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+        
+    while True:
+        print("\nType in the host and port of the indi service to connect to,\nas colon separated host:number")
+        newihp = input("Currently : " + ihp + "\nEnter to accept, or input new value>")
+        if not newihp:
+            newihp = ihp
+        if ":" not in newihp:
+            print("Invalid indi host:port")
+            continue
+        try:
+            ihost,iport = newihp.split(":")
+            iport = int(iport)
+        except:
+            print("Invalid indi host:port")
+            continue
+        print("Value set at : " + newihp + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nType in the host and port of the redis service to connect to,\nas colon separated host:number")
+        newrhp = input("Currently : " + rhp + "\nEnter to accept, or input new value>")
+        if not newrhp:
+            newrhp = rhp
+        if ":" not in newrhp:
+            print("Invalid redis host:port")
+            continue
+        try:
+            rhost,rport = newrhp.split(":")
+            rport = int(rport)
+        except:
+            print("Invalid redis host:port")
+            continue
+        print("Value set at : " + newrhp + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nType in a string which will be prefixed to the indi keys saved in redis.\nThis is used to avoid any other uses of redis you may have.")
+        newprefix = input("Currently : " + prefix + "\nEnter to accept, or input new string>")
+        if not newprefix:
+            newprefix = prefix
+        print("String set at : " + newprefix + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nType in a string which will be used as a redis publish channel when data is to be transmitted to the INDI service.")
+        newtoindipub = input("Currently : " + toindipub + "\nEnter to accept, or input new string>")
+        if not newtoindipub:
+            newtoindipub = toindipub
+        print("String set at : " + newtoindipub + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nType in a string which will be used as a redis publish channel when data is received from the INDI service.")
+        newfromindipub = input("Currently : " + fromindipub + "\nEnter to accept, or input new string>")
+        if not newfromindipub:
+            newfromindipub = fromindipub
+        print("String set at : " + newfromindipub + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nType in a path to the folder where Blobs will be stored.")
+        blob_folder = input("input path>")
+        if not blob_folder:
+            continue
+        blob_folder = os.path.abspath(os.path.expanduser(blob_folder))
+        print("BLOB folder set at : " + blob_folder + "\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    while True:
+        print("\nEnter for no password, or type in a password which will be used to access the client.")
+        password = input("input password>")
+        if password:
+            print("Password set at : " + password + "\n")
+        else:
+            print("No password set.\n")
+        q = input("OK (y/n)?")
+        if q == "y" or q == "Y":
+            break
+
+    print("\nAll parameters have been set, type y to save the config file, or any other character to exit without creating a file.")
+    proceed = input("Create file (y/n)?>")
+    if proceed != "y" and proceed != "Y":
+        sys.exit(0)
+
+    if password:
+        hashedpassword = hashlib.sha512( password.encode('utf-8') ).hexdigest()
+    else:
+        hashedpassword = None
+        
+
+    config = configparser.ConfigParser(allow_no_value=True)
+
+    config['PARAMETERS'] = { "# Set this to the folder where Blobs will be stored": None,
+                             'blob_folder': blob_folder,
+                             "# Leave the password empty or set it to a hashed password": None,
+                             "# string which will be required to access the web pages": None,
+                             'hashedpassword': hashedpassword,
+                             '# web service host and port': None,
+                             'host': host,
+                             'port': port,
+                             '# indi server host and port': None,
+                             'ihost': ihost,
+                             'iport': iport,
+                             '# redis server host and port': None,
+                             'rhost': rhost,
+                             'rport': rport,
+                             '# Prefix applied to redis keys': None,
+                             'prefix': newprefix,
+                             '# Redis channel used to publish data to indiserver': None,
+                             'toindipub': newtoindipub,
+                             '# Redis channel on which data is published from indiserver': None,
+                             'fromindipub': newfromindipub
+                           }
+
+    with open(configfile, 'w') as cf:
+        config.write(cf)
+
+    print(f"File {configfile} has been created")
+    sys.exit(0)
+
+
+def _read_config(configfile):
+    "Reads the configfile and returns dictionary of parameters"
+    config = configparser.ConfigParser()
+    config.read(configfile)
+    params = config['PARAMETERS']
+    configdict = {}
+    configdict['host'] = params.get('host', 'localhost')
+    configdict['port'] = params.getint('port', 8000)
+    configdict['ihost'] = params.get('ihost', 'localhost')
+    configdict['iport'] = params.getint('iport', 7624)
+    configdict['rhost'] = params.get('rhost', 'localhost')
+    configdict['rport'] = params.getint('rport', 6379)
+    configdict['prefix'] = params.get('prefix', 'indi_')
+    configdict['toindipub'] = params.get('toindipub', 'to_indi')
+    configdict['fromindipub'] = params.get('fromindipub', 'from_indi')
+    configdict['hashedpassword'] = params.get('hashedpassword', '')
+    configdict['blob_folder'] = params['blob_folder']
+    return configdict
+    
+
+def runclient(configfile):
+    """Blocking call, which given the path to a config reads the
+    parameters and runs the web client 
+
+    :param configfile: path to the config file
+    :type configfile: String
+    """
+    
+    configfile = os.path.abspath(os.path.expanduser(configfile))
+    if not os.path.isfile(configfile):
+        print("The configuration file has not been found")
+        sys.exit(1)
+
+    configdict = _read_config(configfile)
+
+    # define the hosts/ports where servers are listenning, these functions return named tuples
+    # which are required as arguments to inditoredis() and to make_wsgi_app()
+
+    indi_host = indi_server(host=configdict["ihost"], port=configdict["iport"])
+    redis_host = redis_server(host=configdict["rhost"], port=configdict["rport"],
+                              db=0, password='',
+                              keyprefix=configdict['prefix'],
+                              to_indi_channel=configdict['toindipub'],
+                              from_indi_channel=configdict['fromindipub'])
+
+    # create a wsgi application
+    application = make_wsgi_app(redis_host, configdict['blob_folder'], url='/', hashedpassword=configdict['hashedpassword'])
+
+    # serve the application with the python waitress web server in another thread
+    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':configdict['host'], 'port':configdict['port']})
+    webapp.start()
+
+    # and start the blocking function inditoredis
+    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
+
+
+
 
 
