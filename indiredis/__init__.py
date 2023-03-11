@@ -15,7 +15,7 @@ make_wsgi_app() in your own script with your preferred web server.
 """ 
 
 
-import os, pathlib
+import os, pathlib, time
 
 from datetime import datetime
 
@@ -26,7 +26,6 @@ from indi_mr import tools
 PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
 PROJECT = 'indiredis'
 
-set_debug(True)
 
 def _start_call(called_ident, skicall):
     "When a call is initially received this function is called."
@@ -121,17 +120,20 @@ def _end_call(page_ident, page_type, skicall):
 
 def _is_user_logged_in(skicall):
     "Checks if user is logged in"
-    if PROJECT not in skicall.received_cookies:
+    proj = skicall.proj_ident
+    if proj not in skicall.received_cookies:
         return False
-    # get cookie
-    rediskey = skicall.proj_data["redisserver"].keyprefix + 'cookiestring'
+    receivedcookie = skicall.received_cookies[proj]
+    # check cookie exists in redis sorted set
+    rediskey = skicall.proj_data["rediskey"]
     rconn = skicall.proj_data["rconn"]
-    cookievalue = rconn.get(rediskey)
-    if not cookievalue:
+    # check the score of this cookie in the sorted set
+    score = rconn.zscore(rediskey, receivedcookie)
+    # if this cookie has a score of None, it does not exist
+    if not score:
         return False
-    cookiestring = cookievalue.decode('utf-8')
-    if skicall.received_cookies[PROJECT] != cookiestring:
-        return False
+    # cookie exist, update its score - which is the unix timestamp
+    rconn.zadd(rediskey, {receivedcookie:time.time()}, xx=True)
     return True
     
 
@@ -153,13 +155,13 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
     if blob_folder:
         blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
         
-    if not hashedpassword:
-        hashedpassword = 'b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86'
-
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)
+    # and pass parameters in proj_data, note that resdiskey will be the key used to store cookies, created
+    # as users log in
     proj_data = {"rconn":rconn,
                  "redisserver":redisserver,
+                 "rediskey":redisserver.keyprefix + 'cookies',
                  "blob_folder":blob_folder,
                  "hashedpassword":hashedpassword
                 }

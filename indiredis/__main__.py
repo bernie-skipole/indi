@@ -54,15 +54,9 @@ if __name__ == "__main__":
     redis_host = redis_server(host=args.rhost, port=args.rport, db=0, password='', keyprefix=args.prefix,
                               to_indi_channel=args.toindipub, from_indi_channel=args.fromindipub)
 
-
     # create a wsgi application
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
 
-    #### for development #####################
-    from skilift import make_skiadmin
-    skiadmin_application = make_skiadmin(editedprojname='indiredis', examples="http://www.webparametrics.co.uk/skiwidgets/")
-    application.add_project(skiadmin_application, url='/skiadmin')
-    ##########################################
 
     # serve the application with the python waitress web server in another thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
