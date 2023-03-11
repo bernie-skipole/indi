@@ -7,6 +7,7 @@
 "specialpages": {
 "blobfolder": 14,
 "changegroup": 8,
+"checklogin": 17,
 "checkupdates": 5,
 "favicon": 3002,
 "general_json": 2070,
@@ -16,6 +17,8 @@
 "homeonanyupdate": 6,
 "jquery_core": "skis,jquery_core",
 "json_failed": 11,
+"login": 4004,
+"logout": 18,
 "no_javascript": 10,
 "properties": 3,
 "redirector": 2030,
@@ -2709,7 +2712,7 @@
 "brief": "Lists and allows download of files",
 "fields": {
 "button_class": "w3-button w3-block w3-black w3-left-align",
-"button_style": "margin-left:auto;width:60%;margin-right:auto;",
+"button_style": "margin-left:auto;width:60%;margin-right:auto;margin-bottom:2px;",
 "file_links": [],
 "show": true,
 "widget_class": "",
@@ -2937,7 +2940,7 @@
 "show_error": "",
 "target": "",
 "widget_class": "w3-button w3-block w3-theme-d4",
-"widget_style": "width:20em;"
+"widget_style": "width:20em;margin-bottom:2px;"
 }
 }
 ],
@@ -2958,6 +2961,31 @@
 "get_field4": "",
 "hide": false,
 "link_ident": "blobfolder",
+"show": true,
+"show_error": "",
+"target": "",
+"widget_class": "w3-button w3-block w3-theme-d4",
+"widget_style": "width:20em;margin-bottom:2px;"
+}
+}
+],
+[
+"Widget",
+{
+"class": "links.ButtonLink1",
+"name": "logout",
+"brief": "Logs the user out",
+"fields": {
+"button_text": "Logout",
+"clear_error": false,
+"error_class": "w3-button w3-block w3-theme-action",
+"force_ident": false,
+"get_field1": "",
+"get_field2": "",
+"get_field3": "",
+"get_field4": "",
+"hide": false,
+"link_ident": "logout",
 "show": true,
 "show_error": "",
 "target": "",
@@ -3066,6 +3094,304 @@
 "tag_name": "hr",
 "brief": "Line",
 "show": true
+}
+]
+]
+}
+]
+]
+}
+]
+]
+}
+]
+},
+"login": {
+"ident": 4004,
+"brief": "Login page",
+"TemplatePage": {
+"show_backcol": false,
+"last_scroll": false,
+"interval": 0,
+"interval_target": null,
+"catch_to_html": null,
+"lang": "en",
+"backcol": "#ffffff",
+"default_error_widget": [
+"",
+"top_error"
+]
+},
+"head": [
+"Part",
+{
+"tag_name": "head",
+"brief": "The head section of the page",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The charset meta declaration",
+"show": true,
+"attribs": {
+"charset": "utf-8"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "meta",
+"brief": "The viewport meta declaration",
+"show": true,
+"attribs": {
+"content": "width=device-width, initial-scale=1",
+"name": "viewport"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "title",
+"brief": "The page title element",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Login"
+]
+]
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "link to favicon",
+"show": true,
+"attribs": {
+"href": "{favicon}",
+"rel": "icon",
+"type": "image/svg+xml"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_css",
+"show": true,
+"attribs": {
+"href": "{w3_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"ClosedPart",
+{
+"tag_name": "link",
+"brief": "css link to w3_theme_ski.css",
+"show": true,
+"attribs": {
+"href": "{w3_theme_ski_css}",
+"rel": "stylesheet",
+"type": "text/css"
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to jquery_core",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{jquery_core}"
+},
+"parts": []
+}
+],
+[
+"Part",
+{
+"tag_name": "script",
+"brief": "script link to skipole_js",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"src": "{skipole_js}"
+},
+"parts": []
+}
+]
+]
+}
+],
+"body": [
+"Part",
+{
+"tag_name": "body",
+"brief": "The body section of the page",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-theme-d1"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "containing div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "error_messages.ErrorPara",
+"name": "top_error",
+"brief": "Default error widget for the page",
+"fields": {
+"clear_error": false,
+"hide": true,
+"show": true,
+"show_error": "An unknown error has occurred.",
+"widget_class": "w3-red",
+"widget_style": ""
+}
+}
+],
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "containing div",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"class": "w3-container",
+"style": "max-width: 60em; margin: auto;"
+},
+"parts": [
+[
+"Widget",
+{
+"class": "inputforms.SubmitForm1",
+"name": "submitform1",
+"brief": "Form containing password input field",
+"fields": {
+"action": "checklogin",
+"action_json": "",
+"button_class": "w3-button w3-theme-d4",
+"button_text": "Submit",
+"button_wait_text": "",
+"clear_error": false,
+"container_class": "w3-section",
+"div_class": "",
+"enctype": "",
+"error_class": "w3-panel w3-red",
+"hidden_field1": "",
+"hidden_field2": "",
+"hidden_field3": "",
+"hidden_field4": "",
+"left_class": "",
+"left_label": "submit to log in :",
+"left_style": "display:inline-block;margin-right:1%;text-align:right;width:30%;",
+"right_class": "",
+"right_label": "",
+"right_style": "",
+"show": true,
+"show_error": "",
+"widget_class": "w3-container",
+"widget_style": ""
+},
+"container_0": [
+[
+"Part",
+{
+"tag_name": "div",
+"brief": "div holding input",
+"show": true,
+"hide_if_empty": false,
+"attribs": {
+"style": "margin-left:10em;margin-top:40px;"
+},
+"parts": [
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Paragraph of set password",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"Text",
+"Please input password:"
+]
+]
+}
+],
+[
+"ClosedWidget",
+{
+"class": "inputtext.Password1",
+"name": "password1",
+"brief": "Input field for password",
+"fields": {
+"disabled": false,
+"input_accepted_class": "w3-pale-green",
+"input_errored_class": "w3-pale-red",
+"input_text": "",
+"maxlength": "20",
+"required": true,
+"set_input_accepted": false,
+"set_input_errored": false,
+"show": true,
+"size": "",
+"widget_class": "",
+"widget_style": ""
+}
+}
+]
+]
+}
+]
+]
+}
+],
+[
+"Part",
+{
+"tag_name": "p",
+"brief": "Holds text",
+"show": true,
+"hide_if_empty": false,
+"parts": [
+[
+"TextBlock",
+{
+"textref": "logintext",
+"failmessage": "TextBlock not found",
+"show": true,
+"escape": true,
+"linebreaks": true
+}
+]
+]
 }
 ]
 ]
@@ -3706,6 +4032,32 @@
 }
 }
 },
+"checklogin": {
+"ident": 17,
+"brief": "Checks input from the login page",
+"RespondPage": {
+"class": "AllowStore",
+"original_args": {
+"allowed_callers": [
+"login"
+],
+"alternate_ident": "logout",
+"fail_ident": "login",
+"submit_list": [
+"webcode",
+"authenticate",
+"login"
+],
+"submit_option": true,
+"target_ident": "home",
+"validate_fail_ident": null,
+"validate_option": false
+},
+"original_fields": {
+"password1:input_text": ""
+}
+}
+},
 "checkupdates": {
 "ident": 5,
 "brief": "If any property updates, refreshes the page",
@@ -3813,6 +4165,24 @@
 "original_fields": {
 "show_error": "Failure when calling a JSON file"
 }
+}
+},
+"logout": {
+"ident": 18,
+"brief": "Logs the user out",
+"RespondPage": {
+"class": "SubmitData",
+"original_args": {
+"allowed_callers": [],
+"fail_ident": "login",
+"submit_list": [
+"webcode",
+"authenticate",
+"logout"
+],
+"target_ident": "login"
+},
+"original_fields": {}
 }
 },
 "no_javascript": {

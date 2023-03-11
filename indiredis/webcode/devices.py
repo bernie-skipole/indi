@@ -30,7 +30,19 @@ def _fromsafekey(safekey):
 def devicelist(skicall):
     "Gets a list of devices and fill index devices page"
     # remove any device, group etc from call_data, since this page does not refer to a single device
+    # however, retain the athenticate value if given
+    if 'authenticate' in skicall.call_data:
+        authenticate = skicall.call_data['authenticate']
+    else:
+       authenticate = None
     skicall.call_data.clear()
+    if authenticate:
+        skicall.call_data['authenticate'] = authenticate
+    # If a password has been set, a logout button is displayed
+    # since the user must have logged in to see this page
+    # if no password, the logout button is not shown
+    if not skicall.proj_data["hashedpassword"]:
+        skicall.page_data['logout', 'show'] = False 
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     checksum1 = ''
@@ -143,7 +155,6 @@ def getProperties(skicall):
     redisserver = skicall.proj_data["redisserver"]
     # publish getProperties
     textsent = tools.getProperties(rconn, redisserver)
-    # print(textsent)
 
 
 def getDeviceProperties(skicall):
@@ -156,7 +167,6 @@ def getDeviceProperties(skicall):
     redisserver = skicall.proj_data["redisserver"]
     # publish getProperties
     textsent = tools.getProperties(rconn, redisserver, device=devicename)
-    # print(textsent)
     # wait two seconds for the data to hopefully refresh
     sleep(2)
     # and refresh the properties on the page

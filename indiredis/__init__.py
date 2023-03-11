@@ -19,16 +19,32 @@ import os, pathlib
 
 from datetime import datetime
 
-from skipole import WSGIApplication, use_submit_list, skis, ServeFile
+from skipole import WSGIApplication, use_submit_list, skis, ServeFile, set_debug
 
 from indi_mr import tools
 
 PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
 PROJECT = 'indiredis'
 
+set_debug(True)
 
 def _start_call(called_ident, skicall):
     "When a call is initially received this function is called."
+
+    if skicall.proj_data["hashedpassword"]:
+        # a password has been set, so pages must be protected
+        if _is_user_logged_in(skicall):
+            # The user is logged in, so do not show the checklogin page
+            if called_ident == (PROJECT, 17):
+                # instead jump to home page
+                return "home"
+        else:
+            # the user is not logged in, only allow the css page and checklogin page
+            if (called_ident == (PROJECT, 1008)) or (called_ident == (PROJECT, 17)):
+                return called_ident
+            # any other page divert to login page
+            return "login"
+
     if called_ident is None:
         # blobs are served at /projectpath/blobs
         servedfile = skicall.map_url_to_server("blobs", skicall.proj_data["blob_folder"])
@@ -67,6 +83,13 @@ def _submit_data(skicall):
 
 def _end_call(page_ident, page_type, skicall):
     """This function is called at the end of a call prior to filling the returned page with skicall.page_data"""
+    if ('authenticate' in skicall.call_data) and skicall.call_data['authenticate']:
+        # a user has logged in, set a cookie
+        return skicall.call_data['authenticate']
+    if ('logout' in skicall.call_data) and skicall.call_data['logout']:
+        # a user has been logged out, set an invalid cookie in the client
+        return "xxxxxxxx"
+        
     if "status" in skicall.call_data:
         # display a modal status message
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
@@ -94,10 +117,26 @@ def _end_call(page_ident, page_type, skicall):
 
     # set this string to ident_data
     skicall.page_data['ident_data'] = identstring
+
+
+def _is_user_logged_in(skicall):
+    "Checks if user is logged in"
+    if PROJECT not in skicall.received_cookies:
+        return False
+    # get cookie
+    rediskey = skicall.proj_data["redisserver"].keyprefix + 'cookiestring'
+    rconn = skicall.proj_data["rconn"]
+    cookievalue = rconn.get(rediskey)
+    if not cookievalue:
+        return False
+    cookiestring = cookievalue.decode('utf-8')
+    if skicall.received_cookies[PROJECT] != cookiestring:
+        return False
+    return True
     
 
 
-def make_wsgi_app(redisserver, blob_folder='', url="/"):
+def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
     """Create a wsgi application which can be served by a WSGI compatable web server.
     Reads and writes to redis stores created by indi-mr
 
@@ -113,10 +152,17 @@ def make_wsgi_app(redisserver, blob_folder='', url="/"):
 
     if blob_folder:
         blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
+        
+    if not hashedpassword:
+        hashedpassword = 'b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86'
 
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)
-    proj_data = {"rconn":rconn, "redisserver":redisserver, "blob_folder":blob_folder}
+    proj_data = {"rconn":rconn,
+                 "redisserver":redisserver,
+                 "blob_folder":blob_folder,
+                 "hashedpassword":hashedpassword
+                }
     application = WSGIApplication(project=PROJECT,
                                   projectfiles=PROJECTFILES,
                                   proj_data=proj_data,

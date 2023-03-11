@@ -59,9 +59,9 @@ if __name__ == "__main__":
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
 
     #### for development #####################
-    #from skilift import make_skiadmin
-    #skiadmin_application = make_skiadmin(editedprojname='indiredis', examples="http://www.webparametrics.co.uk/skiwidgets/")
-    #application.add_project(skiadmin_application, url='/skiadmin')
+    from skilift import make_skiadmin
+    skiadmin_application = make_skiadmin(editedprojname='indiredis', examples="http://www.webparametrics.co.uk/skiwidgets/")
+    application.add_project(skiadmin_application, url='/skiadmin')
     ##########################################
 
     # serve the application with the python waitress web server in another thread
