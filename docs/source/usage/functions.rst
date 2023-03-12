@@ -69,20 +69,24 @@ This can be used in your own python script, for example::
 
 and this would run the web client.
 
-The configfile has format::
+The configfile must exist, and should have format::
 
-    [PARAMETERS]
+    [WEB]
     # Set this to the folder where Blobs will be stored
     blob_folder = path/to/blob/folder
-    # Leave the password empty or set it to a hashed password
-    # string which will be required to access the web pages
-    hashedpassword
+    # Set this to a hashed password string which will be required to access the
+    # web pages, or do not include this parameter if no password is required
+    hashedpassword = hash-of-password
     # web service host and port
     host = localhost
     port = 8000
+    
+    [INDI]
     # indi server host and port
     ihost = localhost
     iport = 7624
+    
+    [REDIS]
     # redis server host and port
     rhost = localhost
     rport = 6379
@@ -93,7 +97,7 @@ The configfile has format::
     # Redis channel on which data is published from indiserver 
     fromindipub = from_indi
 
-It should be noted this has a password option, if set to nothing, as shown above, no password is applied, however if set as::
+It should be noted this has a web client password option. If not included, no password is applied, however if set as::
 
     hashedpassword = hashstring
 

@@ -190,18 +190,22 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 
 # The function confighelper helps generate a config file which should look like:
 
-#  [PARAMETERS]
+#  [WEB]
 #  # Set this to the folder where Blobs will be stored
 #  blob_folder = path/to/blob/folder
-#  # Leave the password empty or set it to a hashed password
-#  # string which will be required to access the web pages
-#  hashedpassword
+#  # Set this to a hashed password string which will be required to access the
+#  # web pages, or do not include this parameter if no password is required
+#  hashedpassword = hash-of-password
 #  # web service host and port
 #  host = localhost
 #  port = 8000
+#
+#  [INDI]
 #  # indi server host and port
 #  ihost = localhost
 #  iport = 7624
+#
+#  [REDIS]
 #  # redis server host and port
 #  rhost = localhost
 #  rport = 6379
@@ -359,24 +363,31 @@ def confighelper(path):
 
     if password:
         hashedpassword = hashlib.sha512( password.encode('utf-8') ).hexdigest()
+        hashedpasswordkey = 'hashedpassword'
     else:
         hashedpassword = None
+        hashedpasswordkey = '# hashedpassword'
         
 
     config = configparser.ConfigParser(allow_no_value=True)
 
-    config['PARAMETERS'] = { "# Set this to the folder where Blobs will be stored": None,
+    config['WEB'] =        { "# Set this to the folder where Blobs will be stored": None,
                              'blob_folder': blob_folder,
-                             "# Leave the password empty or set it to a hashed password": None,
-                             "# string which will be required to access the web pages": None,
-                             'hashedpassword': hashedpassword,
+                             "# Set this to a hashed password string which will be required to access the": None,
+                             "# web pages, or do not include this parameter if no password is required": None,
+                             hashedpasswordkey: hashedpassword,
                              '# web service host and port': None,
                              'host': host,
-                             'port': port,
-                             '# indi server host and port': None,
+                             'port': port
+                           }
+                             
+
+    config['INDI'] =       { '# indi server host and port': None,
                              'ihost': ihost,
-                             'iport': iport,
-                             '# redis server host and port': None,
+                             'iport': iport
+                           }
+
+    config['REDIS'] =      { '# redis server host and port': None,
                              'rhost': rhost,
                              'rport': rport,
                              '# Prefix applied to redis keys': None,
@@ -386,6 +397,7 @@ def confighelper(path):
                              '# Redis channel on which data is published from indiserver': None,
                              'fromindipub': newfromindipub
                            }
+
 
     with open(configfile, 'w') as cf:
         config.write(cf)
@@ -398,19 +410,21 @@ def _read_config(configfile):
     "Reads the configfile and returns dictionary of parameters"
     config = configparser.ConfigParser()
     config.read(configfile)
-    params = config['PARAMETERS']
     configdict = {}
-    configdict['host'] = params.get('host', 'localhost')
-    configdict['port'] = params.getint('port', 8000)
-    configdict['ihost'] = params.get('ihost', 'localhost')
-    configdict['iport'] = params.getint('iport', 7624)
-    configdict['rhost'] = params.get('rhost', 'localhost')
-    configdict['rport'] = params.getint('rport', 6379)
-    configdict['prefix'] = params.get('prefix', 'indi_')
-    configdict['toindipub'] = params.get('toindipub', 'to_indi')
-    configdict['fromindipub'] = params.get('fromindipub', 'from_indi')
-    configdict['hashedpassword'] = params.get('hashedpassword', '')
-    configdict['blob_folder'] = params['blob_folder']
+    webparams = config['WEB']
+    configdict['blob_folder'] = webparams['blob_folder']
+    configdict['hashedpassword'] = webparams.get('hashedpassword', '')
+    configdict['host'] = webparams.get('host', 'localhost')
+    configdict['port'] = webparams.getint('port', 8000)
+    indiparams = config['INDI']
+    configdict['ihost'] = indiparams.get('ihost', 'localhost')
+    configdict['iport'] = indiparams.getint('iport', 7624)
+    redisparams = config['REDIS']
+    configdict['rhost'] = redisparams.get('rhost', 'localhost')
+    configdict['rport'] = redisparams.getint('rport', 6379)
+    configdict['prefix'] = redisparams.get('prefix', 'indi_')
+    configdict['toindipub'] = redisparams.get('toindipub', 'to_indi')
+    configdict['fromindipub'] = redisparams.get('fromindipub', 'from_indi')
     return configdict
     
 
