@@ -12,10 +12,10 @@ Finally it serves the web application with the Python waitress web server.
 
 Instead of running this indiredis package, you could import it, and then run
 make_wsgi_app() in your own script with your preferred web server.
-""" 
+"""
 
 
-import os, sys, pathlib, time, configparser, hashlib, threading
+import os, sys, pathlib, time, configparser, hashlib, threading, json
 
 from datetime import datetime
 
@@ -23,7 +23,7 @@ from waitress import serve
 
 from skipole import WSGIApplication, use_submit_list, skis, ServeFile
 
-from indi_mr import tools, inditoredis, indi_server, redis_server
+from indi_mr import tools, inditoredis, indi_server, redis_server, mqtttoredis, mqtt_server, driverstoredis
 
 PROJECTFILES = os.path.dirname(os.path.realpath(__file__))
 PROJECT = 'indiredis'
@@ -84,13 +84,13 @@ def _submit_data(skicall):
 
 def _end_call(page_ident, page_type, skicall):
     """This function is called at the end of a call prior to filling the returned page with skicall.page_data"""
-    if ('authenticate' in skicall.call_data) and skicall.call_data['authenticate']:
+    if skicall.call_data.get('authenticate'):
         # a user has logged in, set a cookie
         return skicall.call_data['authenticate']
-    if ('logout' in skicall.call_data) and skicall.call_data['logout']:
+    if skicall.call_data.get('logout'):
         # a user has been logged out, set an invalid cookie in the client
         return "xxxxxxxx"
-        
+
     if "status" in skicall.call_data:
         # display a modal status message
         skicall.page_data["status", "para_text"] = skicall.call_data["status"]
@@ -137,7 +137,7 @@ def _is_user_logged_in(skicall):
     # cookie exist, update its score - which is the unix timestamp
     rconn.zadd(rediskey, {receivedcookie:time.time()}, xx=True)
     return True
-    
+
 
 
 def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
@@ -158,7 +158,7 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 
     if blob_folder:
         blob_folder = pathlib.Path(blob_folder).expanduser().resolve()
-        
+
     # The web service needs a redis connection, available in tools
     rconn = tools.open_redis(redisserver)
     # and pass parameters in proj_data, note that resdiskey will be the key used to store cookies, created
@@ -186,7 +186,7 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
     application.add_project(skis_application, url=skisurl)
 
     return application
-    
+
 
 # The function confighelper helps generate a config file which should look like:
 
@@ -200,10 +200,24 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 #  host = localhost
 #  port = 8000
 #
+#  # only one of the following [INDI], [MQTT] or [DRIVERS] should
+#  # be given. They are mutually exclusive.
+#
 #  [INDI]
 #  # indi server host and port
 #  ihost = localhost
 #  iport = 7624
+#
+#  [MQTT]
+#  # mqtt server host, port and client id
+#  mhost = localhost
+#  mport = 1883
+#  mqtt_id = indi_client01
+#
+#  [DRIVERS]
+#  # a list of drivers, for example
+#  indi_simulator_telescope
+#  indi_simulator_ccd
 #
 #  [REDIS]
 #  # redis server host and port
@@ -213,7 +227,7 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 #  prefix = indi_
 #  # Redis channel used to publish data to indiserver
 #  toindipub = to_indi
-#  # Redis channel on which data is published from indiserver 
+#  # Redis channel on which data is published from indiserver
 #  fromindipub = from_indi
 
 
@@ -223,11 +237,11 @@ def confighelper(path):
     path should be the path of the file you wish to make, and should not
     already exist. You will be asked a series of questions and then the
     file will be generated.
-       
+
     :param path: path of the file to be generated
     :type path: String
     """
-    
+
     hp = "localhost:8000"
     ihp = "localhost:7624"
     rhp = "localhost:6379"
@@ -265,7 +279,7 @@ def confighelper(path):
         q = input("OK (y/n)?")
         if q == "y" or q == "Y":
             break
-        
+
     while True:
         print("\nType in the host and port of the indi service to connect to,\nas colon separated host:number")
         newihp = input("Currently : " + ihp + "\nEnter to accept, or input new value>")
@@ -367,7 +381,7 @@ def confighelper(path):
     else:
         hashedpassword = None
         hashedpasswordkey = '# hashedpassword'
-        
+
 
     config = configparser.ConfigParser(allow_no_value=True)
 
@@ -380,7 +394,7 @@ def confighelper(path):
                              'host': host,
                              'port': port
                            }
-                             
+
 
     config['INDI'] =       { '# indi server host and port': None,
                              'ihost': ihost,
@@ -408,17 +422,38 @@ def confighelper(path):
 
 def _read_config(configfile):
     "Reads the configfile and returns dictionary of parameters"
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(allow_no_value=True)
     config.read(configfile)
     configdict = {}
+    if 'WEB' not in config:
+        print("ERROR: The config file does not include a WEB section.")
+        sys.exit(1)
     webparams = config['WEB']
     configdict['blob_folder'] = webparams['blob_folder']
     configdict['hashedpassword'] = webparams.get('hashedpassword', '')
     configdict['host'] = webparams.get('host', 'localhost')
     configdict['port'] = webparams.getint('port', 8000)
-    indiparams = config['INDI']
-    configdict['ihost'] = indiparams.get('ihost', 'localhost')
-    configdict['iport'] = indiparams.getint('iport', 7624)
+    if 'INDI' in config:
+        indiparams = config['INDI']
+        configdict['ihost'] = indiparams.get('ihost', 'localhost')
+        configdict['iport'] = indiparams.getint('iport', 7624)
+    elif 'MQTT' in config:
+        mqttparams = config['MQTT']
+        configdict['mhost'] = mqttparams.get('mhost', 'localhost')
+        configdict['mport'] = mqttparams.getint('mport', 1883)
+        configdict['mqtt_id'] = mqttparams.get('mqtt_id', 'indi_client01')
+    elif 'DRIVERS' in config:
+        drivers = config['DRIVERS']
+        configdict['drivers'] = list(drivers.keys())
+        if not configdict['drivers']:
+            print("ERROR: No drivers given under DRIVERS.")
+            sys.exit(1)
+    else:
+        print("ERROR: No INDI, MQTT or DRIVERS section in the config file.")
+        sys.exit(1)
+    if 'REDIS' not in config:
+        print("ERROR: The config file does not include a REDIS section.")
+        sys.exit(1)
     redisparams = config['REDIS']
     configdict['rhost'] = redisparams.get('rhost', 'localhost')
     configdict['rport'] = redisparams.getint('rport', 6379)
@@ -426,16 +461,16 @@ def _read_config(configfile):
     configdict['toindipub'] = redisparams.get('toindipub', 'to_indi')
     configdict['fromindipub'] = redisparams.get('fromindipub', 'from_indi')
     return configdict
-    
+
 
 def runclient(configfile):
     """Blocking call, which given the path to a config reads the
-    parameters and runs the web client 
+    parameters and runs the web client
 
     :param configfile: path to the config file
     :type configfile: String
     """
-    
+
     configfile = os.path.abspath(os.path.expanduser(configfile))
     if not os.path.isfile(configfile):
         print("The configuration file has not been found")
@@ -443,10 +478,6 @@ def runclient(configfile):
 
     configdict = _read_config(configfile)
 
-    # define the hosts/ports where servers are listenning, these functions return named tuples
-    # which are required as arguments to inditoredis() and to make_wsgi_app()
-
-    indi_host = indi_server(host=configdict["ihost"], port=configdict["iport"])
     redis_host = redis_server(host=configdict["rhost"], port=configdict["rport"],
                               db=0, password='',
                               keyprefix=configdict['prefix'],
@@ -460,10 +491,14 @@ def runclient(configfile):
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':configdict['host'], 'port':configdict['port']})
     webapp.start()
 
-    # and start the blocking function inditoredis
-    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
-
-
-
-
-
+    if "ihost" in configdict:
+        indi_host = indi_server(host=configdict["ihost"], port=configdict["iport"])
+        # start the blocking function inditoredis
+        inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
+    elif "mhost" in configdict:
+        mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"])
+        # start the blocking function mqtttoredis
+        mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, blob_folder=configdict['blob_folder'])
+    elif "drivers" in configdict:
+        # start the blocking function driverstoredis
+        driverstoredis(configdict['drivers'], redis_host, blob_folder=configdict['blob_folder'])
