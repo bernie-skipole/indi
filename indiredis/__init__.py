@@ -244,6 +244,12 @@ def confighelper(path):
 
     hp = "localhost:8000"
     ihp = "localhost:7624"
+    ihost = ""
+    mhp = "localhost:1883"
+    mhost = ""
+    mqtt_id = "indi_client01"
+    newmid = ""
+    drivers = set()
     rhp = "localhost:6379"
     prefix = "indi_"
     toindipub = "to_indi"
@@ -280,24 +286,78 @@ def confighelper(path):
         if q == "y" or q == "Y":
             break
 
-    while True:
-        print("\nType in the host and port of the indi service to connect to,\nas colon separated host:number")
-        newihp = input("Currently : " + ihp + "\nEnter to accept, or input new value>")
-        if not newihp:
-            newihp = ihp
-        if ":" not in newihp:
-            print("Invalid indi host:port")
-            continue
-        try:
-            ihost,iport = newihp.split(":")
-            iport = int(iport)
-        except:
-            print("Invalid indi host:port")
-            continue
-        print("Value set at : " + newihp + "\n")
-        q = input("OK (y/n)?")
+    print("\nYou can specify one of the following three:")
+    print("The host:port of an INDI server (which itself connects to instruments and drivers).")
+    print("Or\nThe host:port of an MQTT server (which connect to instruments using the indi-mr package).")
+    print("Or\nA list of indi drivers, which in turn connect to instruments.\n")
+    q = input("Do you wish to connect to an INDI server (y/n)?")
+    if q == "y" or q == "Y":
+        while True:
+            print("\nType in the host and port of the indi service to connect to,\nas colon separated host:number")
+            newihp = input("Currently : " + ihp + "\nEnter to accept, or input new value>")
+            if not newihp:
+                newihp = ihp
+            if ":" not in newihp:
+                print("Invalid indi host:port")
+                continue
+            try:
+                ihost,iport = newihp.split(":")
+                iport = int(iport)
+            except:
+                print("Invalid indi host:port")
+                continue
+            print("Value set at : " + newihp + "\n")
+            q = input("OK (y/n)?")
+            if q == "y" or q == "Y":
+                break
+    else:
+        # Not indi server, could be mqtt or drivers
+        q = input("\nDo you wish to connect to an MQTT server (y/n)?")
         if q == "y" or q == "Y":
-            break
+            while True:
+                print("\nType in the host and port of the mqtt service to connect to,\nas colon separated host:number")
+                newmhp = input("Currently : " + mhp + "\nEnter to accept, or input new value>")
+                if not newmhp:
+                    newmhp = mhp
+                if ":" not in newmhp:
+                    print("Invalid mqtt host:port")
+                    continue
+                try:
+                    mhost,mport = newmhp.split(":")
+                    mport = int(mport)
+                except:
+                    print("Invalid mqtt host:port")
+                    continue
+                print("Value set at : " + newmhp + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
+            while True:
+                print("\nType in a string which will be the MQTT client ID.\nThis should be unique if there are multiple MQTT clients.")
+                newmid = input("Currently : " + mqtt_id + "\nEnter to accept, or input new string>")
+                if not newmid:
+                    newmid = mqtt_id
+                print("String set at : " + newmid + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
+        else:
+            # neither indi nor mqtt servers, could be drivers
+            q = input("\nDo you wish to define one or more drivers (y/n)?")
+            if q != "y" and q != "Y":
+                print("No other options are available. Exiting without creating config file")
+                sys.exit(0)
+            print("\nType a driver string and Enter, you will then be prompted for the next driver.")
+            print("Continue adding drivers, and then just press Enter without input to finish.")
+            while True:
+                dstring = input("Driver : ")
+                dstring = dstring.strip(" \"\'")
+                if not dstring:
+                    break
+                drivers.add(dstring)
+            if not drivers:
+                print("No drivers specified, no other options are available. Exiting without creating config file")
+                sys.exit(0)
 
     while True:
         print("\nType in the host and port of the redis service to connect to,\nas colon separated host:number")
@@ -395,11 +455,22 @@ def confighelper(path):
                              'port': port
                            }
 
-
-    config['INDI'] =       { '# indi server host and port': None,
+    if ihost:
+        config['INDI'] =   { '# indi server host and port': None,
                              'ihost': ihost,
                              'iport': iport
                            }
+    elif mhost:
+        config['MQTT'] =   { '# mqtt server host, port and client id': None,
+                             'mhost': mhost,
+                             'mport': mport,
+                             'mqtt_id': newmid
+                           }
+    elif drivers:
+        driverdict = { '# a list of drivers': None }
+        for driver in drivers:
+            driverdict[driver] = None
+        config['DRIVERS'] = driverdict
 
     config['REDIS'] =      { '# redis server host and port': None,
                              'rhost': rhost,
