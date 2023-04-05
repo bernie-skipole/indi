@@ -21,7 +21,7 @@ from datetime import datetime
 
 from waitress import serve
 
-from skipole import WSGIApplication, use_submit_list, skis, ServeFile
+from skipole import WSGIApplication, use_submit_list, skis, ServeFile, set_debug
 
 from indi_mr import tools, inditoredis, indi_server, redis_server, mqtttoredis, mqtt_server, driverstoredis
 
@@ -184,6 +184,8 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 
     skis_application = skis.makeapp()
     application.add_project(skis_application, url=skisurl)
+
+    #set_debug(True)
 
     return application
 
@@ -440,7 +442,7 @@ def confighelper(path):
         hashedpasswordkey = 'hashedpassword'
     else:
         hashedpassword = None
-        hashedpasswordkey = '# hashedpassword'
+        hashedpasswordkey = '# hashedpassword ='
 
 
     config = configparser.ConfigParser(allow_no_value=True)

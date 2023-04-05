@@ -1,20 +1,23 @@
 # indiredis
 
+
 This Python3 package provides an INDI web client for general Instrument control.
 
 INDI - Instrument Neutral Distributed Interface.
 
 See https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-The package does not include indiserver or drivers, but is compatable with them.
+The package does not include indiserver or drivers, but is compatable with them, indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on port 7624. This, or other INDI clients, connect to this port and using an XML based protocol, control the connected instruments.
 
-Though INDI is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
+Though the INDI protocol is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
-The package can be imported, or run directly with the python -m option.
+This indiredis package can be imported which gives functions for running a web client connected to an INDI server port, an MQTT server or directly to INDI instrument drivers. If indiredis is run with the python -m option, then the web client is started and connects to an INDI server port.
 
-For example:
+This web client uses a redis database to hold instrument values, so a redis instance is needed, generally running on the same host as indiredis.
 
-Your host should have a redis server running, typically with instruments connected by appropriate drivers and indiserver. For example, in one terminal, run:
+ For example:
+
+Your host typically has instruments connected by appropriate drivers and indiserver. For example, in one terminal, run:
 
 > indiserver -v indi_simulator_telescope indi_simulator_ccd
 
@@ -22,12 +25,13 @@ Usage of this client is then:
 
 > python3 -m indiredis /path/to/blobfolder
 
-
 The directory /path/to/blobfolder should be a path to a directory of your choice, where BLOB's (Binary Large Objects), such as images will be stored, it will be created if it does not exist. Then connecting with a browser to http://localhost:8000 should enable you to view and control the connected instruments.
 
 For further usage information, including setting ports and hosts, try:
 
 > python3 -m indiredis --help
+
+If the package is imported it provides functions for creating the web client, and also connecting to an MQTT server - assuming the INDI XML protocol is being passed via MQTT using the indi-mr python package.
 
 
 ## Installation
@@ -67,5 +71,3 @@ The web service provided here does not apply any authentication.
 If the package is imported into your own scripts, it provides functions which can be adapted to your own web server. Detailed information is available at:
 
 https://indiredis.readthedocs.io
-
-

@@ -63,7 +63,7 @@ runclient
 This can be used in your own python script, for example::
 
     import indiredis
-    
+
     # blocking call
     indiredis.runclient("/path/to/configfile")
 
@@ -80,12 +80,26 @@ The configfile must exist, and should have format::
     # web service host and port
     host = localhost
     port = 8000
-    
+
+    # only one of the following [INDI], [MQTT] or [DRIVERS] should
+    # be given. They are mutually exclusive.
+
     [INDI]
     # indi server host and port
     ihost = localhost
     iport = 7624
-    
+
+    # [MQTT]
+    # mqtt server host, port and client id
+    # mhost = localhost
+    # mport = 1883
+    # mqtt_id = indi_client01
+
+    # [DRIVERS]
+    # a list of drivers, for example
+    # indi_simulator_telescope
+    # indi_simulator_ccd
+
     [REDIS]
     # redis server host and port
     rhost = localhost
@@ -94,7 +108,7 @@ The configfile must exist, and should have format::
     prefix = indi_
     # Redis channel used to publish data to indiserver
     toindipub = to_indi
-    # Redis channel on which data is published from indiserver 
+    # Redis channel on which data is published from indiserver
     fromindipub = from_indi
 
 It should be noted this has a web client password option. If not included, no password is applied, however if set as::
@@ -124,7 +138,7 @@ Typically, in the REPL you would run::
 
     import indiredis
     indiredis.confighelper("/path/to/new/configfile")
-    
+
 You will be asked for each parameter, this function will do the password hashing, and will finally produce the config file.
 
 
@@ -134,8 +148,8 @@ make_wsgi_app
 .. autofunction:: indiredis.make_wsgi_app
 
 
-make_wsgi_app can be used if you want run your own web server in your own script, further examples are
-given below which can be adapted to your own system
+make_wsgi_app can be used if you want to run your own web server in your own script, further examples are
+given below which can be adapted to your own system.
 
 Open three terminals.
 
@@ -276,10 +290,15 @@ At the remote sites where instruments and drivers are connected, the following s
 
     # The list of two simulated drivers shown above should be replaced by a list of your own drivers.
 
-Substitute your own MQTT server ip address for 10.34.167.1, and your own mqtt id for 'indi_drivers01'.
+Substitute your own MQTT server ip address for 10.34.167.1, and a unique mqtt id for 'indi_drivers01',
+if you have another set of drivers connecting to the MQTT server, possibly from a different location,
+then they should use a different mqtt id.
 
 The above script uses the blocking function driverstomqtt to run the drivers, and publishes/receives
-INDI data via MQTT. At the central site where the redis and web servers are, the following is run::
+INDI data via MQTT. At the central site where the redis and web servers are, you could simply call
+the indiredis.runclient function, with the config file specifying the MQTT parameters.
+
+Alternatively you could run a script such as::
 
 
     import threading
@@ -311,8 +330,12 @@ INDI data via MQTT. At the central site where the redis and web servers are, the
     mqtttoredis('indi_client01', mqtt_host, redis_host, blob_folder=BLOBS)
 
 
-The blocking function mqtttoredis converts the INDI data received via MQTT to redis stored data, which again
-is served by the indiredis client running in its own thread.
+The blocking function mqtttoredis converts the INDI data received via MQTT to redis stored data, which is
+served by the indiredis client running in its own thread. Again this server would need the indi-mr and the
+paho-mqtt packages installing.
+
+The indi-mr package provides the function mqtttoredis, note it has further arguments subscribe_list
+and log_lengths which may be usefull, refer to the indi-mr documentation for details.
 
 
 Web client limitation
@@ -335,9 +358,3 @@ and add .gz to the extension format, and will then send the data on to the remot
 
 Note: this is done by holding the file in variables (in memory) rather than reading/writing to disc, which
 may not work with very large files.
-
-
-
-
-
-
