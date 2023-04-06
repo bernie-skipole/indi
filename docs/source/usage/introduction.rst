@@ -65,11 +65,3 @@ skipole - framework used to build the web pages.
 waitress - Python web server.
 
 redis - Python redis client.
-
-
-Security
-^^^^^^^^
-
-Only open communications are defined in this package, security and authentication are not considered.
-
-The web service provided here does not apply any authentication.

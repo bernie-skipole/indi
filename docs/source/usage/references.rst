@@ -39,8 +39,4 @@ https://docs.pylonsproject.org/projects/waitress/en/latest/
 
 https://github.com/andymccurdy/redis-py
 
-
-
-
-
-
+https://www.eclipse.org/paho/
