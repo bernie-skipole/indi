@@ -7,7 +7,7 @@ INDI - Instrument Neutral Distributed Interface.
 
 See https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface
 
-The package does not include indiserver or drivers, but is compatable with them, indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on port 7624. This, or other INDI clients, connect to this port and using an XML based protocol, control the connected instruments.
+The package does not include indiserver or drivers, but is compatable with them, indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on port 7624. This client (or other INDI clients), can connect to this port and using an XML based protocol, control the connected instruments.
 
 Though the INDI protocol is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
@@ -60,11 +60,6 @@ waitress - Python web server.
 
 redis - Python redis client.
 
-## Security
-
-Only open communications are defined in this package, security and authentication are not considered.
-
-The web service provided here does not apply any authentication.
 
 ## Documentation
 

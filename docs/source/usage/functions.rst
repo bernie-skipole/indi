@@ -141,6 +141,11 @@ Typically, in the REPL you would run::
 
 You will be asked for each parameter, this function will do the password hashing, and will finally produce the config file.
 
+Using a config file to provide parameters may be usefull where docker containers are used, as config files in a drive
+shared with a host can be easily changed, as opposed to creating new containers. The runclient function parses the config
+file and then calls further functions - these are also available if you want to create your own scripts, and are described
+below.
+
 
 make_wsgi_app
 ^^^^^^^^^^^^^
@@ -148,10 +153,10 @@ make_wsgi_app
 .. autofunction:: indiredis.make_wsgi_app
 
 
-make_wsgi_app can be used if you want to run your own web server in your own script, further examples are
+make_wsgi_app can be used if you want to run your own WSGI web server in your own script, further examples are
 given below which can be adapted to your own system.
 
-Open three terminals.
+For example, open three terminals.
 
 In terminal one, run indiserver with the simulated instruments::
 
@@ -358,3 +363,13 @@ and add .gz to the extension format, and will then send the data on to the remot
 
 Note: this is done by holding the file in variables (in memory) rather than reading/writing to disc, which
 may not work with very large files.
+
+This package, and indi-mr, is the work of a single developer. In the situation where connections are made
+across a network the multiple scenarios of possible network failures are difficult to handle. For the most
+stable outcome, run everything on a single machine.
+
+Do not use this::
+
+    To control a nuclear power station
+    To control a strategic missile defence system
+    To control anything remotely critical
