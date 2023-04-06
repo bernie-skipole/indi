@@ -90,13 +90,18 @@ The configfile must exist, and should have format::
     iport = 7624
 
     # [MQTT]
-    # mqtt server host, port and client id
+    # # mqtt server host, port and client id
     # mhost = localhost
     # mport = 1883
     # mqtt_id = indi_client01
 
+    # [MQTT.SUBSCRIBE_LIST]
+    # # A list of remote mqtt_id's to subscribe to, for example
+    # indi_drivers01
+    # indi_drivers02
+
     # [DRIVERS]
-    # a list of drivers, for example
+    # # a list of drivers, for example
     # indi_simulator_telescope
     # indi_simulator_ccd
 
@@ -111,7 +116,16 @@ The configfile must exist, and should have format::
     # Redis channel on which data is published from indiserver
     fromindipub = from_indi
 
-It should be noted this has a web client password option. If not included, no password is applied, however if set as::
+The config file should have either the INDI section present, in which case the client will connect to the indiserver port,
+or it should have the MQTT and optionally the MQTT.SUBSCRIBE_LIST sections present, in which case it connects to an MQTT
+server - which in turn connects to drivers, or the DRIVERS section present, which lists drivers to be run, and their outputs
+directly passed to the redis database, without indiserver being needed.
+
+The MQTT.SUBSCRIBE_LIST should list the mqtt id's associated with remote drivers that this client will control, it is
+possible for multiple clients, and multiple sets of drivers to connect via the MQTT broker with different clients controlling
+different drivers. If this section is not given, then the client subscribes to all mqtt_id's.
+
+It should be noted this file has a web client password option. If not included, no password is applied, however if set as::
 
     hashedpassword = hashstring
 
@@ -299,9 +313,13 @@ Substitute your own MQTT server ip address for 10.34.167.1, and a unique mqtt id
 if you have another set of drivers connecting to the MQTT server, possibly from a different location,
 then they should use a different mqtt id.
 
-The above script uses the blocking function driverstomqtt to run the drivers, and publishes/receives
-INDI data via MQTT. At the central site where the redis and web servers are, you could simply call
-the indiredis.runclient function, with the config file specifying the MQTT parameters.
+The function driverstomqtt has a further argument 'subscribe_list' which is a list of remote client
+mqtt_id's to connect to -if not given (as in the case above), then this function subscribes to
+all mqtt id's - which is reasonable if only one client is connected to this broker.
+
+The above script runs the drivers, and publishes/receives INDI data via MQTT. At the central site
+where the redis and web servers are, you could simply call the indiredis.runclient function, with
+the config file specifying the MQTT parameters.
 
 Alternatively you could run a script such as::
 
@@ -339,8 +357,9 @@ The blocking function mqtttoredis converts the INDI data received via MQTT to re
 served by the indiredis client running in its own thread. Again this server would need the indi-mr and the
 paho-mqtt packages installing.
 
-The indi-mr package provides the function mqtttoredis, note it has further arguments subscribe_list
-and log_lengths which may be usefull, refer to the indi-mr documentation for details.
+The indi-mr package provides the function mqtttoredis, note it has further optional arguments, subscribe_list
+which could contain a list of remote driver mqtt id's, such as ['indi_drivers01'] and log_lengths which may be
+usefull, refer to the indi-mr documentation for details.
 
 
 Web client limitation

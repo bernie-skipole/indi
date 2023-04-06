@@ -216,6 +216,11 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 #  mport = 1883
 #  mqtt_id = indi_client01
 #
+#  [MQTT.SUBSCRIBE_LIST]
+#  # A list of remote mqtt_id's to subscribe to, for example
+#  indi_drivers01
+#  indi_drivers02
+#
 #  [DRIVERS]
 #  # a list of drivers, for example
 #  indi_simulator_telescope
@@ -251,6 +256,7 @@ def confighelper(path):
     mhost = ""
     mqtt_id = "indi_client01"
     newmid = ""
+    remote_ids = set()
     drivers = set()
     rhp = "localhost:6379"
     prefix = "indi_"
@@ -343,6 +349,20 @@ def confighelper(path):
                 q = input("OK (y/n)?")
                 if q == "y" or q == "Y":
                     break
+
+            print("/nDo you want to list the remote driver mqtt id's to which this client connects?")
+            print("If not then the client will connect (subscribe) to all mqtt id's")
+            q = input("List mqtt id's to subscribe to (y/n)?")
+            if q == "y" or q == "Y":
+                # fill section MQTT.SUBSCRIBE_LIST
+                print("\nType an id string and Enter, you will then be prompted for the next id.")
+                print("Continue adding id's, and then just press Enter without input to finish.")
+                while True:
+                    idstring = input("mqtt_id : ")
+                    idstring = idstring.strip(" \"\'")
+                    if not idstring:
+                        break
+                    remote_ids.add(dstring)
         else:
             # neither indi nor mqtt servers, could be drivers
             q = input("\nDo you wish to define one or more drivers (y/n)?")
@@ -468,6 +488,12 @@ def confighelper(path):
                              'mport': mport,
                              'mqtt_id': newmid
                            }
+        if remote_ids:
+            iddict = { "# A list of remote mqtt_id's to subscribe to, for example": None }
+            for ids in remote_ids:
+                iddict[ids] = None
+            config['MQTT.SUBSCRIBE_LIST'] = iddict
+
     elif drivers:
         driverdict = { '# a list of drivers': None }
         for driver in drivers:
@@ -515,6 +541,11 @@ def _read_config(configfile):
         configdict['mhost'] = mqttparams.get('mhost', 'localhost')
         configdict['mport'] = mqttparams.getint('mport', 1883)
         configdict['mqtt_id'] = mqttparams.get('mqtt_id', 'indi_client01')
+        if 'MQTT.SUBSCRIBE_LIST' in config:
+            subscribe_list = config['MQTT.SUBSCRIBE_LIST']
+            configdict['subscribe_list'] = list(subscribe_list.keys())
+        else:
+            configdict['subscribe_list'] = []
     elif 'DRIVERS' in config:
         drivers = config['DRIVERS']
         configdict['drivers'] = list(drivers.keys())
@@ -571,7 +602,7 @@ def runclient(configfile):
     elif "mhost" in configdict:
         mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"])
         # start the blocking function mqtttoredis
-        mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, blob_folder=configdict['blob_folder'])
+        mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, subscribe_list=configdict['subscribe_list'], blob_folder=configdict['blob_folder'])
     elif "drivers" in configdict:
         # start the blocking function driverstoredis
         driverstoredis(configdict['drivers'], redis_host, blob_folder=configdict['blob_folder'])
