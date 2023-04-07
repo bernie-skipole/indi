@@ -36,8 +36,6 @@ For further usage information, including setting ports and hosts, try::
 
     python3 -m indiredis --help
 
-If the package is imported it provides functions for creating the web client, and also connecting to an MQTT server - assuming the INDI XML protocol is being passed via MQTT using the indi-mr python package.
-
 
 Installation
 ^^^^^^^^^^^^
@@ -65,3 +63,6 @@ skipole - framework used to build the web pages.
 waitress - Python web server.
 
 redis - Python redis client.
+
+paho-mqtt - Python mqtt client.
+
