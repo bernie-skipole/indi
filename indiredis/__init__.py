@@ -215,6 +215,11 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 #  mhost = localhost
 #  mport = 1883
 #  mqtt_id = indi_client01
+#  # mqtt topics
+#  to_indi_topic = to_indi
+#  from_indi_topic = from_indi
+#  snoop_control_topic = snoop_control
+#  snoop_data_topic = snoop_data
 #
 #  [MQTT.SUBSCRIBE_LIST]
 #  # A list of remote mqtt_id's to subscribe to, for example
@@ -256,6 +261,10 @@ def confighelper(path):
     mhost = ""
     mqtt_id = "indi_client01"
     newmid = ""
+    to_topic = 'to_indi'
+    from_topic = 'from_indi'
+    control_topic = 'snoop_control'
+    data_topic = 'snoop_data'
     remote_ids = set()
     drivers = set()
     rhp = "localhost:6379"
@@ -349,7 +358,42 @@ def confighelper(path):
                 q = input("OK (y/n)?")
                 if q == "y" or q == "Y":
                     break
-
+            while True:
+                print("\nType in a string which will be the MQTT topic communicating to drivers.")
+                to_indi_topic = input("Currently : " + to_topic + "\nEnter to accept, or input new string>")
+                if not to_indi_topic:
+                    to_indi_topic = to_topic
+                print("String set at : " + to_indi_topic + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
+            while True:
+                print("\nType in a string which will be the MQTT topic communicating to the client.")
+                from_indi_topic = input("Currently : " + from_topic + "\nEnter to accept, or input new string>")
+                if not from_indi_topic:
+                    from_indi_topic = from_topic
+                print("String set at : " + from_indi_topic + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
+            while True:
+                print("\nType in a string which will be the MQTT topic used for driver snoop control.")
+                snoop_control_topic = input("Currently : " + control_topic + "\nEnter to accept, or input new string>")
+                if not snoop_control_topic:
+                    snoop_control_topic = control_topic
+                print("String set at : " + snoop_control_topic + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
+            while True:
+                print("\nType in a string which will be the MQTT topic used for driver snoop data.")
+                snoop_data_topic = input("Currently : " + data_topic + "\nEnter to accept, or input new string>")
+                if not snoop_data_topic:
+                    snoop_data_topic = data_topic
+                print("String set at : " + snoop_data_topic + "\n")
+                q = input("OK (y/n)?")
+                if q == "y" or q == "Y":
+                    break
             print("/nDo you want to list the remote driver mqtt id's to which this client connects?")
             print("If not then the client will connect (subscribe) to all mqtt id's")
             q = input("List mqtt id's to subscribe to (y/n)?")
@@ -364,7 +408,7 @@ def confighelper(path):
                         break
                     remote_ids.add(dstring)
         else:
-            # neither indi nor mqtt servers, could be drivers
+            # neither indi nor mqtt servers, therfore should be drivers
             q = input("\nDo you wish to define one or more drivers (y/n)?")
             if q != "y" and q != "Y":
                 print("No other options are available. Exiting without creating config file")
@@ -487,6 +531,11 @@ def confighelper(path):
                              'mhost': mhost,
                              'mport': mport,
                              'mqtt_id': newmid
+                             '# mqtt topics': None,
+                             'to_indi_topic': to_indi_topic,
+                             'from_indi_topic': from_indi_topic,
+                             'snoop_control_topic': snoop_control_topic,
+                             'snoop_data_topic': snoop_data_topic
                            }
         if remote_ids:
             iddict = { "# A list of remote mqtt_id's to subscribe to, for example": None }
@@ -541,6 +590,10 @@ def _read_config(configfile):
         configdict['mhost'] = mqttparams.get('mhost', 'localhost')
         configdict['mport'] = mqttparams.getint('mport', 1883)
         configdict['mqtt_id'] = mqttparams.get('mqtt_id', 'indi_client01')
+        configdict['to_indi_topic'] = mqttparams.get('to_indi_topic', 'to_indi')
+        configdict['from_indi_topic'] = mqttparams.get('from_indi_topic', 'from_indi')
+        configdict['snoop_control_topic'] = mqttparams.get('snoop_control_topic', 'snoop_control')
+        configdict['snoop_data_topic'] = mqttparams.get('snoop_data_topic', 'snoop_data')
         if 'MQTT.SUBSCRIBE_LIST' in config:
             subscribe_list = config['MQTT.SUBSCRIBE_LIST']
             configdict['subscribe_list'] = list(subscribe_list.keys())
@@ -600,7 +653,11 @@ def runclient(configfile):
         # start the blocking function inditoredis
         inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
     elif "mhost" in configdict:
-        mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"])
+        mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"],
+                                to_indi_topic = configdict['to_indi_topic'],
+                                from_indi_topic = configdict['from_indi_topic'],
+                                snoop_control_topic = configdict['snoop_control_topic'],
+                                snoop_data_topic = configdict['snoop_data_topic'] )
         # start the blocking function mqtttoredis
         mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, subscribe_list=configdict['subscribe_list'], blob_folder=configdict['blob_folder'])
     elif "drivers" in configdict:

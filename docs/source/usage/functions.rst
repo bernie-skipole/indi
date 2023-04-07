@@ -94,6 +94,11 @@ The configfile must exist, and should have format::
     # mhost = localhost
     # mport = 1883
     # mqtt_id = indi_client01
+    # # mqtt topics, defaults are shown here
+    # to_indi_topic = to_indi
+    # from_indi_topic = from_indi
+    # snoop_control_topic = snoop_control
+    # snoop_data_topic = snoop_data
 
     # [MQTT.SUBSCRIBE_LIST]
     # # A list of remote mqtt_id's to subscribe to, for example
@@ -123,7 +128,7 @@ directly passed to the redis database, without indiserver being needed.
 
 The MQTT.SUBSCRIBE_LIST should list the mqtt id's associated with remote drivers that this client will control, it is
 possible for multiple clients, and multiple sets of drivers to connect via the MQTT broker with different clients controlling
-different drivers. If this section is not given, then the client subscribes to all mqtt_id's.
+different drivers. If this section is not given, then the client subscribes to all mqtt_id's using the MQTT topics.
 
 It should be noted this file has a web client password option. If not included, no password is applied, however if set as::
 
@@ -313,9 +318,11 @@ Substitute your own MQTT server ip address for 10.34.167.1, and a unique mqtt id
 if you have another set of drivers connecting to the MQTT server, possibly from a different location,
 then they should use a different mqtt id.
 
+The mqtt_server function also has arguments which set MQTT 'topics' - the above illustration uses defaults.
+
 The function driverstomqtt has a further argument 'subscribe_list' which is a list of remote client
-mqtt_id's to connect to -if not given (as in the case above), then this function subscribes to
-all mqtt id's - which is reasonable if only one client is connected to this broker.
+mqtt_id's -if not given (as in the case above), then this function subscribes to all mqtt id's using
+the given topics.
 
 The above script runs the drivers, and publishes/receives INDI data via MQTT. At the central site
 where the redis and web servers are, you could simply call the indiredis.runclient function, with
