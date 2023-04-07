@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "indiredis"
+authors = [{name = "Bernard Czenkusz", email = "bernie@skipole.co.uk"}]
+license = {file = "LICENSE"}
+classifiers = ["License :: OSI Approved :: MIT License","Operating System :: POSIX :: Linux","Topic :: Scientific/Engineering :: Astronomy", "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator"]
+version = "0.6.0"
+description="An INDI web client for general Instrument control. If the package is run, it provides a web service for controlling instruments. If imported, it provides functions which can be adapted to your own web server."
+readme = "README.md"
+requires-python = ">=3.9"
+keywords=['indi', 'client', 'astronomy', 'instrument']
+dependencies = ["skipole>=5.5.2", "indi-mr>=0.2.3", "paho-mqtt>=1.5.1", "redis>=3.5.3", "waitress>=1.4.4"]
+
+[project.urls]
+Documentation = "https://indiredis.readthedocs.io"
+Source = "https://github.com/bernie-skipole/indi"
