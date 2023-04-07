@@ -15,7 +15,9 @@ For further information on INDI, see :ref:`references`.
 
 Though the INDI protocol is generally used for astronomical instruments, it can work with any instrument if appropriate INDI drivers are available.
 
-This indiredis package can be imported which gives functions for running a web client connected to an INDI server port, an MQTT server or directly to INDI instrument drivers. If indiredis is run with the python -m option, then the web client is started and connects to an INDI server port.
+If this indiredis package is imported it provides functions for running a web client connected to either: an INDI server port; an MQTT server; or directly to INDI instrument drivers.
+
+If indiredis is run with the python -m option, then the web client is started and connects to an INDI server port.
 
 This web client uses a redis database to hold instrument values, so a redis instance is needed, generally running on the same host as indiredis.
 
