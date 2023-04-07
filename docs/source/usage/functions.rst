@@ -190,6 +190,9 @@ In terminal two, run inditoredis with the following script::
 
     inditoredis(indi_host, redis_host, blob_folder='/path/to/blob_folder')
 
+Please note: the redis_server function takes further arguments, setting a variable prefix and pub/sub channels.
+By not including these arguments, the illustration above uses default values.
+
 In terminal three, run the following web service::
 
     from indi_mr import redis_server
