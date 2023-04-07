@@ -530,7 +530,7 @@ def confighelper(path):
         config['MQTT'] =   { '# mqtt server host, port and client id': None,
                              'mhost': mhost,
                              'mport': mport,
-                             'mqtt_id': newmid
+                             'mqtt_id': newmid,
                              '# mqtt topics': None,
                              'to_indi_topic': to_indi_topic,
                              'from_indi_topic': from_indi_topic,
