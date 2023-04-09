@@ -38,6 +38,8 @@ For further usage information, including setting ports and hosts, try::
 
     python3 -m indiredis --help
 
+If the package is imported into your own scripts, it provides a runclient function which accepts a configuration file. This file specifies the INDI drivers to run, or the MQTT or indiserver connections to use. The function then runs the web client.
+
 
 Installation
 ^^^^^^^^^^^^
@@ -67,4 +69,3 @@ waitress - Python web server.
 redis - Python redis client.
 
 paho-mqtt - Python mqtt client.
-

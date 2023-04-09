@@ -33,6 +33,8 @@ For further usage information, including setting ports and hosts, try:
 
 > python3 -m indiredis --help
 
+If the package is imported into your own scripts, it provides a runclient function which accepts a configuration file. This file specifies the INDI drivers to run, or the MQTT or indiserver connections to use. The function then runs the web client.
+
 
 ## Installation
 
@@ -65,6 +67,6 @@ paho-mqtt - Python mqtt client.
 
 ## Documentation
 
-If the package is imported into your own scripts, it provides functions which can be adapted to your own web server. Detailed information is available at:
+Detailed information is available at:
 
 https://indiredis.readthedocs.io
