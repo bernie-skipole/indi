@@ -9,7 +9,7 @@ This Python3 package provides an INDI web client for general Instrument control.
 
 INDI - Instrument Neutral Distributed Interface.
 
-The package does not include indiserver or drivers, but is compatable with them, indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on port 7624. This client (or other INDI clients), can connect to this port and using an XML based protocol, control the connected instruments.
+The package does not include indiserver or drivers, but is compatable with them, indiserver is an application (debian package indi-bin) which runs instrument drivers, and listens on port 7624. This client can connect to this port, and then serves web pages allowing the user to control the connected instruments.
 
 For further information on INDI, see :ref:`references`.
 
