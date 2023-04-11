@@ -204,6 +204,8 @@ def make_wsgi_app(redisserver, blob_folder='', url="/", hashedpassword=""):
 #
 #  # only one of the following [INDI], [MQTT] or [DRIVERS] should
 #  # be given. They are mutually exclusive.
+#  # If none are given the web client runs but the redis server must be
+#  # connected to drivers by some other process
 #
 #  [INDI]
 #  # indi server host and port
@@ -303,10 +305,11 @@ def confighelper(path):
         if q == "y" or q == "Y":
             break
 
-    print("\nYou can specify one of the following three:")
+    print("\nYou can specify one, or none, of the following three:")
     print("The host:port of an INDI server (which itself connects to instruments and drivers).")
     print("Or\nThe host:port of an MQTT server (which connect to instruments using the indi-mr package).")
-    print("Or\nA list of indi drivers, which in turn connect to instruments.\n")
+    print("Or\nA list of indi drivers, which in turn connect to instruments.")
+    print("Or\nNone of these, in which case the redis database should be connected\nto drivers by some other process.\n")
     q = input("Do you wish to connect to an INDI server (y/n)?")
     if q == "y" or q == "Y":
         while True:
@@ -408,22 +411,21 @@ def confighelper(path):
                         break
                     remote_ids.add(dstring)
         else:
-            # neither indi nor mqtt servers, therfore should be drivers
-            q = input("\nDo you wish to define one or more drivers (y/n)?")
-            if q != "y" and q != "Y":
-                print("No other options are available. Exiting without creating config file")
-                sys.exit(0)
-            print("\nType a driver string and Enter, you will then be prompted for the next driver.")
-            print("Continue adding drivers, and then just press Enter without input to finish.")
-            while True:
-                dstring = input("Driver : ")
-                dstring = dstring.strip(" \"\'")
-                if not dstring:
-                    break
-                drivers.add(dstring)
-            if not drivers:
-                print("No drivers specified, no other options are available. Exiting without creating config file")
-                sys.exit(0)
+            # neither indi nor mqtt servers, therfore should be drivers or nothing
+            q = input("\nDo you wish to specify one or more drivers (y/n)?")
+            if q == "y" or q == "Y":
+                print("\nType a driver string and Enter, you will then be prompted for the next driver.")
+                print("Continue adding drivers, and then just press Enter without input to finish.")
+                while True:
+                    dstring = input("Driver : ")
+                    dstring = dstring.strip(" \"\'")
+                    if not dstring:
+                        break
+                    drivers.add(dstring)
+                if not drivers:
+                    print("No drivers specified, the config file will not contain these sections.")
+            else:
+                print("\nNo connectivity to drivers has been specified.")
 
     while True:
         print("\nType in the host and port of the redis service to connect to,\nas colon separated host:number")
@@ -605,9 +607,6 @@ def _read_config(configfile):
         if not configdict['drivers']:
             print("ERROR: No drivers given under DRIVERS.")
             sys.exit(1)
-    else:
-        print("ERROR: No INDI, MQTT or DRIVERS section in the config file.")
-        sys.exit(1)
     if 'REDIS' not in config:
         print("ERROR: The config file does not include a REDIS section.")
         sys.exit(1)
@@ -644,22 +643,27 @@ def runclient(configfile):
     # create a wsgi application
     application = make_wsgi_app(redis_host, configdict['blob_folder'], url='/', hashedpassword=configdict['hashedpassword'])
 
-    # serve the application with the python waitress web server in another thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':configdict['host'], 'port':configdict['port']})
-    webapp.start()
+    if ("ihost" in configdict) or ("mhost" in configdict) or ("drivers" in configdict):
+        # serve the application with the python waitress web server in another thread
+        webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':configdict['host'], 'port':configdict['port']})
+        webapp.start()
 
-    if "ihost" in configdict:
-        indi_host = indi_server(host=configdict["ihost"], port=configdict["iport"])
-        # start the blocking function inditoredis
-        inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
-    elif "mhost" in configdict:
-        mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"],
-                                to_indi_topic = configdict['to_indi_topic'],
-                                from_indi_topic = configdict['from_indi_topic'],
-                                snoop_control_topic = configdict['snoop_control_topic'],
-                                snoop_data_topic = configdict['snoop_data_topic'] )
-        # start the blocking function mqtttoredis
-        mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, subscribe_list=configdict['subscribe_list'], blob_folder=configdict['blob_folder'])
-    elif "drivers" in configdict:
-        # start the blocking function driverstoredis
-        driverstoredis(configdict['drivers'], redis_host, blob_folder=configdict['blob_folder'])
+        if "ihost" in configdict:
+            indi_host = indi_server(host=configdict["ihost"], port=configdict["iport"])
+            # start the blocking function inditoredis
+            inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=configdict['blob_folder'])
+        elif "mhost" in configdict:
+            mqtt_host = mqtt_server(host=configdict["mhost"], port=configdict["mport"],
+                                    to_indi_topic = configdict['to_indi_topic'],
+                                    from_indi_topic = configdict['from_indi_topic'],
+                                    snoop_control_topic = configdict['snoop_control_topic'],
+                                    snoop_data_topic = configdict['snoop_data_topic'] )
+            # start the blocking function mqtttoredis
+            mqtttoredis(configdict['mqtt_id'], mqtt_host, redis_host, subscribe_list=configdict['subscribe_list'], blob_folder=configdict['blob_folder'])
+        elif "drivers" in configdict:
+            # start the blocking function driverstoredis
+            driverstoredis(configdict['drivers'], redis_host, blob_folder=configdict['blob_folder'])
+   else:
+        # blocking call which serves the application with the python waitress web server
+        serve(application, host=configdict['host'], port=configdict['port'])
+
