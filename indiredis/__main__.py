@@ -27,16 +27,22 @@ from waitress import serve
 from . import make_wsgi_app
 
 
+<<<<<<< HEAD
 version = "0.6.1"
+=======
+version = "0.7.0"
+>>>>>>> 6f1160a9d49c1389e503389f35351870101dd24e
 
 if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser(usage="python3 -m indiredis [options] blobdirectorypath",
-        description="INDI web client communicating to indiserver and saving data to redis and to a BLOB directory.")
+        description="INDI web client communicating to indiserver and saving data to redis and to a BLOB directory.",
+        epilog="The --clientonly option disables the connection to indiserver, iport and ihost will be ignored. This requires the redis database to be connected to drivers by some other process, typically using functions from package indi-mr.")
     parser.add_argument("blobdirectorypath", help="Path of the directory where BLOB's will be set")
     parser.add_argument("-p", "--port", type=int, default=8000, help="Port of the web service (default 8000).")
     parser.add_argument("--host", default="localhost", help="Listenning IP address of the web service (default localhost).")
+    parser.add_argument("--clientonly", action="store_true", help="Do not connect to indiserver port.")
     parser.add_argument("--iport", type=int, default=7624, help="Port of the indiserver (default 7624).")
     parser.add_argument("--ihost", default="localhost", help="Hostname of the indiserver (default localhost).")
     parser.add_argument("--rport", type=int, default=6379, help="Port of the redis server (default 6379).")
@@ -57,6 +63,7 @@ if __name__ == "__main__":
     # create a wsgi application
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
 
+<<<<<<< HEAD
 
     # serve the application with the python waitress web server in another thread
     webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
@@ -64,3 +71,15 @@ if __name__ == "__main__":
 
     # and start the blocking function inditoredis
     inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
+=======
+    if args.clientonly:
+        # blocking call which serves the application with the python waitress web server
+        serve(application, host=args.host, port=args.port)
+    else:
+        # serve the application with the python waitress web server in another thread
+        webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
+        webapp.start()
+        # and start the blocking function inditoredis
+        inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
+
+>>>>>>> 6f1160a9d49c1389e503389f35351870101dd24e
