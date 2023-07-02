@@ -2,7 +2,7 @@
 "url": "/",
 "default_language": "en",
 "brief": "indiredis web client",
-"version": "0.7.0",
+"version": "0.7.1",
 "skipole": "5.5.9",
 "specialpages": {
 "blobfolder": 14,
