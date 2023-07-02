@@ -10,7 +10,7 @@ indiserver -v indi_simulator_telescope indi_simulator_dome
 This script then creates the directory /path/to/blobfolder if it does not
 exist, and then communicates with the indiserver on localhost port 7624 and
 a redis server on localhost port 6379. It runs a web server on port 8000,
-so connecting with a browser to http://localhost:8000 
+so connecting with a browser to http://localhost:8000
 should enable you to view and control the connected instruments.
 """
 
@@ -27,7 +27,7 @@ from waitress import serve
 from . import make_wsgi_app
 
 
-version = "0.6.0"
+version = "0.6.1"
 
 if __name__ == "__main__":
 
@@ -64,4 +64,3 @@ if __name__ == "__main__":
 
     # and start the blocking function inditoredis
     inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
-

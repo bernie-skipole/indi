@@ -84,7 +84,7 @@ def _check_received_data(skicall, setstring):
 
     if (propertyindex, setstring, 'sectionindex') not in received_data:
         raise FailPage("Invalid data")
-    
+
     # sectionindex should be equal to the provided sectionindex
     if received_data[(propertyindex, setstring, 'sectionindex')] != sectionindex:
         raise FailPage("Invalid data")
@@ -92,7 +92,6 @@ def _check_received_data(skicall, setstring):
     propertyname = received_data[propertyindex, setstring, 'propertyname']
 
     return devicename, propertyindex, sectionindex, propertyname
-
 
 
 def set_switch(skicall):
@@ -103,7 +102,7 @@ def set_switch(skicall):
     # get list of element names for this property
     names = tools.elements(rconn, redisserver, propertyname, devicename)
     if not names:
-        raise FailPage("Error parsing data")
+        raise FailPage(f"Error parsing data for device {devicename}, property {propertyname}")
     # initially set all element switch values to be Off
     valuedict = {nm:'Off' for nm in names}
     received_data = skicall.submit_dict['received_data']
@@ -111,23 +110,27 @@ def set_switch(skicall):
         # a value has been received from a radio control
         value = received_data[propertyindex, 'svradio', 'radio_checked']
         if len(names) == 1:
-            # only one element, can be either on or off
-            # this value is a string of the format name or name_on or name_off
+            onename = names[0]
+            # only one element
+            # this value could be a string of the format name or name_on or name_off or noneoftheabove
             if value.endswith("_on"):
                 ename = value[0:-3]
-                if ename in names:
+                if ename == onename:
                     valuedict = {ename : "On"}
                 else:
-                    raise FailPage("Error parsing data")
+                    raise FailPage(f"Error parsing data, received value {value} not recognised")
             elif value.endswith("_off"):
                 ename = value[0:-4]
-                if ename in names:
+                if ename == onename:
                     valuedict = {ename : "Off"}
                 else:
-                    raise FailPage("Error parsing data")
+                    raise FailPage(f"Error parsing data, received value {value} not recognised")
+            elif value == "noneoftheabove":
+                valuedict[onename] = "Off"
+            elif value == onename:
+                valuedict[value] = "On"
             else:
-                # only one value, but does not end in _on or _off
-                raise FailPage("Error parsing data")
+                raise FailPage(f"Error parsing data, received value {value} not recognised")
         else:
             # multiple names, but only one received, and to be set to On
             # however if value is noneoftheabove, then all should be Off
@@ -135,7 +138,7 @@ def set_switch(skicall):
                 if value in names:
                     valuedict[value] = "On"
                 else:
-                    raise FailPage("Error parsing data")
+                    raise FailPage(f"Error parsing data, received value {value} not a recognised switch name.")
         data_sent = tools.newswitchvector(rconn, redisserver, propertyname, devicename, valuedict)
         # print(data_sent)
         if not data_sent:
@@ -148,16 +151,16 @@ def set_switch(skicall):
             if ename in names:
                 valuedict[ename] = "On"
             else:
-                raise FailPage("Error sending data")
+                raise FailPage(f"Error parsing data, received value {value} not recognised")
         data_sent = tools.newswitchvector(rconn, redisserver, propertyname, devicename, valuedict)
         # print(data_sent)
         if not data_sent:
-            raise FailPage("Error sending data")
+            raise FailPage("Error parsing data, received value not recognised")
     else:
         skicall.call_data["status"] = "Unable to parse received data"
         return
     set_state(skicall, sectionindex, "Busy")
-    skicall.call_data["status"] = f"Change to property {propertyname} has been submitted" 
+    skicall.call_data["status"] = f"Change to property {propertyname} has been submitted"
 
 
 # The Client must send all members of Number and Text vectors,
@@ -333,12 +336,12 @@ def up_number(skicall):
             # elements[index] gives a dictionary of the element at this index position, sorted by label
             # and ['name'] gives it by name. Setting the inputdict value to None means no change
             inputdict[_safekey(elements[index]['name'])] = None
- 
+
     skicall.page_data[propertyindex,'nvinputtable', 'inputdict'] = inputdict
     skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
     skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
     skicall.page_data[propertyindex,'nvinputtable', 'getfield3'] = getfield3values
-    
+
 
 
 
@@ -439,9 +442,9 @@ def down_number(skicall):
     skicall.page_data[propertyindex,'nvinputtable', 'up_hide'] = up_hide
     skicall.page_data[propertyindex,'nvinputtable', 'down_hide'] = down_hide
     skicall.page_data[propertyindex,'nvinputtable', 'getfield3'] = getfield3values
-    
 
-    
+
+
 def toggle_blob(skicall):
     "toggles a blob vector between enabled, disabled"
     rconn = skicall.proj_data["rconn"]
@@ -528,8 +531,3 @@ def set_blob(skicall):
     Element name  : {elementname}
     Size          : {lenrxfile}
     Format        : {fext}"""
-
-
-
-
-

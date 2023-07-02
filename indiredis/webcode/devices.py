@@ -42,7 +42,7 @@ def devicelist(skicall):
     # since the user must have logged in to see this page
     # if no password, the logout button is not shown
     if not skicall.proj_data["hashedpassword"]:
-        skicall.page_data['logout', 'show'] = False 
+        skicall.page_data['logout', 'show'] = False
     rconn = skicall.proj_data["rconn"]
     redisserver = skicall.proj_data["redisserver"]
     checksum1 = ''
@@ -159,7 +159,7 @@ def getProperties(skicall):
 
 def getDeviceProperties(skicall):
     "Sends getProperties request for a given device, and refresh properties page"
-    # gets device from page_data, which is set into skicall.call_data["device"] 
+    # gets device from page_data, which is set into skicall.call_data["device"]
     devicename = skicall.call_data.get("device","")
     if not devicename:
         raise FailPage("Device not recognised")
@@ -805,7 +805,7 @@ def _show_lightvector(skicall, index, ad):
         if eld['value'] == "Ok":
             contents.append([eld['value'], "white", "green"])
         if eld['value'] == "Busy":
-            contents.append([eld['value'], "white", "yellow"])
+            contents.append([eld['value'], "black", "yellow"])
         if eld['value'] == "Alert":
             contents.append([eld['value'], "white", "red"])
     skicall.page_data['property_'+str(index),'lvelements', 'contents'] = contents
@@ -993,8 +993,8 @@ def check_for_device_change(skicall):
     # The page which has called for this update shows all the properties in
     # a particular group, and the device, group and checksums should all be present
     # in call_data
-    if (('device' not in skicall.call_data) or 
-        ('group' not in skicall.call_data) or 
+    if (('device' not in skicall.call_data) or
+        ('group' not in skicall.call_data) or
         ('checksum1' not in skicall.call_data) or
         ('checksum2' not in skicall.call_data)):
         # something wrong, divert to the home page
@@ -1022,7 +1022,7 @@ def check_for_device_change(skicall):
         # the whole page needs refreshing, request the browser to make an html call
         skicall.page_data['JSONtoHTML'] = 'refreshproperties'
         return
-        
+
     #############################################################################################################
     # To reach this point, only those items which can be updated by json have changed, therefore do a json update
 
@@ -1044,8 +1044,8 @@ def check_for_device_change(skicall):
         # and index is the section index on the web page
         propertyname = ad['name']
         if propertyname not in numbervectors:
-            continue 
-        
+            continue
+
         # set the change into page data
         # items which may have changed:
         #            state
@@ -1083,5 +1083,3 @@ def check_for_device_change(skicall):
     # checksums as the generated checksums
 
     skicall.call_data['checksum1'] = checksum1
-
-
