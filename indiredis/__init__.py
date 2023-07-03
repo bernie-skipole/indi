@@ -663,7 +663,6 @@ def runclient(configfile):
         elif "drivers" in configdict:
             # start the blocking function driverstoredis
             driverstoredis(configdict['drivers'], redis_host, blob_folder=configdict['blob_folder'])
-   else:
+    else:
         # blocking call which serves the application with the python waitress web server
         serve(application, host=configdict['host'], port=configdict['port'])
-

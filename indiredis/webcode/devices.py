@@ -602,8 +602,8 @@ def _show_switchvector(skicall, index, ad):
     # permission is one of ro, wo, rw
     if ad['perm'] == "wo":
         # permission is wo
-        if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
-            # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
+        if len(element_list) == 1:
+            # only one element, must give an off/on choice regardless of rule
             skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
             skicall.page_data['property_'+str(index),'svradio', 'show'] = True
             eld = element_list[0]
@@ -662,8 +662,8 @@ def _show_switchvector(skicall, index, ad):
         skicall.page_data['property_'+str(index),'setswitch', 'sectionindex'] = index
 
     elif ad['perm'] == "rw":
-        if (ad['rule'] == "OneOfMany") and (len(element_list) == 1):
-            # only one element, but rule is OneOfMany, so must give an off/on choice, with button names name_on and name_off
+        if len(element_list) == 1:
+            # only one element, must give an off/on choice regardless of rule
             skicall.page_data['property_'+str(index),'setswitch', 'show'] = True
             skicall.page_data['property_'+str(index),'svradio', 'show'] = True
             eld = element_list[0]

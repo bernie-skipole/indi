@@ -112,7 +112,7 @@ def set_switch(skicall):
         if len(names) == 1:
             onename = names[0]
             # only one element
-            # this value could be a string of the format name or name_on or name_off or noneoftheabove
+            # this value could be a string of the format name_on or name_off
             if value.endswith("_on"):
                 ename = value[0:-3]
                 if ename == onename:
@@ -125,10 +125,6 @@ def set_switch(skicall):
                     valuedict = {ename : "Off"}
                 else:
                     raise FailPage(f"Error parsing data, received value {value} not recognised")
-            elif value == "noneoftheabove":
-                valuedict[onename] = "Off"
-            elif value == onename:
-                valuedict[value] = "On"
             else:
                 raise FailPage(f"Error parsing data, received value {value} not recognised")
         else:
