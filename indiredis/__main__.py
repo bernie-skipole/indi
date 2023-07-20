@@ -26,7 +26,7 @@ from waitress import serve
 
 from . import make_wsgi_app
 
-version = "0.7.1"
+version = "0.7.2"
 
 if __name__ == "__main__":
 
@@ -58,15 +58,6 @@ if __name__ == "__main__":
     # create a wsgi application
     application = make_wsgi_app(redis_host, args.blobdirectorypath, url='/')
 
-<<<<<<< HEAD
-
-    # serve the application with the python waitress web server in another thread
-    webapp = threading.Thread(target=serve, args=(application,), kwargs={'host':args.host, 'port':args.port})
-    webapp.start()
-
-    # and start the blocking function inditoredis
-    inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
-=======
     if args.clientonly:
         # blocking call which serves the application with the python waitress web server
         serve(application, host=args.host, port=args.port)
@@ -76,5 +67,3 @@ if __name__ == "__main__":
         webapp.start()
         # and start the blocking function inditoredis
         inditoredis(indi_host, redis_host, log_lengths={}, blob_folder=args.blobdirectorypath)
-
->>>>>>> 6f1160a9d49c1389e503389f35351870101dd24e
